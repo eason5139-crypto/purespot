@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@theme inline {
+  --color-background: #090d16;
+  --color-foreground: #edf2f8;
+  --color-card: #111827;
+  --color-primary: #06b6d4;
+  --font-sans:
+    "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono:
+    "SFMono-Regular", Consolas, "Liberation Mono", "Noto Sans TC", monospace;
+}
+:root {
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: #090d16;
+  color: #edf2f8;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+a,
+input,
+select,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+summary {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+a,
+button,
+input,
+select,
+summary {
+  outline-offset: 4px;
+}
+:focus-visible {
+  outline: 2px solid #22d3ee;
+}
+::selection {
+  background: #06b6d440;
+  color: #fff;
+}
+.page-shell {
+  width: min(100% - 3rem, 1320px);
+  margin-inline: auto;
+}
+.panel {
+  border: 1px solid #ffffff14;
+  border-radius: 1.25rem;
+  background: #111827cc;
+  backdrop-filter: blur(12px);
+}
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  color: #7c9fb4;
+}
+.field-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+}
+.input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ffffff1a;
+  border-radius: 0.7rem;
+  background: #0b1220;
+  font-size: 0.875rem;
+  color: #f1f5f9;
+  transition: border-color 0.2s;
+}
+.input:focus {
+  border-color: #22d3ee88;
+}
+.input::placeholder {
+  color: #64748b;
+}
+.dialog-overlay[data-state="open"] {
+  animation: fade-in 0.18s ease-out;
+}
+.dialog-content[data-state="open"] {
+  animation: fade-in 0.22s ease-out;
+}
+.drawer-content[data-state="open"] {
+  animation: drawer-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 640px) {
+  .page-shell {
+    width: calc(100% - 2rem);
+  }
+  .hero-panel {
+    min-height: 365px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

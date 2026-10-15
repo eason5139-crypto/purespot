@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum PetType {
+  DOG
+  CAT
+}
+enum ActivityLevel {
+  SEDENTARY
+  MODERATE
+  HIGH
+  ATHLETIC
+}
+enum AutoshipFrequency {
+  EVERY_2_WEEKS
+  EVERY_4_WEEKS
+  EVERY_6_WEEKS
+  EVERY_8_WEEKS
+}
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  passwordHash String
+  name String?
+  phone String?
+  pets Pet[]
+  orders Order[]
+  autoships AutoshipPlan[]
+  reviews Review[]
+  sessions Session[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Session {
+  id String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+model Pet {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name String
+  type PetType
+  breed String
+  gender String @default("未提供")
+  isNeutered Boolean
+  birthday DateTime
+  weightKg Float
+  bodyConditionScore Int @default(5)
+  activityLevel ActivityLevel
+  allergies String[]
+  chronicDiseases String[]
+  goal String @default("MAINTAIN")
+  avatarUrl String?
+  isDefault Boolean @default(false)
+  orderItems OrderItem[]
+  autoshipItems AutoshipItem[]
+  weightRecords WeightRecord[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+model WeightRecord {
+  id String @id @default(uuid())
+  petId String
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+  weightKg Float
+  recordedAt DateTime @default(now())
+  @@index([petId, recordedAt])
+}
+model Category {
+  id String @id @default(uuid())
+  name String
+  products Product[]
+}
+model Product {
+  id String @id @default(uuid())
+  categoryId String
+  category Category @relation(fields: [categoryId], references: [id])
+  name String
+  slug String @unique
+  targetPetType PetType
+  brief String
+  description String
+  ingredientsText String
+  allergens String[]
+  lifeStages String[]
+  guaranteedAnalysis Json
+  transparencyReportUrl String?
+  imageUrl String
+  isPublished Boolean @default(false)
+  isAutoshipEligible Boolean @default(true)
+  autoshipDiscountRate Decimal @default(0.90) @db.Decimal(4, 2)
+  variants ProductVariant[]
+  batches BatchReport[]
+  reviews Review[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([targetPetType, isPublished])
+}
+model ProductVariant {
+  id String @id @default(uuid())
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku String @unique
+  label String
+  bagGrams Int
+  priceNt Int
+  stock Int
+  orderItems OrderItem[]
+  autoshipItems AutoshipItem[]
+  @@index([productId])
+}
+model BatchReport {
+  id String @id @default(uuid())
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batch String
+  testedAt DateTime
+  protein Float
+  moisture Float
+  ash Float
+  reportUrl String?
+  isDemo Boolean @default(true)
+  @@unique([productId, batch])
+  @@index([productId, testedAt])
+}
+model Order {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  status OrderStatus @default(PENDING_PAYMENT)
+  subtotalNt Int
+  shippingNt Int
+  totalNt Int
+  idempotencyKey String
+  requestHash String
+  shippingAddress Json
+  paymentReference String? @unique
+  expiresAt DateTime
+  items OrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+}
+model OrderItem {
+  id String @id @default(uuid())
+  orderId String
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+  petId String
+  pet Pet @relation(fields: [petId], references: [id])
+  productName String
+  unitPriceNt Int
+  quantity Int
+  isAutoship Boolean @default(false)
+  intervalDays Int?
+  @@index([orderId])
+  @@index([petId])
+}
+model AutoshipPlan {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  frequency AutoshipFrequency
+  nextBillingDate DateTime
+  shippingAddress Json
+  paymentMethodToken String?
+  isActive Boolean @default(false)
+  status PlanStatus @default(DRAFT)
+  revision Int @default(0)
+  items AutoshipItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, nextBillingDate])
+  @@index([status, nextBillingDate])
+}
+model AutoshipItem {
+  id String @id @default(uuid())
+  planId String
+  plan AutoshipPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  variantId String
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+  petId String
+  pet Pet @relation(fields: [petId], references: [id])
+  quantity Int
+  @@unique([planId, variantId, petId])
+}
+model Review {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  productId String
+  product Product @relation(fields: [productId], references: [id])
+  rating Int
+  body String
+  mediaUrl String?
+  mediaType String @default("IMAGE")
+  petSnapshot Json
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@index([productId, isApproved, createdAt])
+}
+model OutboxEvent {
+  id String @id @default(uuid())
+  dedupeKey String @unique
+  type String
+  payload Json
+  attempts Int @default(0)
+  availableAt DateTime @default(now())
+  processedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([processedAt, availableAt])
+}

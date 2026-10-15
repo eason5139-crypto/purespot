@@ -1,0 +1,204 @@
+"use client";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Plus, Cat, Dog } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
+import { useUiStore } from "@/store/useUiStore";
+import { petSchema, type ActivePet } from "@/lib/types";
+const allergens = ["雞肉", "牛肉", "魚類", "大豆", "乳製品", "小麥"];
+export function PetEditor() {
+  const pet = useActivePet();
+  const [draft, setDraft] = useState<ActivePet>(pet);
+  const [isNew, setIsNew] = useState(false);
+  const [error, setError] = useState("");
+  const close = useUiStore((s) => s.setPetEditorOpen);
+  const update = usePetContextStore((s) => s.updatePet);
+  const add = usePetContextStore((s) => s.addPet);
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = petSchema.safeParse(draft);
+    if (!parsed.success) {
+      setError("請確認姓名、體重（0.5–90 公斤）與月齡（1–360 個月）。");
+      return;
+    }
+    try {
+      if (isNew) add(parsed.data);
+      else update(pet.id, parsed.data);
+      toast.success("毛孩資料已儲存，選物與配糧同步更新");
+      close(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
+    }
+  }
+  return (
+    <Dialog open onOpenChange={close}>
+      <DialogContent className="max-w-xl">
+        <DialogTitle className="pr-10 text-2xl font-semibold">
+          {isNew ? "認識新家人" : "毛孩的小檔案"}
+        </DialogTitle>
+        <DialogDescription className="mt-2 text-sm text-slate-400">
+          每一個細節，都讓我們更懂牠的需要。
+        </DialogDescription>
+        <form onSubmit={save} className="mt-6 space-y-5">
+          <div className="grid grid-cols-2 gap-3">
+            {(["CAT", "DOG"] as const).map((type) => (
+              <Button
+                key={type}
+                variant={draft.type === type ? "default" : "secondary"}
+                onClick={() =>
+                  setDraft((d) => ({
+                    ...d,
+                    type,
+                    breed: type === "CAT" ? "家貓" : "家犬",
+                  }))
+                }
+              >
+                {type === "CAT" ? <Cat /> : <Dog />}
+                {type === "CAT" ? "貓咪" : "狗狗"}
+              </Button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="field-label">
+              毛孩名稱
+              <input
+                className="input"
+                value={draft.name}
+                maxLength={24}
+                required
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, name: e.target.value }))
+                }
+              />
+            </label>
+            <label className="field-label">
+              品種
+              <input
+                className="input"
+                value={draft.breed}
+                maxLength={40}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, breed: e.target.value }))
+                }
+              />
+            </label>
+            <label className="field-label">
+              體重（公斤）
+              <input
+                className="input"
+                type="number"
+                min="0.5"
+                max="90"
+                step="0.1"
+                required
+                value={draft.weightKg}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, weightKg: Number(e.target.value) }))
+                }
+              />
+            </label>
+            <label className="field-label">
+              年齡（月）
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="360"
+                required
+                value={draft.ageMonths}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, ageMonths: Number(e.target.value) }))
+                }
+              />
+            </label>
+          </div>
+          <label className="field-label">
+            活動量
+            <select
+              className="input"
+              value={draft.activityLevel}
+              onChange={(e) =>
+                setDraft((d) => ({
+                  ...d,
+                  activityLevel: e.target.value as ActivePet["activityLevel"],
+                }))
+              }
+            >
+              <option value="SEDENTARY">悠閒少動</option>
+              <option value="MODERATE">一般活動</option>
+              <option value="HIGH">活潑好動</option>
+              <option value="ATHLETIC">高強度活動</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-cyan-400"
+              checked={draft.isNeutered}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, isNeutered: e.target.checked }))
+              }
+            />
+            已結紮
+          </label>
+          <fieldset>
+            <legend className="mb-3 text-sm text-slate-300">
+              需要避開的過敏原
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {allergens.map((a) => (
+                <button
+                  type="button"
+                  key={a}
+                  aria-pressed={draft.allergies.includes(a)}
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      allergies: d.allergies.includes(a)
+                        ? d.allergies.filter((x) => x !== a)
+                        : [...d.allergies, a],
+                    }))
+                  }
+                  className={`rounded-lg border px-3 py-2 text-sm transition-colors ${draft.allergies.includes(a) ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/10 text-slate-400"}`}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          {error && (
+            <p role="alert" className="text-sm text-rose-300">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-between gap-3 pt-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsNew(true);
+                setDraft({
+                  ...pet,
+                  id: crypto.randomUUID(),
+                  name: "",
+                  allergies: [],
+                  avatarUrl: undefined,
+                });
+              }}
+            >
+              <Plus />
+              新增毛孩
+            </Button>
+            <Button type="submit">儲存毛孩資料</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
