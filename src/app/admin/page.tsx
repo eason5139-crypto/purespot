@@ -140,7 +140,7 @@ export default function AdminPage() {
   };
 
   return (
-    <main id="main-content" className="page-shell py-10">
+    <div className="py-2">
       {/* 頂部標題與權限提示 */}
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-6">
         <div>
@@ -574,6 +574,6 @@ export default function AdminPage() {
           )}
         </div>
       )}
-    </main>
+    </div>
   );
 }

@@ -30,12 +30,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 const links = [
-  { href: "/", label: "專屬選物" },
+  { href: "/", label: "品牌首頁" },
+  { href: "/shop", label: "精品商城" },
+  { href: "/transparency", label: "7C 透明度" },
   { href: "/community", label: "毛孩日常" },
-  { href: "/autoship", label: "循環補貨" },
   { href: "/health", label: "健康儀表板" },
   { href: "/account", label: "我的帳戶" },
-  { href: "/admin", label: "後台管理" },
 ];
 export function Navbar() {
   const path = usePathname();
