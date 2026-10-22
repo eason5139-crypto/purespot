@@ -78,7 +78,7 @@ export async function POST(request: Request) {
           brief: input.subtitle,
           description: input.description,
           targetPetType: input.type,
-          categoryId: "cat-general", // 預設類別
+          categoryId: "00000000-0000-0000-0000-000000000001", // 系統標準類別 UUID
           ingredientsText: input.ingredients.join("、"),
           allergens: input.allergens,
           lifeStages: input.lifeStages,

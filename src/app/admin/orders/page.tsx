@@ -39,87 +39,48 @@ const STATUS_CONFIG = {
   CANCELLED: { label: "已取消", color: "text-rose-300 bg-rose-400/10 border-rose-400/20", icon: XCircle },
 };
 
-// 展示用假資料（正式環境從 /api/orders 取得）
-const DEMO_ORDERS: Order[] = [
-  {
-    id: "PS-20261014001",
-    status: "SHIPPED",
-    totalNt: 1960,
-    createdAt: "2026-10-14T09:30:00Z",
-    customerName: "陳小玲",
-    customerEmail: "ling@example.com",
-    items: [
-      { id: "i1", productName: "鮭魚低敏成貓糧", quantity: 2, unitPriceNt: 980 },
-    ],
-  },
-  {
-    id: "PS-20261014002",
-    status: "PENDING",
-    totalNt: 850,
-    createdAt: "2026-10-14T14:22:00Z",
-    customerName: "林大明",
-    customerEmail: "ming@example.com",
-    items: [
-      { id: "i2", productName: "鮮雞全齡犬糧", quantity: 1, unitPriceNt: 850 },
-    ],
-  },
-  {
-    id: "PS-20261013001",
-    status: "DELIVERED",
-    totalNt: 2940,
-    createdAt: "2026-10-13T11:05:00Z",
-    customerName: "王小花",
-    customerEmail: "hua@example.com",
-    items: [
-      { id: "i3", productName: "鮭魚低敏成貓糧", quantity: 3, unitPriceNt: 980 },
-    ],
-  },
-  {
-    id: "PS-20261012001",
-    status: "PROCESSING",
-    totalNt: 1700,
-    createdAt: "2026-10-12T16:40:00Z",
-    customerName: "張志遠",
-    customerEmail: "yuan@example.com",
-    items: [
-      { id: "i4", productName: "鴨肉凍乾成貓糧", quantity: 1, unitPriceNt: 1200 },
-      { id: "i5", productName: "鮭魚低敏成貓糧", quantity: 0, unitPriceNt: 500 },
-    ],
-  },
-];
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(DEMO_ORDERS);
-  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/orders");
-        if (res.ok) {
-          const data = await res.json() as { orders?: Order[] };
-          if (Array.isArray(data.orders) && data.orders.length > 0) {
-            setOrders(data.orders);
-          }
-        }
-      } catch {
-        // 使用展示資料
-      } finally {
-        setLoading(false);
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders");
+      if (res.ok) {
+        const data = await res.json() as { orders?: Order[] };
+        setOrders(data.orders || []);
       }
+    } catch {
+      // 保持空陣列
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     void fetchOrders();
   }, []);
 
   async function updateStatus(orderId: string, newStatus: Order["status"]) {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
-    // 實際環境應呼叫 PATCH /api/orders/:id
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+        );
+      }
+    } catch {
+      alert("狀態更新失敗，請檢查網路連線");
+    }
   }
 
   const filtered = orders.filter((o) => {

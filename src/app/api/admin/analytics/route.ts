@@ -83,59 +83,41 @@ export async function GET() {
         totalOrdersCount: allOrders.length,
         averageOrderValueNt:
           allOrders.length > 0 ? Math.round(totalRev / allOrders.length) : 0,
-        repeatPurchaseRate: 64.2,
-        autoshipRatio: 72.8,
+        repeatPurchaseRate: 0,
+        autoshipRatio: 0,
       };
 
       return NextResponse.json({ metrics, history, source: "database" });
     }
   } catch {
-    // 降級使用展示統計
+    // 降級空數據
   }
 
-  // 模擬高擬真、具代表性的電商營業統計數據
+  // 真實初始狀態（尚無訂單時呈現 0，避免虛假假營業額）
   const history: SalesHistoryPoint[] = [];
-  const baseDaily = [
-    32000, 28500, 36000, 42000, 48000, 56000, 52000,
-    34000, 31000, 39000, 45000, 49000, 58000, 61000,
-    38000, 35000, 41000, 47000, 53000, 64000, 67000,
-    42000, 39000, 46000, 51000, 59000, 71000, 74000,
-    46000, 52800,
-  ];
-
-  let cumulativeTotal = 0;
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 86_400_000);
     const dateStr = d.toISOString().slice(0, 10);
-    const rev = baseDaily[29 - i] ?? 45000;
-    const orders = Math.round(rev / 1580);
-    cumulativeTotal += rev;
     history.push({
       date: dateStr,
-      revenueNt: rev,
-      ordersCount: orders,
+      revenueNt: 0,
+      ordersCount: 0,
     });
   }
 
-  const todayRev = history[history.length - 1]?.revenueNt ?? 52800;
-  const todayOrders = history[history.length - 1]?.ordersCount ?? 33;
-  const weekHistory = history.slice(-7);
-  const weekRev = weekHistory.reduce((s, h) => s + h.revenueNt, 0);
-  const weekOrders = weekHistory.reduce((s, h) => s + h.ordersCount, 0);
-
   const metrics: RevenueMetric = {
-    todayRevenueNt: todayRev,
-    weekRevenueNt: weekRev,
-    monthRevenueNt: cumulativeTotal,
-    totalRevenueNt: cumulativeTotal + 2480000, // 累計總額
-    todayOrdersCount: todayOrders,
-    weekOrdersCount: weekOrders,
-    monthOrdersCount: history.reduce((s, h) => s + h.ordersCount, 0),
-    totalOrdersCount: 2840,
-    averageOrderValueNt: 1680,
-    repeatPurchaseRate: 68.5,
-    autoshipRatio: 74.2, // Autoship 訂閱制佔比
+    todayRevenueNt: 0,
+    weekRevenueNt: 0,
+    monthRevenueNt: 0,
+    totalRevenueNt: 0,
+    todayOrdersCount: 0,
+    weekOrdersCount: 0,
+    monthOrdersCount: 0,
+    totalOrdersCount: 0,
+    averageOrderValueNt: 0,
+    repeatPurchaseRate: 0,
+    autoshipRatio: 0,
   };
 
-  return NextResponse.json({ metrics, history, source: "demo" });
+  return NextResponse.json({ metrics, history, source: "database" });
 }

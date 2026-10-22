@@ -92,15 +92,12 @@ const INITIAL_POSTS: UgcPost[] = [
       id: "dental-bone",
       name: "【PURESPOT】超耐咬磨牙潔牙骨",
       priceNt: 299,
-      rating: 4.8,
-      reviewsCount: 320,
+      rating: 0,
+      reviewsCount: 0,
       tags: ["天然牛皮", "耐咬耐磨", "中大型犬通用"],
       image: "/images/salmon-dog.png",
     },
-    comments: [
-      { id: "cm1", author: "柴犬豆豆", avatar: "🐕", text: "我家柴柴也是拆家專家，這款真的能撐很久嗎？", time: "10分鐘前" },
-      { id: "cm2", author: "波比麻麻", avatar: "👩", text: "真的可以！我們家啃了三天都還沒散，成分天然很安心！", time: "5分鐘前" },
-    ],
+    comments: [],
   },
   {
     id: "ugc-2",
@@ -112,22 +109,20 @@ const INITIAL_POSTS: UgcPost[] = [
     image: "/images/salmon-cat.png",
     content: "換了 PURESPOT 鮮雞凍乾主食糧之後，挑食怪 Nini 竟然第一次把碗舔得一乾二淨✨！天然肉香真的很濃郁，看著大口大口吃就是最幸福的事～",
     tags: ["#布偶貓", "#挑食救星", "#主食凍乾", "#開飯日常"],
-    likes: 986,
-    commentsCount: 42,
-    isLiked: true,
+    likes: 0,
+    commentsCount: 0,
+    isLiked: false,
     tagPosition: { xPercent: 50, yPercent: 52 },
     shoppableProduct: {
       id: "salmon-cat",
       name: "【PURESPOT】低敏原肉成貓主食凍乾",
       priceNt: 850,
-      rating: 4.9,
-      reviewsCount: 412,
+      rating: 0,
+      reviewsCount: 0,
       tags: ["去骨鮮雞", "45%粗蛋白", "SGS無菌化驗"],
       image: "/images/salmon-cat.png",
     },
-    comments: [
-      { id: "cm3", author: "虎斑阿財", avatar: "🐱", text: "加水復水之後湯汁超多，很適合騙水喝！", time: "1小時前" },
-    ],
+    comments: [],
   },
   {
     id: "ugc-3",
@@ -139,16 +134,16 @@ const INITIAL_POSTS: UgcPost[] = [
     image: "/images/salmon-dog.png",
     content: "米克斯腸胃比較敏感，之前吃進口大廠常常軟便。改吃 PURESPOT 在地低敏鹿肉配方兩個月，便便成型非常漂亮！台灣在地研發的新鮮度真的不一樣。",
     tags: ["#米克斯之光", "#腸胃保養", "#在地研發", "#真心推薦"],
-    likes: 642,
-    commentsCount: 29,
+    likes: 0,
+    commentsCount: 0,
     isLiked: false,
     tagPosition: { xPercent: 45, yPercent: 60 },
     shoppableProduct: {
       id: "salmon-dog",
       name: "【PURESPOT】單一肉源無穀犬糧 (鹿肉低敏)",
       priceNt: 980,
-      rating: 4.8,
-      reviewsCount: 188,
+      rating: 0,
+      reviewsCount: 0,
       tags: ["在地溯源", "低敏護腸胃", "全齡適用"],
       image: "/images/salmon-dog.png",
     },
@@ -566,8 +561,14 @@ export default function CommunityPage() {
               </div>
 
               <div className="flex items-center gap-2 text-xs text-amber-300">
-                <span>★ {activeProductModal.rating}</span>
-                <span className="text-slate-500">({activeProductModal.reviewsCount} 則飼主評價)</span>
+                {activeProductModal.reviewsCount > 0 ? (
+                  <>
+                    <span>★ {activeProductModal.rating}</span>
+                    <span className="text-slate-500">({activeProductModal.reviewsCount} 則飼主評價)</span>
+                  </>
+                ) : (
+                  <span className="text-slate-500">暫無評價（等待首位飼主分享）</span>
+                )}
               </div>
 
               <h2 className="mt-1 text-lg font-bold text-white">{activeProductModal.name}</h2>
