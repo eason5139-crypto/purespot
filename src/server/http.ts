@@ -11,10 +11,23 @@ export class ApiError extends Error {
   }
 }
 export function verifyOrigin(request: Request) {
-  const expected = process.env.APP_ORIGIN;
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  
+  // 優先使用設定的 APP_ORIGIN，若無設定則根據 Vercel 環境變數或當前請求 host 自動相容
+  const expected =
+    process.env.APP_ORIGIN ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (host ? `http://${host}` : null));
+
   if (!expected) throw new ApiError(503, "服務網址尚未設定");
-  if (request.headers.get("origin") !== new URL(expected).origin)
-    throw new ApiError(403, "請從本站提交操作");
+
+  if (origin) {
+    const originHost = new URL(origin).host;
+    const expectedHost = new URL(expected.startsWith("http") ? expected : `https://${expected}`).host;
+    if (originHost !== expectedHost && (!host || originHost !== host)) {
+      throw new ApiError(403, "請從本站提交操作");
+    }
+  }
 }
 export async function readBody<T>(
   request: Request,
