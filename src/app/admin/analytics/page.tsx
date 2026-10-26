@@ -105,9 +105,8 @@ export default function AdminAnalyticsPage() {
                 <p className="mt-2 text-3xl font-bold font-mono text-white">
                   {money(metrics.totalRevenueNt)}
                 </p>
-                <p className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
-                  <ArrowUpRight size={14} />
-                  <span>較上月同期成長 +14.2%</span>
+                <p className="mt-2 flex items-center gap-1 text-xs text-slate-400">
+                  <span>{metrics.totalOrdersCount > 0 ? `累計 ${metrics.totalOrdersCount} 筆訂單` : "尚無結算訂單"}</span>
                 </p>
               </motion.div>
 
@@ -125,7 +124,7 @@ export default function AdminAnalyticsPage() {
                   {money(metrics.averageOrderValueNt)}
                 </p>
                 <p className="mt-2 text-xs text-slate-400">
-                  健康自訂與搭配飼養顯著提升客單價
+                  {metrics.totalOrdersCount > 0 ? "依真實訂單計算平均單價" : "尚無有效訂單"}
                 </p>
               </motion.div>
 
@@ -143,7 +142,7 @@ export default function AdminAnalyticsPage() {
                   {metrics.autoshipRatio}%
                 </p>
                 <p className="mt-2 text-xs text-slate-400">
-                  高持續性經常性收益 (MRR)
+                  定期訂閱制營收佔比
                 </p>
               </motion.div>
 
@@ -161,7 +160,7 @@ export default function AdminAnalyticsPage() {
                   {metrics.repeatPurchaseRate}%
                 </p>
                 <p className="mt-2 text-xs text-slate-400">
-                  超越傳統電商平均 45%
+                  {metrics.repeatPurchaseRate > 0 ? "多筆下單顧客佔比" : "尚未有重複購買記錄"}
                 </p>
               </motion.div>
             </div>

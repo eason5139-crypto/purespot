@@ -207,7 +207,7 @@ export default function AdminPage() {
                   <p className="mt-2 text-3xl font-bold font-mono text-white">{money(metrics.todayRevenueNt)}</p>
                   <p className="mt-2 flex items-center justify-between text-xs text-slate-400">
                     <span>今日訂單：{metrics.todayOrdersCount} 筆</span>
-                    <span className="text-emerald-400 flex items-center">+8.4%</span>
+                    <span className="text-slate-400">{metrics.todayOrdersCount > 0 ? "即時結算" : "尚無訂單"}</span>
                   </p>
                 </div>
 
@@ -216,7 +216,7 @@ export default function AdminPage() {
                   <p className="mt-2 text-3xl font-bold font-mono text-white">{money(metrics.weekRevenueNt)}</p>
                   <p className="mt-2 flex items-center justify-between text-xs text-slate-400">
                     <span>週訂單：{metrics.weekOrdersCount} 筆</span>
-                    <span className="text-emerald-400">穩定成長</span>
+                    <span className="text-slate-400">{metrics.weekOrdersCount > 0 ? "累計統計" : "尚無訂單"}</span>
                   </p>
                 </div>
 
@@ -225,7 +225,7 @@ export default function AdminPage() {
                   <p className="mt-2 text-3xl font-bold font-mono text-white">{money(metrics.monthRevenueNt)}</p>
                   <p className="mt-2 flex items-center justify-between text-xs text-slate-400">
                     <span>本月累計：{metrics.monthOrdersCount} 筆</span>
-                    <span className="text-cyan-400">目標達成率 106%</span>
+                    <span className="text-slate-400">{metrics.monthOrdersCount > 0 ? "即時累計" : "本月起始"}</span>
                   </p>
                 </div>
 
@@ -249,19 +249,21 @@ export default function AdminPage() {
                 <div className="panel p-5">
                   <p className="text-xs text-slate-400">累計總營業額</p>
                   <p className="mt-1 font-mono text-2xl font-semibold text-white">{money(metrics.totalRevenueNt)}</p>
-                  <p className="mt-2 text-xs text-slate-500">自開台以來所有已結算訂單總額</p>
+                  <p className="mt-2 text-xs text-slate-500">真實資料庫已結算訂單總額</p>
                 </div>
                 <div className="panel p-5">
                   <p className="text-xs text-slate-400">顧客回購率 (Repeat Rate)</p>
                   <p className="mt-1 font-mono text-2xl font-semibold text-emerald-400">{metrics.repeatPurchaseRate}%</p>
-                  <p className="mt-2 text-xs text-slate-500">高於寵物電商產業平均 (45%)</p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {metrics.repeatPurchaseRate > 0 ? "真實顧客回購統計" : "等待新顧客產生回購"}
+                  </p>
                 </div>
                 <div className="panel p-5">
                   <p className="text-xs text-slate-400">在線商品總數 / 庫存警戒</p>
                   <p className="mt-1 font-mono text-2xl font-semibold text-cyan-300">
                     {products.length} 款 / 0 缺貨
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">供應鏈自動補貨系統運作中</p>
+                  <p className="mt-2 text-xs text-slate-500">資料庫即時在庫商品</p>
                 </div>
               </div>
             </motion.div>

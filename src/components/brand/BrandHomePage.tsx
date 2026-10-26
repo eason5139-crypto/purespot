@@ -350,43 +350,6 @@ export function BrandHomePage() {
         </div>
       </section>
 
-      {/* ── 飼主見證 ── */}
-      <section className="py-24">
-        <div className="page-shell">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="eyebrow">真實飼主回饋</span>
-            <h2 className="mt-3 text-4xl font-bold text-white">他們說的，是最好的答案</h2>
-          </motion.div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="panel p-6"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.rating }).map((_, idx) => (
-                    <Star key={idx} size={14} className="fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-slate-300 text-sm leading-7 italic">「{t.quote}」</p>
-                <div className="mt-5 border-t border-white/5 pt-4">
-                  <p className="text-sm font-medium text-white">{t.name}</p>
-                  <p className="text-xs text-slate-500">{t.breed}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── 底部 CTA ── */}
       <section className="py-24 bg-gradient-to-b from-transparent to-cyan-950/10">
