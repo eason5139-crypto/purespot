@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   AlertTriangle,
@@ -13,35 +13,65 @@ import {
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/utils";
-import { products } from "@/lib/catalog";
 
 const LOW_STOCK_THRESHOLD = 20;
 const CRITICAL_THRESHOLD = 10;
 
+interface InventoryProduct {
+  id: string;
+  name: string;
+  subtitle: string;
+  type: "CAT" | "DOG";
+  category: string;
+  priceNt: number;
+  stock: number;
+  image: string;
+}
+
 export default function AdminInventoryPage() {
-  const [stocks, setStocks] = useState<Record<string, number>>(
-    Object.fromEntries(products.map((p) => [p.id, p.stock]))
-  );
+  const [products, setProducts] = useState<InventoryProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  function restock(id: string) {
-    setStocks((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 50 }));
-  }
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/products");
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.products || []);
+      }
+    } catch {
+      // 容錯
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const sorted = [...products].sort((a, b) => (stocks[a.id] ?? 0) - (stocks[b.id] ?? 0));
-  const criticalCount = sorted.filter((p) => (stocks[p.id] ?? 0) <= CRITICAL_THRESHOLD).length;
+  useEffect(() => {
+    void fetchProducts();
+  }, []);
+
+  const sorted = [...products].sort((a, b) => a.stock - b.stock);
+  const criticalCount = sorted.filter((p) => p.stock <= CRITICAL_THRESHOLD).length;
   const lowCount = sorted.filter(
-    (p) => (stocks[p.id] ?? 0) > CRITICAL_THRESHOLD && (stocks[p.id] ?? 0) <= LOW_STOCK_THRESHOLD
+    (p) => p.stock > CRITICAL_THRESHOLD && p.stock <= LOW_STOCK_THRESHOLD
   ).length;
-  const okCount = sorted.filter((p) => (stocks[p.id] ?? 0) > LOW_STOCK_THRESHOLD).length;
+  const okCount = sorted.filter((p) => p.stock > LOW_STOCK_THRESHOLD).length;
 
   return (
     <div>
-      <div className="mb-8">
-        <span className="eyebrow">管理端</span>
-        <h1 className="mt-2 text-2xl font-bold text-white">庫存警報</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          即時監控所有商品庫存量，低於警戒值時自動標示警示。
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div>
+          <span className="eyebrow">管理端</span>
+          <h1 className="mt-2 text-2xl font-bold text-white">庫存警報</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            即時監控真實資料庫在架商品庫存量，低於警戒值時自動標示警示。
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void fetchProducts()}>
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          重新整理庫存
+        </Button>
       </div>
 
       {/* 統計卡片 */}
@@ -85,90 +115,85 @@ export default function AdminInventoryPage() {
               <th className="p-4 text-center">現有庫存</th>
               <th className="p-4 text-center">狀態</th>
               <th className="p-4 text-right">售價</th>
-              <th className="p-4 text-right">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {sorted.map((p, i) => {
-              const stock = stocks[p.id] ?? 0;
-              const isCritical = stock <= CRITICAL_THRESHOLD;
-              const isLow = !isCritical && stock <= LOW_STOCK_THRESHOLD;
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-slate-400">
+                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent mb-2" />
+                  同步最新商品庫存中...
+                </td>
+              </tr>
+            ) : sorted.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-slate-500">
+                  資料庫目前尚無在架商品
+                </td>
+              </tr>
+            ) : (
+              sorted.map((p) => {
+                const isCritical = p.stock <= CRITICAL_THRESHOLD;
+                const isLow = !isCritical && p.stock <= LOW_STOCK_THRESHOLD;
 
-              return (
-                <motion.tr
-                  key={p.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.04 }}
-                  className={`transition-colors hover:bg-white/[0.02] ${isCritical ? "bg-rose-950/10" : isLow ? "bg-amber-950/5" : ""}`}
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-black/40">
-                        <Image src={p.image} alt={p.name} fill className="object-cover" />
+                return (
+                  <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                          <Image src={p.image} alt={p.name} fill className="object-cover" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{p.name}</p>
+                          <p className="text-xs text-slate-400">{p.subtitle}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-white">{p.name}</p>
-                        <p className="text-xs text-slate-500">{p.bagGrams}g</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-300">
-                      {p.type === "CAT" ? "🐱 貓" : "🐶 狗"}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className={`font-mono text-lg font-bold ${
-                        isCritical ? "text-rose-400" : isLow ? "text-amber-400" : "text-emerald-400"
-                      }`}>
-                        {stock}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          p.type === "CAT"
+                            ? "bg-cyan-400/10 text-cyan-300"
+                            : "bg-amber-400/10 text-amber-300"
+                        }`}
+                      >
+                        {p.type === "CAT" ? "貓咪" : "狗狗"}
                       </span>
-                      {/* 庫存條 */}
-                      <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            isCritical ? "bg-rose-400" : isLow ? "bg-amber-400" : "bg-emerald-400"
-                          }`}
-                          style={{ width: `${Math.min((stock / 100) * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-center">
-                    {isCritical ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-0.5 text-xs text-rose-400">
-                        <XCircle size={11} />
-                        嚴重缺貨
+                    </td>
+                    <td className="p-4 text-center font-mono font-bold text-base">
+                      <span
+                        className={
+                          isCritical
+                            ? "text-rose-400"
+                            : isLow
+                              ? "text-amber-400"
+                              : "text-emerald-400"
+                        }
+                      >
+                        {p.stock}
                       </span>
-                    ) : isLow ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-0.5 text-xs text-amber-400">
-                        <TrendingDown size={11} />
-                        庫存偏低
+                      <span className="text-xs text-slate-500 font-normal ml-1">包</span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
+                          isCritical
+                            ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
+                            : isLow
+                              ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
+                              : "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                        }`}
+                      >
+                        {isCritical ? "嚴重缺貨" : isLow ? "庫存偏低" : "正常供應"}
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-0.5 text-xs text-emerald-400">
-                        <CheckCircle2 size={11} />
-                        庫存充足
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right font-mono text-slate-300">{money(p.priceNt)}</td>
-                  <td className="p-4 text-right">
-                    <Button
-                      size="sm"
-                      variant={isCritical ? "default" : "ghost"}
-                      className="gap-1.5 h-7 text-xs"
-                      onClick={() => restock(p.id)}
-                    >
-                      <Plus size={12} />
-                      補貨 +50
-                    </Button>
-                  </td>
-                </motion.tr>
-              );
-            })}
+                    </td>
+                    <td className="p-4 text-right font-mono font-medium text-cyan-300">
+                      {money(p.priceNt)}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
