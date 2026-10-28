@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { TransparencyPage } from "@/components/brand/TransparencyPage";
+import { readSiteContent } from "@/server/siteContentRepository";
 
 export const metadata: Metadata = {
   title: "7C 透明度報告｜PURESPOT",
-  description: "PURESPOT 7C 透明度完整報告：成分來源、台灣在地產地溯源地圖、SGS 第三方化驗結果、每款主食完整營養保證值對照表。",
+  description: "查看 PURESPOT 商品的原料、營養保證值與示範批次資料，清楚區分展示資訊與待核實的正式報告。",
 };
 
-export default function TransparencyRoute() {
-  return <TransparencyPage />;
+export default async function TransparencyRoute() {
+  return <TransparencyPage content={await readSiteContent()} />;
 }

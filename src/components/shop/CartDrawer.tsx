@@ -184,9 +184,14 @@ export function CartDrawer() {
             <p className="mt-4 text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
               系統已將這筆訂單記至本機。若您有選定定期補貨，會在指定天數模擬下一次循環。
             </p>
-            <Button className="mt-6 w-full" onClick={() => close(false)}>
-              完成並返回探索
-            </Button>
+            <div className="mt-6 grid gap-2">
+              <Button asChild className="w-full" onClick={() => close(false)}>
+                <Link href="/autoship">查看我的循環補貨</Link>
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => close(false)}>
+                完成並返回探索
+              </Button>
+            </div>
           </div>
         ) : cartMode === "FAMILY" ? (
           /* ===================================================
@@ -480,9 +485,19 @@ export function CartDrawer() {
                 </Button>
 
                 {/* 快速示範模式開關 */}
-                <div className="pt-2 text-center">
+                <div className="space-y-2 pt-2 text-center">
+                  <label className="flex cursor-pointer items-start gap-2 rounded-xl bg-white/5 p-3 text-left text-xs leading-5 text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={accepted}
+                      onChange={(event) => setAccepted(event.target.checked)}
+                      className="mt-0.5 size-4 accent-[#f4a261]"
+                    />
+                    <span>我了解這是本機示範訂單，不會扣款、出貨或寄送通知。</span>
+                  </label>
                   <button
                     onClick={() => void checkoutDemo()}
+                    disabled={!accepted || invalid || busy}
                     className="text-[11px] text-slate-500 hover:text-slate-300 underline underline-offset-2"
                   >
                     或以本機示範訂單快速結算 (免填地址)

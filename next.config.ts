@@ -4,6 +4,9 @@ const config: NextConfig = {
   devIndicators: false,
   outputFileTracingRoot: process.cwd(),
   poweredByHeader: false,
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
+  },
   async headers() {
     return [
       {

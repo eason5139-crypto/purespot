@@ -2,7 +2,7 @@
 
 這份專案交付五大指定模組與完整可操作的展示購物流程，使用真實 Next.js App Router、React 19、TypeScript 嚴格模式、Tailwind CSS v4、Shadcn 風格的 Radix 元件、Framer Motion、Zustand Persist 與 TradingView Lightweight Charts 5。
 
-**目前定位：可執行的五大核心前端、商務示範流程與後端基礎實作。這不是已串接金流、物流與通知的正式營運商城。** 展示介面使用本機狀態；Prisma API 另提供驗證、持久化及訂單草稿能力，尚未接管展示介面的資料讀寫。資料庫連線與正式支付未在此次環境中完成端到端驗證。
+**目前定位：可執行的五大核心前端、可編輯的商品／品牌內容，以及商務示範流程。這不是已串接金流、物流與通知的正式營運商城。** 公開商品列表與商品詳情會讀取 Prisma 商品資料；會員、家庭、購物車與示範結帳仍包含瀏覽器本機狀態。
 
 ## 立即啟動
 
@@ -21,6 +21,24 @@ Copy-Item .env.example .env
 ```
 
 開啟 `http://localhost:3000`。展示模式不需要 PostgreSQL。沒有設定 `NEXT_PUBLIC_DEMO_MODE` 時仍以展示模式運作；設定為 `false` 會停用示範結帳，**不會自動啟用正式金流或將本機資料轉成雲端會員資料**。
+
+### 後台管理登入
+
+後台入口為 `http://localhost:3000/admin-login`。所有 `/admin` 頁面及 `/api/admin/*` 管理資料都需要獨立管理員工作階段；一般會員登入無法存取後台。
+
+請在未提交版本控制的 `.env` 設定：
+
+```bash
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD_HASH=<scrypt salt:hash>
+ADMIN_SESSION_SECRET=<至少 32 字元的隨機字串>
+```
+
+管理員工作階段採 HTTP-only、SameSite Strict Cookie，8 小時後失效。正式環境需另行設定 Upstash Redis 登入限流；缺少限流服務時正式環境會拒絕登入。
+
+後台將功能分為工作台、網站／商品與交易／顧客三組。`/admin/content` 可按首頁、特色、社群、商城與全站訊息編輯文案及形象圖；`/admin/media` 可管理 JPG、PNG、WebP 圖片；`/admin/products` 可編輯商品基本資料、相簿、營養／過敏原、價格、庫存與上架狀態。公開商城支援物種、關鍵字、庫存與價格排序。商品資料需有可用的 PostgreSQL 連線才可持久化。
+
+**部署注意：** 網站文案目前儲存在 `data/site-content.json`，上傳圖片目前儲存在 `public/uploads/`。兩者在本機可保存，但無法保證在唯讀或無狀態雲端主機上持久保存；正式部署前需改接持久資料庫與物件儲存。商品頁公開圖文由資料庫讀取，但目前批次報告仍為示範資料，請勿將展示樣本當作真實檢驗證明。
 
 正式建置檢查：
 

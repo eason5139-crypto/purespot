@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Storefront } from "@/components/shop/Storefront";
+import { readSiteContent } from "@/server/siteContentRepository";
 
 export const metadata: Metadata = {
   title: "精品商城｜PURESPOT",
-  description: "依毛孩年齡、體重與過敏原，智慧篩選最適合的天然主食。7C 透明成分，循環補貨享 9 折優惠。",
+  description: "依毛孩資料查看主食適配提示，搜尋成分、篩選有貨商品並比較售價與營養資訊。",
 };
 
-export default function ShopPage() {
-  return <Storefront />;
+export default async function ShopPage() {
+  return <Storefront content={await readSiteContent()} />;
 }

@@ -70,6 +70,9 @@ export async function GET() {
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (e) {
+    if (e instanceof ApiError && e.status === 401) {
+      return NextResponse.json({ user: null }, { headers: { "Cache-Control": "private, no-store" } });
+    }
     return apiError(e);
   }
 }

@@ -4,8 +4,8 @@ import "@fontsource/noto-sans-tc/500.css";
 import "@fontsource/noto-sans-tc/600.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { Navbar } from "@/components/layout/Navbar";
-import { OverlayHub } from "@/components/layout/OverlayHub";
+import { SiteChrome } from "@/components/layout/SiteChrome";
+import { readSiteContent } from "@/server/siteContentRepository";
 export const metadata: Metadata = {
   title: { default: "PURESPOT｜懂牠，從每一口開始", template: "%s｜PURESPOT" },
   description:
@@ -13,32 +13,26 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 export const viewport: Viewport = {
-  themeColor: "#090D16",
+  themeColor: "#FFFAF3",
   width: "device-width",
   initialScale: 1,
 };
-export default function RootLayout({
+export const dynamic = "force-dynamic";
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const content = await readSiteContent();
   return (
     <html lang="zh-Hant">
       <body>
         <a
           href="#main-content"
-          className="fixed -top-20 left-4 z-[100] rounded-lg bg-cyan-300 px-4 py-3 text-slate-950 focus:top-4"
+          className="fixed -top-20 left-4 z-[100] rounded-lg bg-[#f4a261] px-4 py-3 text-[#2b170f] focus:top-4"
         >
           跳至主要內容
         </a>
         <Providers>
-          <Navbar />
-          {children}
-          <footer className="border-t border-white/8 py-7">
-            <div className="page-shell flex flex-wrap items-center justify-between gap-3 text-xs leading-6 text-slate-500">
-              <span>PURESPOT · 讓每一份陪伴，回到純粹。</span>
-              <span>商品、檢驗與社群內容為展示樣本 · 未啟用真實扣款</span>
-            </div>
-          </footer>
-          <OverlayHub />
+          <SiteChrome content={content}>{children}</SiteChrome>
         </Providers>
       </body>
     </html>

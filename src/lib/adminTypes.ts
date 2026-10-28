@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mediaUrlSchema } from "./mediaUrl";
 
 export const adminProductInputSchema = z.object({
   name: z.string().trim().min(2, "商品名稱至少 2 個字").max(60),
@@ -12,13 +13,15 @@ export const adminProductInputSchema = z.object({
   proteinMin: z.number().min(1).max(99),
   moistureMax: z.number().min(1).max(90),
   ashMax: z.number().min(1).max(30),
-  image: z.string().min(1, "請輸入或上傳圖片網址"),
+  image: mediaUrlSchema,
+  gallery: z.array(mediaUrlSchema).max(8).default([]),
   videoUrl: z.string().url("請輸入有效影片網址").optional().or(z.literal("")),
   description: z.string().min(10, "商品描述至少 10 個字"),
   ingredients: z.array(z.string()).min(1, "至少填寫一項主要成分"),
   allergens: z.array(z.string()).default([]),
   lifeStages: z.array(z.enum(["JUNIOR", "ADULT", "SENIOR"])).min(1, "至少選擇一個生命階段"),
   autoshipEligible: z.boolean().default(true),
+  isPublished: z.boolean().default(false),
   color: z.enum(["cyan", "amber", "blue"]).default("cyan"),
 });
 

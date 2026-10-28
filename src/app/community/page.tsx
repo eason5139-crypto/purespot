@@ -81,7 +81,7 @@ const INITIAL_POSTS: UgcPost[] = [
     age: "3 歲",
     author: "波比麻麻",
     authorAvatar: "👩",
-    image: "/images/salmon-dog.png",
+    image: "/images/chicken-dog.png",
     content: "今天帶波比去大安森林公園放電🐾！這支【PURESPOT】超耐咬磨牙骨真的超耐咬！玩一整個下午還在咬～口氣也變得好清新，大推給家有破壞狂的毛孩爸媽！",
     tags: ["#柯基", "#磨牙骨", "#公園日常", "#好物推薦"],
     likes: 1248,
@@ -95,7 +95,7 @@ const INITIAL_POSTS: UgcPost[] = [
       rating: 0,
       reviewsCount: 0,
       tags: ["天然牛皮", "耐咬耐磨", "中大型犬通用"],
-      image: "/images/salmon-dog.png",
+      image: "/images/chicken-dog.png",
     },
     comments: [],
   },
@@ -131,7 +131,7 @@ const INITIAL_POSTS: UgcPost[] = [
     age: "4 歲",
     author: "黑皮拔拔",
     authorAvatar: "👦",
-    image: "/images/salmon-dog.png",
+    image: "/images/chicken-dog.png",
     content: "米克斯腸胃比較敏感，之前吃進口大廠常常軟便。改吃 PURESPOT 在地低敏鹿肉配方兩個月，便便成型非常漂亮！台灣在地研發的新鮮度真的不一樣。",
     tags: ["#米克斯之光", "#腸胃保養", "#在地研發", "#真心推薦"],
     likes: 0,
@@ -145,7 +145,7 @@ const INITIAL_POSTS: UgcPost[] = [
       rating: 0,
       reviewsCount: 0,
       tags: ["在地溯源", "低敏護腸胃", "全齡適用"],
-      image: "/images/salmon-dog.png",
+      image: "/images/chicken-dog.png",
     },
     comments: [],
   },
@@ -222,9 +222,12 @@ export default function CommunityPage() {
       });
       toast.success(`已將「${product.name}」加入購物袋！`);
       setActiveProductModal(null);
-    } catch {
-      toast.success(`已將「${product.name}」加入購物袋！`);
-      setActiveProductModal(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "這項商品目前不適合所選毛孩，請先切換毛孩資料。",
+      );
     }
   };
 
@@ -254,7 +257,7 @@ export default function CommunityPage() {
       age: "2 歲",
       author: "毛孩家長",
       authorAvatar: "🐾",
-      image: activePet.type === "CAT" ? "/images/salmon-cat.png" : "/images/salmon-dog.png",
+      image: activePet.type === "CAT" ? "/images/salmon-cat.png" : "/images/chicken-dog.png",
       content: newPostContent,
       tags: newPostTags.split(" ").filter(Boolean),
       likes: 1,
@@ -268,7 +271,7 @@ export default function CommunityPage() {
         rating: 5.0,
         reviewsCount: 1,
         tags: ["原肉鮮食", "在地食材", "高嗜口性"],
-        image: activePet.type === "CAT" ? "/images/salmon-cat.png" : "/images/salmon-dog.png",
+        image: activePet.type === "CAT" ? "/images/salmon-cat.png" : "/images/chicken-dog.png",
       },
       comments: [],
     };
@@ -420,7 +423,9 @@ export default function CommunityPage() {
 
               {/* 脈動白色互動標籤 (White Dot Tag) */}
               {post.shoppableProduct && post.tagPosition && (
-                <div
+                <button
+                  type="button"
+                  aria-label={`查看 ${post.shoppableProduct.name}`}
                   className="absolute z-10 cursor-pointer"
                   style={{
                     left: `${post.tagPosition.xPercent}%`,
@@ -442,7 +447,7 @@ export default function CommunityPage() {
                       <ShoppingBag size={12} className="text-amber-400" />
                     </div>
                   </div>
-                </div>
+                </button>
               )}
             </div>
 
@@ -539,6 +544,9 @@ export default function CommunityPage() {
         {activeProductModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${activeProductModal.name} 商品資訊`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -546,6 +554,7 @@ export default function CommunityPage() {
             >
               <button
                 onClick={() => setActiveProductModal(null)}
+                aria-label="關閉商品資訊"
                 className="absolute right-4 top-4 text-slate-400 hover:text-white"
               >
                 ✕

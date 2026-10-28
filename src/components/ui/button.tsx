@@ -3,14 +3,14 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 export const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090D16] [&_svg]:size-4 shrink-0",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f4a261] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b110d] [&_svg]:size-4 shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-cyan-400 text-slate-950 hover:bg-cyan-300 shadow-[0_4px_25px_-8px_#06b6d4]",
+          "bg-[#f4a261] text-[#2b170f] hover:bg-[#ffb372] shadow-[0_8px_30px_-12px_#f4a261]",
         secondary:
-          "border border-white/10 bg-white/5 text-slate-100 hover:border-cyan-500/40 hover:bg-white/10",
+          "border border-[#f4a261]/20 bg-[#f4a261]/7 text-[#f8e9dd] hover:border-[#f4a261]/45 hover:bg-[#f4a261]/12",
         ghost: "text-slate-400 hover:bg-white/5 hover:text-white",
         danger: "bg-rose-400/10 text-rose-300 hover:bg-rose-400/20",
       },

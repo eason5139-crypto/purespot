@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import type { RevenueMetric, SalesHistoryPoint } from "@/lib/adminTypes";
+import { requireAdminSession } from "@/server/adminAuth";
+import { apiError } from "@/server/http";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  try {
+    await requireAdminSession();
+  } catch (error) {
+    return apiError(error);
+  }
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfWeek = new Date(startOfToday.getTime() - 7 * 86_400_000);

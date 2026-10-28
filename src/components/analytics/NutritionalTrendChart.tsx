@@ -61,10 +61,10 @@ export function NutritionalTrendChart({
         : ashMax;
   const color =
     metric === "protein"
-      ? "#22d3ee"
+      ? "#9b6048"
       : metric === "moisture"
-        ? "#60a5fa"
-        : "#fbbf24";
+        ? "#66817a"
+        : "#b38a4d";
   useEffect(() => {
     const node = container.current;
     if (!node) return;
@@ -74,15 +74,15 @@ export function NutritionalTrendChart({
       width: node.clientWidth,
       height: 290,
       layout: {
-        background: { type: ColorType.Solid, color: "#111827" },
-        textColor: "#94a3b8",
+        background: { type: ColorType.Solid, color: "#f0e9df" },
+        textColor: "#70665d",
         fontFamily: '"Noto Sans TC", system-ui, sans-serif',
         fontSize: 12,
         attributionLogo: true,
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "#ffffff08" },
+        horzLines: { color: "#d8cbbf" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -101,8 +101,8 @@ export function NutritionalTrendChart({
         dateFormat: "yyyy/MM/dd",
       },
       crosshair: {
-        horzLine: { color: "#64748b", labelBackgroundColor: "#334155" },
-        vertLine: { color: "#64748b", labelBackgroundColor: "#334155" },
+        horzLine: { color: "#8e8072", labelBackgroundColor: "#6f6257" },
+        vertLine: { color: "#8e8072", labelBackgroundColor: "#6f6257" },
       },
       handleScroll: {
         mouseWheel: false,
@@ -138,7 +138,7 @@ export function NutritionalTrendChart({
     series.setData(data.map((b) => ({ time: day(b.date), value: b[metric] })));
     series.createPriceLine({
       price: baseline,
-      color: "#f59e0b99",
+      color: "#b38a4d",
       lineWidth: 1,
       lineStyle: LineStyle.Dashed,
       axisLabelVisible: true,
@@ -173,18 +173,18 @@ export function NutritionalTrendChart({
     );
   return (
     <section
-      className="panel overflow-hidden p-5 sm:p-7"
+      className="overflow-hidden border border-[#d8cbbf] bg-[#f0e9df] p-5 text-[#302b26] sm:p-7"
       aria-label="商品批次檢驗數據"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="eyebrow mb-2 flex items-center gap-2">
+          <div className="editorial-kicker mb-2 flex items-center gap-2">
             <FlaskConical size={14} />
             透明成分履歷
           </div>
           <h2 className="text-xl font-semibold">{title}</h2>
         </div>
-        <span className="rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1 text-xs text-amber-200">
+        <span className="border border-[#d3b99b] bg-[#f7efe6] px-3 py-1 text-xs text-[#795a3a]">
           示範檢驗數據
         </span>
       </div>
@@ -195,19 +195,19 @@ export function NutritionalTrendChart({
               id: "protein",
               label: "粗蛋白",
               value: last?.protein,
-              color: "text-cyan-300",
+              color: "text-[#9b6048]",
             },
             {
               id: "moisture",
               label: "水份",
               value: last?.moisture,
-              color: "text-blue-300",
+              color: "text-[#66817a]",
             },
             {
               id: "ash",
               label: "灰分",
               value: last?.ash,
-              color: "text-amber-300",
+              color: "text-[#a47b3d]",
             },
           ] as const
         ).map((m) => (
@@ -215,9 +215,9 @@ export function NutritionalTrendChart({
             key={m.id}
             onClick={() => setMetric(m.id)}
             aria-pressed={metric === m.id}
-            className={`rounded-xl border p-3 text-left transition-colors ${metric === m.id ? "border-cyan-400/30 bg-white/5" : "border-white/5 hover:border-white/20"}`}
+            className={`border p-3 text-left transition-colors ${metric === m.id ? "border-[#9b6048] bg-[#fffaf3]" : "border-[#d8cbbf] hover:border-[#9b6048]"}`}
           >
-            <p className="text-xs text-slate-400">{m.label}</p>
+            <p className="text-xs text-[#70665d]">{m.label}</p>
             <p className={`mt-1 font-mono text-2xl ${m.color}`}>
               {m.value?.toFixed(1) ?? "—"}
               <span className="text-sm">%</span>
@@ -231,11 +231,11 @@ export function NutritionalTrendChart({
         aria-hidden="true"
       />
       {!rows.length && (
-        <p className="py-4 text-center text-sm text-slate-400">
+        <p className="py-4 text-center text-sm text-[#70665d]">
           尚無可顯示的批次資料。
         </p>
       )}
-      <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-500">
+      <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-[#70665d]">
         <span className="flex items-center gap-2">
           <Activity size={13} />
           {rows.length} 個批次 ·{" "}
@@ -245,17 +245,17 @@ export function NutritionalTrendChart({
           虛線：{metric === "protein" ? "最低" : "最高"}保證值 {baseline}%
         </span>
       </div>
-      <details className="mt-4 border-t border-white/10 pt-4">
-        <summary className="cursor-pointer text-sm text-slate-400 hover:text-white">
+      <details className="mt-4 border-t border-[#d8cbbf] pt-4">
+        <summary className="cursor-pointer text-sm text-[#665a4d] hover:text-[#9b6048]">
           查看批次明細與資料說明
         </summary>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <caption className="pb-3 text-left text-slate-500">
+            <caption className="pb-3 text-left text-[#70665d]">
               數據供介面展示，非第三方檢驗報告；保證值取自示範商品規格。
             </caption>
             <thead>
-              <tr className="border-b border-white/10 text-slate-400">
+              <tr className="border-b border-[#d8cbbf] text-[#70665d]">
                 <th className="py-2">批號</th>
                 <th>粗蛋白</th>
                 <th>水份</th>
@@ -264,7 +264,7 @@ export function NutritionalTrendChart({
             </thead>
             <tbody>
               {rows.map((b) => (
-                <tr key={b.date} className="border-b border-white/5">
+                <tr key={b.date} className="border-b border-[#e2d7ca]">
                   <td className="py-2">{b.batch}</td>
                   <td>{b.protein.toFixed(1)}%</td>
                   <td>{b.moisture.toFixed(1)}%</td>
@@ -275,7 +275,7 @@ export function NutritionalTrendChart({
           </table>
         </div>
       </details>
-      <p className="mt-4 text-xs text-slate-500">
+      <p className="mt-4 text-xs text-[#70665d]">
         圖表由{" "}
         <a
           href="https://www.tradingview.com/"

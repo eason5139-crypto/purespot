@@ -1,5 +1,4 @@
 "use client";
-import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -37,8 +36,9 @@ const links = [
   { href: "/health", label: "健康儀表板" },
   { href: "/account", label: "我的帳戶" },
 ];
-export function Navbar() {
+export function Navbar({ announcement }: { announcement: string }) {
   const path = usePathname();
+  const light = path === "/" || path === "/transparency" || path === "/shop" || path.startsWith("/products/");
   const pet = useActivePet();
   const pets = usePetContextStore((s) => s.allPets);
   const setActive = usePetContextStore((s) => s.setActivePet);
@@ -50,21 +50,15 @@ export function Navbar() {
   const setAuthOpen = useUiStore((s) => s.setAuthOpen);
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const fetchUser = useAuthStore((s) => s.fetchUser);
   const PetIcon = pet.type === "CAT" ? Cat : Dog;
-  // 掛載時嘗試讀取已登入的會員（不影響展示模式）
-  useEffect(() => {
-    void fetchUser();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   return (
-    <header className="sticky top-0 z-40 border-b border-white/8 bg-[#090D16]/90 backdrop-blur-xl">
-      <div className="flex h-8 items-center justify-center gap-2 border-b border-cyan-500/10 bg-cyan-400/5 px-3 text-xs tracking-wide text-cyan-100">
+    <header className={`sticky top-0 z-40 border-b backdrop-blur-xl ${light ? "border-[#eadbcb] bg-[#fffaf3]/95" : "border-[#f4a261]/10 bg-[#1b110d]/92"}`}>
+      <div className={`flex h-8 items-center justify-center gap-2 border-b px-3 text-xs tracking-wide ${light ? "border-[#eadbcb] bg-[#f5e9dc] text-[#95684e]" : "border-[#f4a261]/10 bg-[#f4a261]/7 text-[#f7c9a7]"}`}>
         <Repeat2 size={13} />
-        <span>把補貨交給我們，把時間留給毛孩。</span>
+        <span>{announcement}</span>
         <Link
           href="/autoship"
-          className="hidden underline decoration-cyan-400/50 underline-offset-4 sm:inline"
+          className="hidden underline decoration-[#f4a261]/50 underline-offset-4 sm:inline"
         >
           循環補貨享 9 折 · 滿 $699 免運
         </Link>
@@ -73,7 +67,7 @@ export function Navbar() {
         <Link
           href="/"
           aria-label="PURESPOT 首頁"
-          className="shrink-0 rounded-lg bg-[#edf1f3] px-2 py-1"
+          className="shrink-0 rounded-lg bg-white px-2 py-1"
         >
           <Image
             src="/images/brand-logo.png"
@@ -93,13 +87,13 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               aria-current={path === link.href ? "page" : undefined}
-              className={`relative flex h-full items-center text-sm font-medium transition-colors hover:text-white ${path === link.href ? "text-cyan-300" : "text-slate-400"}`}
+              className={`relative flex h-full items-center text-sm font-medium transition-colors ${light ? "hover:text-[#a75b3d]" : "hover:text-[#fff7ec]"} ${path === link.href ? (light ? "text-[#ad5c3c]" : "text-[#f4a261]") : (light ? "text-[#796354]" : "text-[#b79d8e]")}`}
             >
               {link.label}
               {path === link.href && (
                 <motion.span
                   layoutId="nav-indicator"
-                  className="absolute inset-x-0 bottom-0 h-0.5 bg-cyan-400"
+                  className="absolute inset-x-0 bottom-0 h-0.5 bg-[#f4a261]"
                 />
               )}
             </Link>
@@ -110,24 +104,25 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
-                className="gap-2 px-2 sm:px-3"
+                className={`gap-2 px-2 sm:px-3 ${light ? "!border-[#e6d5c3] !bg-white !text-[#4f382c]" : ""}`}
                 aria-label="切換毛孩"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300">
+                <span className="flex size-7 items-center justify-center rounded-full bg-[#f4a261]/10 text-[#f4a261]">
                   <PetIcon />
                 </span>
-                <span className="hidden text-slate-400 sm:inline">正在為</span>
+                <span className={`hidden sm:inline ${light ? "text-[#977b68]" : "text-slate-400"}`}>正在為</span>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={pet.id}
                     initial={{ y: 4, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -4, opacity: 0 }}
+                    className="hidden min-[420px]:inline"
                   >
                     {pet.name}
                   </motion.span>
                 </AnimatePresence>
-                <ChevronDown className="text-slate-500" />
+                <ChevronDown className="hidden text-slate-500 min-[420px]:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -141,7 +136,7 @@ export function Navbar() {
                     </span>
                   </span>
                   {p.id === pet.id && (
-                    <Check size={16} className="text-cyan-300" />
+                    <Check size={16} className="text-[#f4a261]" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -155,7 +150,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative"
+            className={`relative ${light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}`}
             aria-label={`購物車，${count} 件商品`}
             onClick={() => setCartOpen(true)}
           >
@@ -165,7 +160,7 @@ export function Navbar() {
                 key={count}
                 initial={{ scale: 0.6 }}
                 animate={{ scale: 1 }}
-                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-cyan-400 px-1 text-xs leading-5 text-slate-950"
+                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-[#f4a261] px-1 text-xs leading-5 text-[#2b170f]"
               >
                 {count}
               </motion.span>
@@ -174,7 +169,7 @@ export function Navbar() {
           {authUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="會員選單">
+                <Button variant="ghost" size="icon" aria-label="會員選單" className={light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}>
                   <User className="!size-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -202,6 +197,7 @@ export function Navbar() {
               size="icon"
               aria-label="會員登入"
               onClick={() => setAuthOpen(true)}
+              className={light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}
             >
               <LogIn className="!size-5" />
             </Button>
@@ -211,7 +207,7 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden"
+                className={`lg:hidden ${light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}`}
                 aria-label="開啟導覽選單"
               >
                 <Menu />

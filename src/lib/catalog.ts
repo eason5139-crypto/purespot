@@ -171,4 +171,8 @@ export const ugcPosts: UgcPost[] = [
     media: { kind: "image" },
   },
 ];
-export const getProduct = (id: string) => products.find((p) => p.id === id);
+let runtimeProducts: Product[] = products;
+export function setRuntimeProducts(next: Product[]) {
+  runtimeProducts = next;
+}
+export const getProduct = (id: string) => runtimeProducts.find((p) => p.id === id);

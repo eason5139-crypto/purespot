@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-  Sparkles,
   SlidersHorizontal,
   Calculator,
   ShieldCheck,
@@ -12,23 +11,29 @@ import {
   Search,
   PawPrint,
   CircleHelp,
-  Heart,
 } from "lucide-react";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
-import { products, ugcPosts } from "@/lib/catalog";
+import { ugcPosts } from "@/lib/catalog";
+import { useCatalogStore } from "@/store/useCatalogStore";
 import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { decimal, money } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "./ProductCard";
-export function Storefront() {
+import type { SiteContent } from "@/lib/siteContent";
+export function Storefront({ content }: { content: SiteContent }) {
+  const products = useCatalogStore((s) => s.products);
   const pet = useActivePet();
   const edit = useUiStore((s) => s.setPetEditorOpen);
   const openCalc = useUiStore((s) => s.openCalculator);
   const openUgc = useUiStore((s) => s.openUgc);
   const [category, setCategory] = useState("all");
+  const [productCategory, setProductCategory] = useState("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"fit" | "price-asc" | "price-desc" | "name">("fit");
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const catalogCategories = Array.from(new Set(products.map((product) => product.category))).sort((a, b) => a.localeCompare(b, "zh-Hant"));
   const recommended = products.find((p) => matchProduct(p, pet).safe);
   const result = recommended
     ? calculatePetNutrition(
@@ -53,55 +58,56 @@ export function Storefront() {
           : category === "all"
             ? true
             : p.type === category) &&
-        `${p.name}${p.ingredients.join("")}`.includes(query),
+        (productCategory === "all" || p.category === productCategory) &&
+        `${p.name}${p.subtitle}${p.category}${p.ingredients.join("")}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()) &&
+        (!inStockOnly || p.stock > 0),
     )
-    .sort((a, b) => matchProduct(b, pet).score - matchProduct(a, pet).score);
+    .sort((a, b) => sort === "price-asc" ? a.priceNt - b.priceNt
+      : sort === "price-desc" ? b.priceNt - a.priceNt
+      : sort === "name" ? a.name.localeCompare(b.name, "zh-Hant")
+      : matchProduct(b, pet).score - matchProduct(a, pet).score);
   return (
-    <main id="main-content" className="page-shell pb-16 pt-8">
+    <main id="main-content" className="shop-surface bg-[#f8f4ed] py-8 text-[#302b26]">
+      <div className="page-shell pb-12">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <span className="flex size-7 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300">
-            <PawPrint size={15} />
-          </span>
+        <div className="flex items-center gap-2 text-sm text-[#74675b]">
+          <PawPrint size={16} className="text-[#9b6049]" />
           你好，{pet.name}的家人
           <span className="hidden sm:inline">。今天也一起好好生活。</span>
         </div>
         <button
           onClick={() => edit(true)}
-          className="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300"
+          className="flex items-center gap-2 text-sm text-[#74675b] hover:text-[#9b6049]"
         >
           <SlidersHorizontal size={15} />
           毛孩偏好
         </button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_330px]">
-        <section className="hero-panel relative min-h-[335px] overflow-hidden rounded-3xl border border-white/10 bg-[#121d2a]">
+        <section className="hero-panel relative min-h-[365px] overflow-hidden bg-[#e9e2d6] text-[#302b26]">
           <Image
-            src="/images/cat-life.png"
-            alt="灰色短毛貓在溫暖的家中享用餐點，品牌情境示意"
+            src={content.shopImage}
+            alt="毛孩享用餐點的品牌情境示意"
             fill
             priority
             sizes="(max-width:1024px) 100vw,70vw"
-            className="object-cover object-[75%_center] opacity-65"
+            className="object-cover object-[75%_center] opacity-60 lg:opacity-100"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#111b28_0%,#111b28f5_24%,#111b28b0_50%,#111b2800_83%)]" />
-          <div className="relative z-10 max-w-[520px] p-6 sm:p-9">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs tracking-[.12em] text-cyan-200">
-              <Sparkles size={13} />
-              專屬營養，從理解開始
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,#e9e2d6_0%,#e9e2d6ef_36%,#e9e2d6a6_64%,#e9e2d600_100%)]" />
+          <div className="relative z-10 flex h-full max-w-[560px] flex-col justify-center p-7 sm:p-10">
+            <div className="editorial-kicker mb-5">
+              {content.shopBadge}
             </div>
-            <h1 className="text-[clamp(2rem,3.3vw,3rem)] font-semibold leading-[1.3] tracking-tight">
+            <h1 className="editorial-title text-[clamp(2.5rem,4vw,4.2rem)] leading-[1.15] tracking-[-.06em]">
               為{pet.name}的每一口，
               <br />
-              <span className="text-cyan-300">多想一步。</span>
+              <span className="text-[#9c5b43]">{content.shopTitleAccent}</span>
             </h1>
-            <p className="mt-4 max-w-[290px] text-sm leading-7 text-slate-300">
-              從避開過敏原到剛剛好的份量，
-              <br />
-              把複雜的選擇，變成簡單的日常。
+            <p className="mt-5 max-w-[330px] text-sm leading-7 text-[#665b50]">
+              {content.shopDescription}
             </p>
-            <div className="mt-6 flex gap-3">
-              <Button
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button type="button" className="editorial-action min-h-11 bg-[#955a42] px-5 text-sm font-semibold text-white hover:bg-[#7e4833]"
                 onClick={() =>
                   document
                     .getElementById("products")
@@ -109,36 +115,28 @@ export function Storefront() {
                 }
               >
                 探索專屬選物
-              </Button>
-              <Button
-                variant="secondary"
+              </button>
+              <button type="button" className="editorial-action inline-flex min-h-11 items-center gap-2 border border-[#b5a494] px-5 text-sm font-semibold text-[#4b4036] hover:bg-white/70"
                 onClick={() =>
                   recommended ? openCalc(recommended.id) : edit(true)
                 }
               >
-                <Calculator />
+                <Calculator size={17} />
                 食量試算
-              </Button>
+              </button>
             </div>
           </div>
-          <div className="absolute bottom-6 right-6 hidden rounded-xl border border-white/20 bg-[#111827]/70 px-4 py-2.5 text-sm backdrop-blur-xl xl:block">
-            <Heart className="mb-1 text-amber-300" size={16} />
-            <span className="text-xs text-slate-200">
-              每個毛孩，都值得被好好理解。
-            </span>
-          </div>
         </section>
-        <section className="panel relative flex flex-col justify-between overflow-hidden p-6">
-          <div className="absolute -right-12 -top-12 size-48 rounded-full bg-cyan-400/5 blur-3xl" />
+        <section className="relative flex flex-col justify-between border border-[#d9cbbd] bg-[#f1ebe2] p-6">
           <div>
             <div className="flex items-center justify-between">
-              <span className="eyebrow">今日營養提案</span>
-              <Calculator size={19} className="text-cyan-300" />
+              <span className="editorial-kicker">今日營養提案</span>
+              <Calculator size={19} className="text-[#9c6048]" />
             </div>
             <h2 className="mt-3 text-lg font-semibold">
               {pet.name}的剛剛好份量
             </h2>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[#75695e]">
               {pet.weightKg} 公斤 · {pet.ageMonths < 12 ? "成長期" : "成齡"} ·{" "}
               {pet.isNeutered ? "已結紮" : "未結紮"}
             </p>
@@ -150,13 +148,13 @@ export function Storefront() {
                   key={`${pet.id}-${pet.weightKg}`}
                   initial={false}
                   animate={{ opacity: 1, y: 0 }}
-                  className="font-mono text-[3.5rem] font-light leading-none tracking-tight text-cyan-300"
+                  className="editorial-title text-[3.5rem] leading-none tracking-tight text-[#4e5e4b]"
                 >
                   {decimal(result.dailyGrams, 0)}
                 </motion.span>
-                <span className="pb-1 text-sm text-slate-400">克 / 日</span>
+                <span className="pb-1 text-sm text-[#75695e]">克 / 日</span>
               </div>
-              <div className="mb-5 grid grid-cols-2 gap-3 border-t border-white/8 pt-4">
+              <div className="mb-5 grid grid-cols-2 gap-3 border-t border-[#d9cbbd] pt-4">
                 <div>
                   <p className="text-xs text-slate-500">每日飲食預算</p>
                   <p className="mt-1 font-mono text-lg">
@@ -172,13 +170,9 @@ export function Storefront() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="secondary"
-                className="w-full border-cyan-400/25 text-cyan-200"
-                onClick={() => openCalc(recommended.id)}
-              >
+              <button type="button" className="editorial-action min-h-11 w-full border border-[#9f8f7e] text-sm font-semibold text-[#584536] hover:bg-white/70" onClick={() => openCalc(recommended.id)}>
                 調整我的配糧計畫
-              </Button>
+              </button>
               <p className="mt-2 text-center text-xs text-slate-500">
                 依{recommended.name}與循環價估算
               </p>
@@ -193,25 +187,25 @@ export function Storefront() {
           )}
         </section>
       </div>
-      <div className="my-7 grid grid-cols-1 divide-y divide-white/8 rounded-2xl border border-white/8 bg-white/[.015] px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <div className="my-9 grid grid-cols-1 divide-y divide-[#d9cbbd] border-y border-[#d9cbbd] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {[
           {
             icon: ShieldCheck,
             title: "每一批，都透明",
             desc: "原料與檢驗數據，一目瞭然",
-            color: "text-cyan-300",
+            color: "text-[#9c6048]",
           },
           {
             icon: PawPrint,
             title: "每一隻，都獨特",
             desc: "依年齡、體重與過敏原選物",
-            color: "text-amber-300",
+            color: "text-[#9c6048]",
           },
           {
             icon: Repeat2,
             title: "每一次，都剛好",
             desc: "預測補貨，留住陪伴的時間",
-            color: "text-emerald-300",
+            color: "text-[#4e5e4b]",
           },
         ].map(({ icon: Icon, title, desc, color }) => (
           <div
@@ -266,17 +260,35 @@ export function Storefront() {
               <button
                 key={tab.id}
                 aria-pressed={category === tab.id}
-                className={`rounded-lg px-4 py-2 text-sm transition-colors ${category === tab.id ? "bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/30" : "text-slate-400 hover:bg-white/5"}`}
+                className={`rounded-lg px-4 py-2 text-sm transition-colors ${category === tab.id ? "bg-[#f7e4d5] text-[#9a5036] ring-1 ring-[#e8af8e]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
                 onClick={() => setCategory(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <span className="flex items-center gap-1.5 text-xs text-slate-500">
-            <ShieldCheck size={13} />
-            依毛孩適配排序
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              商品類別
+              <select aria-label="商品類別" value={productCategory} onChange={(event) => setProductCategory(event.target.value)} className="rounded-lg border border-[#e5d3c3] bg-white px-3 py-2 text-sm text-[#3b2b24]">
+                <option value="all">全部類別</option>
+                {catalogCategories.map((name) => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              <input type="checkbox" checked={inStockOnly} onChange={(event) => setInStockOnly(event.target.checked)} />
+              只看有貨
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-400">
+              排序
+              <select aria-label="商品排序" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="rounded-lg border border-[#e5d3c3] bg-white px-3 py-2 text-sm text-[#3b2b24]">
+                <option value="fit">毛孩適配</option>
+                <option value="price-asc">價格：低到高</option>
+                <option value="price-desc">價格：高到低</option>
+                <option value="name">商品名稱</option>
+              </select>
+            </label>
+          </div>
         </div>
         {filtered.length ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -294,6 +306,9 @@ export function Storefront() {
               onClick={() => {
                 setQuery("");
                 setCategory("all");
+                setProductCategory("all");
+                setInStockOnly(false);
+                setSort("fit");
               }}
             >
               清除篩選
@@ -323,7 +338,7 @@ export function Storefront() {
             <button
               key={post.id}
               onClick={() => openUgc(post.id)}
-              className="group flex min-h-40 overflow-hidden rounded-2xl border border-white/10 bg-[#111827] text-left transition-colors hover:border-cyan-400/40"
+              className="group flex min-h-40 overflow-hidden rounded-2xl border border-[#ead9c9] bg-white text-left transition-colors hover:border-[#d99970]"
             >
               <div className="relative w-[40%] shrink-0">
                 <Image
@@ -348,6 +363,7 @@ export function Storefront() {
           ))}
         </div>
       </section>
+      </div>
     </main>
   );
 }

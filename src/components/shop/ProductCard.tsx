@@ -33,10 +33,10 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <motion.article
       layout
-      whileHover={{ y: -5 }}
-      className="product-card group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111827]/80 transition-colors hover:border-cyan-500/40 backdrop-blur-md"
+      whileHover={{ y: -3 }}
+      className="product-card group relative overflow-hidden border border-[#d9cbbd] bg-[#fffdf9] transition-all hover:border-[#a96e51] hover:shadow-[0_18px_36px_-28px_#735646]"
     >
-      <div className="relative aspect-[1.12] overflow-hidden bg-[#111827]">
+      <div className="relative aspect-[1.02] overflow-hidden bg-[#ede6dc]">
         <Link
           href={`/products/${product.slug}`}
           aria-label={`查看${product.name}`}
@@ -46,11 +46,11 @@ export function ProductCard({ product }: { product: Product }) {
             alt={`${product.name}包裝概念示意，商品規格以文字為準`}
             fill
             sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
           />
         </Link>
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-1">
-          <span className="rounded-md bg-slate-950/65 px-2 py-1 text-xs text-slate-300">
+          <span className="bg-[#f8f4ed]/95 px-2 py-1 text-xs font-medium text-[#6b5547]">
             {product.type === "CAT" ? "貓咪" : "狗狗"}
           </span>
           <AnimatePresence mode="wait" initial={false}>
@@ -59,7 +59,7 @@ export function ProductCard({ product }: { product: Product }) {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className={`flex max-w-[80%] items-center gap-1 rounded-md border px-2 py-1 text-xs backdrop-blur-md ${fit.safe ? "border-emerald-400/20 bg-emerald-950/85 text-emerald-200" : fit.conflicts.length && fit.sameSpecies ? "border-amber-400/30 bg-amber-950/85 text-amber-200" : "border-white/10 bg-slate-900/90 text-slate-300"}`}
+              className={`flex max-w-[80%] items-center gap-1 border px-2 py-1 text-xs backdrop-blur-md ${fit.safe ? "border-[#a8b5a2] bg-[#edf0e9] text-[#49634c]" : fit.conflicts.length && fit.sameSpecies ? "border-[#d7b299] bg-[#f4e7dc] text-[#80543c]" : "border-[#d4c7ba] bg-[#f5eee6] text-[#756b61]"}`}
             >
               {fit.safe ? (
                 <ShieldCheck size={12} className="shrink-0" />
@@ -70,7 +70,7 @@ export function ProductCard({ product }: { product: Product }) {
             </motion.span>
           </AnimatePresence>
         </div>
-        <span className="absolute bottom-2 right-3 text-xs text-slate-500">
+        <span className="absolute bottom-2 right-3 bg-[#f8f4ed]/80 px-1 text-[10px] text-[#766c62]">
           概念包裝示意
         </span>
       </div>
@@ -86,7 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <Link
           href={`/products/${product.slug}`}
-          className="text-lg font-semibold tracking-tight hover:text-cyan-300"
+          className="editorial-title text-xl font-semibold tracking-tight text-[#302b26] hover:text-[#955a42]"
         >
           {product.name}
         </Link>

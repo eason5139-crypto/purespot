@@ -14,13 +14,14 @@ import {
 import { motion } from "framer-motion";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
-import { products } from "@/lib/catalog";
+import { useCatalogStore } from "@/store/useCatalogStore";
 import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { Button } from "@/components/ui/button";
 import { PetWeightTrendChart } from "@/components/analytics/PetWeightTrendChart";
 
 export default function HealthPage() {
+  const products = useCatalogStore((s) => s.products);
   const pet = useActivePet();
   const edit = useUiStore((s) => s.setPetEditorOpen);
   const calc = useUiStore((s) => s.openCalculator);

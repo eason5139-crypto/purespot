@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { apiError, readBody } from "@/server/http";
+import { apiError, readBody, verifyOrigin } from "@/server/http";
+import { requireAdminSession } from "@/server/adminAuth";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -20,6 +21,7 @@ const updateOrderStatusSchema = z.object({
 // 公司端取得所有即時訂單列表
 export async function GET() {
   try {
+    await requireAdminSession();
     const orders = await db.order.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -58,6 +60,8 @@ export async function GET() {
 // 公司端修改訂單狀態
 export async function PATCH(request: Request) {
   try {
+    await requireAdminSession();
+    verifyOrigin(request);
     const { orderId, status } = await readBody(request, updateOrderStatusSchema);
 
     const updated = await db.order.update({

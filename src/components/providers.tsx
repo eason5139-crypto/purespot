@@ -6,12 +6,18 @@ import { usePetContextStore } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useAutoshipStore } from "@/store/useAutoshipStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useCatalogStore } from "@/store/useCatalogStore";
 export function Providers({ children }: { children: React.ReactNode }) {
   const [storageError, setStorageError] = useState(false);
   useEffect(() => {
     let mounted = true;
     async function hydrate() {
       try {
+        const catalogResponse = await fetch("/api/products", { cache: "no-store" });
+        if (catalogResponse.ok) {
+          const data = (await catalogResponse.json()) as { products?: import("@/lib/types").Product[] };
+          if (data.products) useCatalogStore.getState().setProducts(data.products);
+        }
         await Promise.all([
           usePetContextStore.persist.rehydrate(),
           useCartStore.persist.rehydrate(),
@@ -52,9 +58,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         toastOptions={{
           style: {
             fontFamily: "inherit",
-            background: "#152033",
-            border: "1px solid #ffffff20",
-            color: "#f8fafc",
+            background: "#2a1a14",
+            border: "1px solid #f4a26130",
+            color: "#fff7ec",
           },
         }}
       />

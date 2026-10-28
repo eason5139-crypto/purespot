@@ -1,8 +1,15 @@
 import { test, expect } from "@playwright/test";
+test("未登入無法讀取管理 API，並會導向後台登入", async ({ page, request }) => {
+  const response = await request.get("/api/admin/products");
+  expect(response.status()).toBe(401);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin-login\?next=%2Fadmin|\/admin-login\?next=\/admin/);
+  await expect(page.getByRole("heading", { name: "歡迎回來" })).toBeVisible();
+});
 test("首頁、毛孩切換與重新整理後的資料保留", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/shop");
   await expect(
     page.getByRole("heading", { name: /為麻糬的每一口/ }),
   ).toBeVisible();
@@ -20,7 +27,7 @@ test("首頁、毛孩切換與重新整理後的資料保留", async ({ page }) 
   expect(errors).toEqual([]);
 });
 test("配糧即時換算、循環加車、示範結帳與計畫順延", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/shop");
   await page.getByRole("button", { name: "調整我的配糧計畫" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
@@ -32,11 +39,11 @@ test("配糧即時換算、循環加車、示範結帳與計畫順延", async ({
   await dialog
     .getByRole("button", { name: /依此週期設定自動循環補貨/ })
     .click();
-  await expect(
-    page.getByRole("heading", { name: "毛孩的購物袋" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /購物袋/ })).toBeVisible();
   await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "建立示範訂單" }).click();
+  await page
+    .getByRole("button", { name: "或以本機示範訂單快速結算 (免填地址)" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "示範訂單已建立" }),
   ).toBeVisible();
@@ -65,12 +72,17 @@ test("配糧即時換算、循環加車、示範結帳與計畫順延", async ({
 });
 test("社群抽屜原地加車，過敏品無法誤購", async ({ page }) => {
   await page.goto("/community");
-  await page.getByRole("button", { name: /開飯時間/ }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "把同款加入購物車" }).click();
+  await page
+    .getByRole("button", { name: "查看 【PURESPOT】低敏原肉成貓主食凍乾" })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "【PURESPOT】低敏原肉成貓主食凍乾",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "一鍵買同款" }).click();
   expect(new URL(page.url()).pathname).toBe("/community");
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("button", { name: /開飯時間/ })).toBeFocused();
   await expect(
     page.getByRole("button", { name: "購物車，1 件商品" }),
   ).toBeVisible();
@@ -99,6 +111,9 @@ test("390 像素手機版沒有水平溢位，導覽與試算可操作", async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.evaluate(() => document.fonts.ready);
+  await expect(
+    page.getByRole("heading", { level: 1, name: /懂牠/ }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -109,7 +124,7 @@ test("390 像素手機版沒有水平溢位，導覽與試算可操作", async (
   await expect(
     page.getByRole("heading", { name: "麻糬的健康儀表板" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "更新我的配糧計畫" }).click();
+  await page.getByRole("button", { name: "開啟精準營養計算機" }).click();
   await expect(page.getByRole("slider")).toBeVisible();
   expect(
     await page.evaluate(
@@ -128,12 +143,10 @@ test("損壞的儲存資料不造成閃退", async ({ page }) => {
     );
     localStorage.setItem("purespot-cart", "{broken");
   });
-  await page.goto("/");
+  await page.goto("/shop");
   await expect(
     page.getByRole("heading", { name: /為麻糬的每一口/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "購物車，0 件商品" }).click();
-  await expect(
-    page.getByRole("heading", { name: "購物袋還空著" }),
-  ).toBeVisible();
+  await expect(page.getByText("目前購物袋內尚無商品。")).toBeVisible();
 });

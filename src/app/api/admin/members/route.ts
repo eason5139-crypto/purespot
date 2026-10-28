@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { apiError, readBody } from "@/server/http";
+import { apiError, readBody, verifyOrigin } from "@/server/http";
 import { hashPassword } from "@/server/auth";
+import { requireAdminSession } from "@/server/adminAuth";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ const createMemberSchema = z.object({
 // 公司端：取得所有真實會員清單
 export async function GET() {
   try {
+    await requireAdminSession();
     const users = await db.user.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -50,6 +52,8 @@ export async function GET() {
 // 公司端：新增會員
 export async function POST(request: Request) {
   try {
+    await requireAdminSession();
+    verifyOrigin(request);
     const input = await readBody(request, createMemberSchema);
 
     const existing = await db.user.findUnique({
@@ -94,6 +98,8 @@ export async function POST(request: Request) {
 // 公司端：刪除會員
 export async function DELETE(request: Request) {
   try {
+    await requireAdminSession();
+    verifyOrigin(request);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

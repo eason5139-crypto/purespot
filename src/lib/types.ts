@@ -37,6 +37,9 @@ export interface Product {
   priceNt: number;
   stock: number;
   image: string;
+  gallery?: string[];
+  videoUrl?: string;
+  isPublished?: boolean;
   color: "cyan" | "amber" | "blue";
   proteinMin: number;
   moistureMax: number;

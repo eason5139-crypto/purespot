@@ -1,9 +1,15 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { products } from "@/lib/catalog";
+import { products as defaults } from "@/lib/catalog";
+import { getCatalogProducts } from "@/server/productCatalog";
 import { ProductDetail } from "@/components/shop/ProductDetail";
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+export const dynamic = "force-dynamic";
+async function loadProduct(slug: string) {
+  try {
+    return (await getCatalogProducts()).find((p) => p.slug === slug);
+  } catch {
+    return defaults.find((p) => p.slug === slug);
+  }
 }
 export async function generateMetadata({
   params,
@@ -11,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  return { title: products.find((p) => p.slug === slug)?.name ?? "找不到商品" };
+  return { title: (await loadProduct(slug))?.name ?? "找不到商品" };
 }
 export default async function ProductPage({
   params,
@@ -19,7 +25,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = products.find((p) => p.slug === slug);
+  const product = await loadProduct(slug);
   if (!product) notFound();
   return <ProductDetail product={product} />;
 }
