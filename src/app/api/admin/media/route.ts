@@ -9,6 +9,7 @@ import { apiError, verifyOrigin, ApiError } from "@/server/http";
 export const runtime = "nodejs";
 const mediaDirectory = join(process.cwd(), "public", "uploads");
 const bundledDirectory = join(process.cwd(), "public", "images");
+const packagedDirectory = join(bundledDirectory, "products");
 const maximumBytes = 4 * 1024 * 1024;
 
 function usesBlob() {
@@ -40,10 +41,13 @@ export async function GET() {
         })());
     const bundled = (await readdir(bundledDirectory))
       .filter((name) => /\.(png|jpg|jpeg|webp)$/i.test(name));
+    const packaged = (await readdir(packagedDirectory))
+      .filter((name) => /^[a-z0-9-]+\.svg$/.test(name));
     return NextResponse.json({
       images: [
         ...uploaded,
         ...bundled.map((name) => `/images/${name}`),
+        ...packaged.map((name) => `/images/products/${name}`),
       ],
     });
   } catch (error) {

@@ -8,7 +8,7 @@ import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
 import { matchProduct } from "@/lib/matching";
-import { money } from "@/lib/utils";
+import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 export function ProductCard({ product }: { product: Product }) {
@@ -77,11 +77,11 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="p-5">
         <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
           <span>
-            {product.bagGrams / 1000} 公斤 · {product.category}
+            {packageSize(product.bagGrams)} · {product.category}
           </span>
           <span className="flex items-center gap-1 text-cyan-400">
             <FlaskConical size={12} />
-            批次履歷
+            {product.batches.length ? "批次履歷" : "配方資料"}
           </span>
         </div>
         <Link

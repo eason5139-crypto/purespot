@@ -68,7 +68,7 @@ export function TransparencyPage({ content }: { content: SiteContent }) {
                   <p className="mt-1 text-sm text-[#806a5c]">{product.subtitle}</p>
                 </div>
                 <span className="bg-[#f0e8de] px-3 py-1 text-xs text-[#876149]">
-                  {product.batches.length} 筆示範批次
+                  {product.batches.length ? `${product.batches.length} 筆示範批次` : "尚無批次資料"}
                 </span>
               </div>
               <div className="mt-5 grid grid-cols-3 gap-2 border-y border-[#eee2d5] py-4 text-center">

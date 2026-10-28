@@ -34,11 +34,11 @@ ADMIN_PASSWORD_HASH=<scrypt salt:hash>
 ADMIN_SESSION_SECRET=<至少 32 字元的隨機字串>
 ```
 
-管理員工作階段採 HTTP-only、SameSite Strict Cookie，8 小時後失效。正式環境需另行設定 Upstash Redis 登入限流；缺少限流服務時正式環境會拒絕登入。
+管理員工作階段採 HTTP-only、SameSite Strict Cookie，8 小時後失效。正式環境使用 Upstash Redis 限流；未設定時由既有 PostgreSQL 保存跨執行個體的限流計數。
 
 後台將功能分為工作台、網站／商品與交易／顧客三組。`/admin/content` 可按首頁、特色、社群、商城與全站訊息編輯文案及形象圖；`/admin/media` 可管理 JPG、PNG、WebP 圖片；`/admin/products` 可編輯商品基本資料、相簿、營養／過敏原、價格、庫存與上架狀態。公開商城支援物種、關鍵字、庫存與價格排序。商品資料需有可用的 PostgreSQL 連線才可持久化。
 
-**部署注意：** 網站文案目前儲存在 `data/site-content.json`，上傳圖片目前儲存在 `public/uploads/`。兩者在本機可保存，但無法保證在唯讀或無狀態雲端主機上持久保存；正式部署前需改接持久資料庫與物件儲存。商品頁公開圖文由資料庫讀取，但目前批次報告仍為示範資料，請勿將展示樣本當作真實檢驗證明。
+**部署注意：** 本機未設定 Blob 時，網站文案儲存在 `data/site-content.json`、上傳圖片儲存在 `public/uploads/`；Vercel 正式站使用 Blob 保存文案與圖片，商品資料由 PostgreSQL 讀取。商城預設有 6 個分類、每類 5 款展示商品；執行 `npm run db:seed` 只會補上缺少的展示商品，不覆蓋後台已修改的商品。批次報告仍為示範資料，請勿將展示樣本當作真實檢驗證明。
 
 正式建置檢查：
 

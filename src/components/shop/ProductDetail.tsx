@@ -10,7 +10,7 @@ import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
 import { matchProduct } from "@/lib/matching";
-import { money } from "@/lib/utils";
+import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export function ProductDetail({ product }: { product: Product }) {
@@ -70,7 +70,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
             <div className="mt-8 border-y border-[#d9cfc3] py-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm text-[#70665d]">{product.bagGrams / 1000} 公斤 · {product.category}</span>
+              <span className="text-sm text-[#70665d]">{packageSize(product.bagGrams)} · {product.category}</span>
               <span className="font-serif text-3xl text-[#3b342d]">{money(product.priceNt)}</span>
               </div>
               <p className="mt-2 text-xs tracking-wide text-[#8a7f75]">展示商品與價格，以結帳頁顯示的配送方式為準</p>
@@ -90,7 +90,7 @@ export function ProductDetail({ product }: { product: Product }) {
             <div className="mt-10 grid grid-cols-3 divide-x divide-[#d9cfc3] border-y border-[#d9cfc3] py-5 text-center">
               <div><strong className="block font-serif text-2xl">{product.proteinMin}%</strong><span className="mt-1 block text-xs text-[#756c63]">粗蛋白最低值</span></div>
               <div><strong className="block font-serif text-2xl">{product.kcalPer100g}</strong><span className="mt-1 block text-xs text-[#756c63]">大卡 / 100 克</span></div>
-              <div><strong className="block font-serif text-2xl">{product.bagGrams / 1000}</strong><span className="mt-1 block text-xs text-[#756c63]">公斤</span></div>
+              <div><strong className="block font-serif text-2xl">{packageSize(product.bagGrams)}</strong><span className="mt-1 block text-xs text-[#756c63]">包裝規格</span></div>
             </div>
             <p className="mt-4 text-xs leading-6 text-[#8a7f75]">商品、包裝與批次為展示資料，尚非正式檢驗報告。適配提醒僅依已填寫的資料比對；如有特殊飲食需求，請先詢問獸醫師。</p>
           </div>

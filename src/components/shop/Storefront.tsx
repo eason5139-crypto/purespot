@@ -11,10 +11,12 @@ import {
   Search,
   PawPrint,
   CircleHelp,
+  ArrowUpRight,
 } from "lucide-react";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
 import { ugcPosts } from "@/lib/catalog";
+import { shopCategories } from "@/lib/productCategories";
 import { useCatalogStore } from "@/store/useCatalogStore";
 import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
@@ -33,7 +35,13 @@ export function Storefront({ content }: { content: SiteContent }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"fit" | "price-asc" | "price-desc" | "name">("fit");
   const [inStockOnly, setInStockOnly] = useState(false);
-  const catalogCategories = Array.from(new Set(products.map((product) => product.category))).sort((a, b) => a.localeCompare(b, "zh-Hant"));
+  const [visibleCount, setVisibleCount] = useState(8);
+  const counts = new Map<string, number>();
+  for (const product of products) counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+  const catalogCategories = [
+    ...shopCategories.map(({ name }) => name).filter((name) => counts.has(name)),
+    ...[...counts.keys()].filter((name) => !shopCategories.some((category) => category.name === name)).sort((a, b) => a.localeCompare(b, "zh-Hant")),
+  ];
   const recommended = products.find((p) => matchProduct(p, pet).safe);
   const result = recommended
     ? calculatePetNutrition(
@@ -66,6 +74,7 @@ export function Storefront({ content }: { content: SiteContent }) {
       : sort === "price-desc" ? b.priceNt - a.priceNt
       : sort === "name" ? a.name.localeCompare(b.name, "zh-Hant")
       : matchProduct(b, pet).score - matchProduct(a, pet).score);
+  const visibleProducts = filtered.slice(0, visibleCount);
   return (
     <main id="main-content" className="shop-surface bg-[#f8f4ed] py-8 text-[#302b26]">
       <div className="page-shell pb-12">
@@ -220,12 +229,37 @@ export function Storefront({ content }: { content: SiteContent }) {
           </div>
         ))}
       </div>
+      <section className="mb-12" aria-labelledby="category-heading">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="editorial-kicker">THE COLLECTION / 依喜好慢慢挑</p>
+            <h2 id="category-heading" className="editorial-title mt-2 text-3xl sm:text-4xl">{catalogCategories.length} 種餐桌靈感，剛好遇見牠。</h2>
+          </div>
+          <button type="button" onClick={() => { setProductCategory("all"); setVisibleCount(8); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">
+            看全部 {products.length} 款 <ArrowUpRight size={16} />
+          </button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {catalogCategories.map((name) => {
+            const info = shopCategories.find((item) => item.name === name) ?? { name, english: "MORE TO EXPLORE", description: "探索更多日常選物。", tint: "#e8e1d8" };
+            const selected = productCategory === name;
+            return (
+              <button key={name} type="button" aria-pressed={selected} onClick={() => { setProductCategory(selected ? "all" : name); setVisibleCount(8); document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className={`group relative flex min-h-40 flex-col items-start overflow-hidden border p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-22px_#594a3f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9c6048] ${selected ? "border-[#9c6048] ring-1 ring-[#9c6048]" : "border-[#d6c9bc] hover:border-[#b7957e]"}`} style={{ backgroundColor: info.tint }}>
+                <span className="text-[10px] font-semibold tracking-[.18em] text-[#746254]">{info.english}</span>
+                <strong className="editorial-title mt-4 text-2xl text-[#352c27]">{name}</strong>
+                <span className="mt-2 text-xs leading-5 text-[#6d6158]">{info.description}</span>
+                <span className="mt-auto flex w-full items-center justify-between pt-4 text-xs font-semibold text-[#7d5140]">{counts.get(name)} 款選品 <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       <section id="products" className="scroll-mt-32">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="eyebrow mb-2">由牠出發的好選擇</div>
             <h2 className="text-2xl font-semibold">
-              {pet.name}的專屬選物
+              {productCategory === "all" ? `${pet.name}的專屬選物` : productCategory}
               <span className="ml-3 align-middle text-sm font-normal text-slate-500">
                 {filtered.length} 款商品
               </span>
@@ -239,7 +273,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setVisibleCount(8); }}
               className="input !mt-0 pl-10"
               placeholder="搜尋商品或成分"
             />
@@ -261,7 +295,7 @@ export function Storefront({ content }: { content: SiteContent }) {
                 key={tab.id}
                 aria-pressed={category === tab.id}
                 className={`rounded-lg px-4 py-2 text-sm transition-colors ${category === tab.id ? "bg-[#f7e4d5] text-[#9a5036] ring-1 ring-[#e8af8e]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
-                onClick={() => setCategory(tab.id)}
+                onClick={() => { setCategory(tab.id); setVisibleCount(8); }}
               >
                 {tab.label}
               </button>
@@ -269,14 +303,7 @@ export function Storefront({ content }: { content: SiteContent }) {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-xs text-slate-400">
-              商品類別
-              <select aria-label="商品類別" value={productCategory} onChange={(event) => setProductCategory(event.target.value)} className="rounded-lg border border-[#e5d3c3] bg-white px-3 py-2 text-sm text-[#3b2b24]">
-                <option value="all">全部類別</option>
-                {catalogCategories.map((name) => <option key={name} value={name}>{name}</option>)}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 text-xs text-slate-400">
-              <input type="checkbox" checked={inStockOnly} onChange={(event) => setInStockOnly(event.target.checked)} />
+              <input type="checkbox" checked={inStockOnly} onChange={(event) => { setInStockOnly(event.target.checked); setVisibleCount(8); }} />
               只看有貨
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-400">
@@ -292,7 +319,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         </div>
         {filtered.length ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {filtered.map((p) => (
+            {visibleProducts.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
@@ -309,10 +336,17 @@ export function Storefront({ content }: { content: SiteContent }) {
                 setProductCategory("all");
                 setInStockOnly(false);
                 setSort("fit");
+                setVisibleCount(8);
               }}
             >
               清除篩選
             </Button>
+          </div>
+        )}
+        {filtered.length > visibleCount && (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <p className="text-xs text-[#86766b]">已顯示 {visibleProducts.length} / {filtered.length} 款</p>
+            <button type="button" onClick={() => setVisibleCount((count) => count + 8)} className="editorial-action min-h-12 border border-[#a88c78] px-8 text-sm font-semibold text-[#71513f] transition-colors hover:bg-[#efe5da]">查看更多商品</button>
           </div>
         )}
         <p className="mt-4 flex items-start gap-1.5 text-xs leading-5 text-slate-500">

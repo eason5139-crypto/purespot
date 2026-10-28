@@ -9,6 +9,8 @@ export const money = (n: number) =>
   }).format(n);
 export const decimal = (n: number, digits = 1) =>
   new Intl.NumberFormat("zh-TW", { maximumFractionDigits: digits }).format(n);
+export const packageSize = (grams: number) =>
+  grams < 1000 ? `${grams} 克` : `${decimal(grams / 1000, 2)} 公斤`;
 export function addDays(date: string, days: number): string {
   const value = new Date(date);
   value.setUTCDate(value.getUTCDate() + days);

@@ -7,6 +7,7 @@ import { ExternalLink, ImagePlus, Package, Plus, RefreshCw, Save, Search, X } fr
 import { Button } from "@/components/ui/button";
 import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { adminProductInputSchema, type AdminProductInput } from "@/lib/adminTypes";
+import { shopCategories } from "@/lib/productCategories";
 import type { Product } from "@/lib/types";
 import { money } from "@/lib/utils";
 
@@ -104,6 +105,7 @@ export default function AdminProductsPage() {
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"ALL" | "CAT" | "DOG" | "DRAFT">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<EditorTab>("basic");
@@ -130,8 +132,10 @@ export default function AdminProductsPage() {
   const filtered = useMemo(() => products.filter((product) => {
     const searchText = `${product.name} ${product.subtitle} ${product.category} ${product.ingredients.join(" ")}`.toLowerCase();
     return searchText.includes(query.toLowerCase()) &&
-      (filter === "ALL" || (filter === "DRAFT" ? !product.isPublished : product.type === filter));
-  }), [products, query, filter]);
+      (filter === "ALL" || (filter === "DRAFT" ? !product.isPublished : product.type === filter)) &&
+      (categoryFilter === "all" || product.category === categoryFilter);
+  }), [products, query, filter, categoryFilter]);
+  const availableCategories = [...new Set(products.map((product) => product.category))];
 
   function update<K extends keyof AdminProductInput>(key: K, value: AdminProductInput[K]) {
     setForm((previous) => ({ ...previous, [key]: value }));
@@ -211,7 +215,7 @@ export default function AdminProductsPage() {
         <div>
           <span className="eyebrow">商品與庫存</span>
           <h1 className="mt-2 text-3xl font-semibold text-[#fff7ec]">商品管理</h1>
-          <p className="mt-2 text-sm text-[#bda595]">編輯完整商品資料、照片、營養資訊與上架狀態。</p>
+          <p className="mt-2 text-sm text-[#bda595]">共 {products.length} 款商品 · {availableCategories.length} 個分類。可編輯照片、文案、營養資訊與上架狀態。</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => void load()} className="gap-2"><RefreshCw size={16} />重新整理</Button>
@@ -249,7 +253,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">適用毛孩</span><select className="input" value={form.type} onChange={(event) => update("type", event.target.value as "CAT" | "DOG")}><option value="CAT">貓咪</option><option value="DOG">狗狗</option></select></label>
-                  <TextField label="分類" required value={form.category} onChange={(value) => update("category", value)} />
+                  <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">分類</span><input className="input" list="product-category-options" required value={form.category} onChange={(event) => update("category", event.target.value)} /><datalist id="product-category-options">{shopCategories.map(({ name }) => <option key={name} value={name} />)}</datalist><span className="mt-1 block text-xs text-[#a78c7c]">可選既有分類，也可輸入新分類名稱。</span></label>
                 </div>
                 <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">商品詳細介紹</span><textarea className="input min-h-36" required value={form.description} onChange={(event) => update("description", event.target.value)} /></label>
               </div>
@@ -315,6 +319,12 @@ export default function AdminProductsPage() {
                 <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-11 rounded-xl px-4 text-sm ${filter === value ? "bg-[#f4a261] text-[#2b170f]" : "bg-white/5 text-[#c1aa9b]"}`}>{label}</button>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-xs text-[#c1aa9b]">商品分類
+              <select aria-label="篩選商品分類" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="min-h-11 rounded-xl border border-white/10 bg-[#2a1b15] px-3 text-sm text-[#f4e5d9]">
+                <option value="all">全部分類</option>
+                {availableCategories.map((name) => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </label>
           </div>
           {loading ? <p className="rounded-2xl border border-white/10 p-10 text-center text-[#a78c7c]">載入商品中…</p> : filtered.length === 0 ? (
             <div className="rounded-2xl border border-white/10 p-12 text-center text-[#a78c7c]"><Package className="mx-auto mb-3" />目前沒有符合條件的商品</div>

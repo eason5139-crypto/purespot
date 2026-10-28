@@ -1,4 +1,14 @@
 import { test, expect } from "@playwright/test";
+
+test("商城六個分類各能查看五款商品", async ({ page }) => {
+  await page.goto("/shop");
+  for (const name of ["主食乾糧", "主食罐頭", "鮮食餐包", "凍乾主食", "風乾主食", "機能配方"]) {
+    await page.getByRole("button", { name: new RegExp(name) }).first().click();
+    await expect(page.locator(".product-card")).toHaveCount(5);
+  }
+  await page.getByRole("button", { name: /看全部 30 款/ }).click();
+  await expect(page.getByRole("button", { name: "查看更多商品" })).toBeVisible();
+});
 test("未登入無法讀取管理 API，並會導向後台登入", async ({ page, request }) => {
   const response = await request.get("/api/admin/products");
   expect(response.status()).toBe(401);
