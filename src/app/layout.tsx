@@ -7,9 +7,9 @@ import { Providers } from "@/components/providers";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { readSiteContent } from "@/server/siteContentRepository";
 export const metadata: Metadata = {
-  title: { default: "PURESPOT｜懂牠，從每一口開始", template: "%s｜PURESPOT" },
+  title: { default: "PURESPOT｜懂牠，從每一天開始", template: "%s｜PURESPOT" },
   description:
-    "依毛孩的年齡、體重與過敏原，找到適合的主食、透明批次履歷與專屬循環補貨計畫。",
+    "為貓、狗、倉鼠與兔兔找到適合的食物、玩具與日常用品，清楚比較價格與商品資訊。",
   robots: { index: false, follow: false },
 };
 export const viewport: Viewport = {
