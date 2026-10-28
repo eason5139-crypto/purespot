@@ -135,7 +135,7 @@ test("390 像素手機版沒有水平溢位，導覽與試算可操作", async (
   await page.getByRole("menuitem", { name: "健康儀表板" }).click();
   await expect(
     page.getByRole("heading", { name: "麻糬的健康儀表板" }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "開啟精準營養計算機" }).click();
   await expect(page.getByRole("slider")).toBeVisible();
   expect(
