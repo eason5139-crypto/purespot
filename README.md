@@ -124,7 +124,7 @@ npm run db:seed
 | `PATCH /api/autoships` | 所有權與 revision 比對；順延、暫停、恢復；未授權付款方式不可恢復                             |
 | `GET /api/health`      | 服務存活資訊，不暴露設定或憑證                                                               |
 
-所有寫入須帶同源 `Origin` 與 JSON Content-Type。讀取資料前驗證登入，寫入同時使用 Zod schema；請求串流限制 32 KiB。正式環境的驗證與訂單 API 需要 Upstash Redis 限流設定，缺設定時直接回傳不可用，不會靜默停用保護。
+所有寫入須帶同源 `Origin` 與 JSON Content-Type。讀取資料前驗證登入，寫入同時使用 Zod schema；請求串流限制 32 KiB。正式環境的登入與訂單 API 使用 Upstash Redis 限流；未設定 Upstash 時，改用資料庫保存跨執行個體的限流計數。
 
 API 範例與串接界線見 `docs/API.md`。前端購物袋價格不可當作正式收款依據；草稿不保留庫存，尚未接收付款。
 

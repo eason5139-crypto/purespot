@@ -1,6 +1,7 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { ApiError } from "./http";
+import { db } from "./db";
 const local = new Map<string, { count: number; expires: number }>();
 export async function rateLimit(
   identity: string,
@@ -40,8 +41,35 @@ export async function rateLimit(
       throw new ApiError(429, "嘗試次數過多，請稍後再試");
     return;
   }
-  if (process.env.NODE_ENV === "production")
-    throw new ApiError(503, "帳戶保護服務尚未設定");
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const rows = await db.$queryRaw<{ count: number }[]>`
+        INSERT INTO "OutboxEvent"
+          ("id", "dedupeKey", "type", "payload", "attempts", "availableAt", "processedAt", "createdAt")
+        VALUES
+          (${randomUUID()}, ${key}, 'RATE_LIMIT', '{}'::jsonb, 1,
+           now() + (${windowSeconds} * interval '1 second'), now(), now())
+        ON CONFLICT ("dedupeKey") DO UPDATE SET
+          "attempts" = CASE
+            WHEN "OutboxEvent"."availableAt" <= now() THEN 1
+            ELSE "OutboxEvent"."attempts" + 1
+          END,
+          "availableAt" = CASE
+            WHEN "OutboxEvent"."availableAt" <= now()
+              THEN now() + (${windowSeconds} * interval '1 second')
+            ELSE "OutboxEvent"."availableAt"
+          END,
+          "processedAt" = now()
+        RETURNING "attempts" AS "count"
+      `;
+      if ((rows[0]?.count ?? maximum + 1) > maximum)
+        throw new ApiError(429, "嘗試次數過多，請稍後再試");
+      return;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, "帳戶保護服務暫時無法使用");
+    }
+  }
   const now = Date.now();
   for (const [k, v] of local) if (v.expires <= now) local.delete(k);
   if (local.size > 10000) throw new ApiError(503, "請稍後再試");
