@@ -9,6 +9,20 @@ test("商城十二個分類各能查看五款商品", async ({ page }) => {
   await page.getByRole("button", { name: /看全部 60 款/ }).click();
   await expect(page.getByRole("button", { name: "查看更多商品" })).toBeVisible();
 });
+test("收藏、價格篩選與商品比較可以操作", async ({ page }) => {
+  await page.goto("/shop");
+  await page.getByRole("button", { name: "收藏鮭魚低敏成貓糧" }).click();
+  await page.getByRole("button", { name: "我的收藏 1" }).click();
+  await expect(page.locator(".product-card")).toHaveCount(1);
+  await page.getByRole("combobox", { name: "價格範圍" }).selectOption("500");
+  await expect(page.getByText("沒有符合的商品")).toBeVisible();
+  await page.getByRole("button", { name: "清除篩選" }).click();
+  await page.getByRole("button", { name: "加入商品比較" }).first().click();
+  await expect(page.getByRole("button", { name: "並排比較" })).toBeVisible();
+  await page.getByRole("button", { name: "並排比較" }).click();
+  await expect(page.getByRole("heading", { name: "選物比較" })).toBeVisible();
+  await expect(page.getByText("規格重量")).toBeVisible();
+});
 test("未登入無法讀取管理 API，並會導向後台登入", async ({ page, request }) => {
   const response = await request.get("/api/admin/products");
   expect(response.status()).toBe(401);
@@ -21,19 +35,19 @@ test("首頁、毛孩切換與重新整理後的資料保留", async ({ page }) 
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/shop");
   await expect(
-    page.getByRole("heading", { name: /為麻糬的每一口/ }),
+    page.getByRole("heading", { name: /為麻糬的每一天/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "切換毛孩" }).click();
   await page.getByRole("menuitem", { name: /芒果/ }).click();
   await expect(
-    page.getByRole("heading", { name: /為芒果的每一口/ }),
+    page.getByRole("heading", { name: /為芒果的每一天/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "狗狗", exact: true }).click();
   await page.getByPlaceholder("搜尋商品或成分").fill("牛肉");
   await expect(page.getByText("過敏原警示：牛肉").first()).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: /為芒果的每一口/ }),
+    page.getByRole("heading", { name: /為芒果的每一天/ }),
   ).toBeVisible();
   await expect(page.locator("body")).not.toContainText("戰情室");
   expect(errors).toEqual([]);
@@ -157,7 +171,7 @@ test("損壞的儲存資料不造成閃退", async ({ page }) => {
   });
   await page.goto("/shop");
   await expect(
-    page.getByRole("heading", { name: /為麻糬的每一口/ }),
+    page.getByRole("heading", { name: /為麻糬的每一天/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: "購物車，0 件商品" }).click();
   await expect(page.getByText("目前購物袋內尚無商品。")).toBeVisible();

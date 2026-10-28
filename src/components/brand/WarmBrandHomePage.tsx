@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowRight, Calculator, Check, PawPrint } from "lucide-react";
+import { ArrowDown, ArrowRight, Calculator, Check } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCatalogStore } from "@/store/useCatalogStore";
@@ -33,23 +33,23 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
 
   return (
     <main id="main-content" className="public-editorial overflow-hidden bg-[#f8f4ed] text-[#302b26]">
-      <section className="border-b border-[#d9cec0]">
-        <div className="page-shell grid min-h-[690px] lg:grid-cols-[.92fr_1.08fr]">
-          <div className="relative z-10 flex flex-col justify-center py-16 lg:py-24 lg:pr-12">
-            <div className="flex items-center gap-3 text-[11px] font-semibold tracking-[.22em] text-[#946c52]"><span className="h-px w-9 bg-[#b67855]" /> PURESPOT JOURNAL · 01</div>
-            <h1 className="editorial-title mt-9 max-w-[660px] text-[clamp(3.5rem,7vw,7.4rem)] font-medium leading-[1.07] tracking-[-.08em]">{content.heroTitle}<br /><span className="text-[#a45f43]">{content.heroAccent}</span></h1>
-            <p className="mt-8 max-w-[510px] border-l border-[#b87956] pl-6 text-base leading-8 text-[#665c52] sm:text-lg">{content.heroDescription}</p>
+      <section className="brand-hero relative isolate overflow-hidden bg-[#28332d] text-[#fffaf0]">
+        <motion.div initial={{ scale: 1.06 }} animate={{ scale: 1 }} transition={{ duration: 1.4, ease: "easeOut" }} className="absolute inset-0">
+          <Image src={content.heroImage} alt={content.heroImageAlt} fill priority sizes="100vw" className="object-cover object-[62%_center]" />
+        </motion.div>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(24,33,27,.88)_0%,rgba(24,33,27,.66)_38%,rgba(24,33,27,.18)_78%)] max-sm:bg-[linear-gradient(0deg,rgba(24,33,27,.95)_0%,rgba(24,33,27,.62)_50%,rgba(24,33,27,.08)_100%)]" />
+        <div className="page-shell relative z-10 flex min-h-[760px] flex-col justify-between py-10 sm:min-h-[780px] sm:py-14">
+          <div className="flex items-center justify-between gap-5 border-b border-white/30 pb-5 text-[11px] font-semibold tracking-[.2em] text-[#f6e6d0]"><span>PURESPOT — THE EVERYDAY EDIT</span><span>01 / 04</span></div>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, delay: .15 }} className="max-w-[810px] py-12">
+            <p className="mb-6 flex items-center gap-3 text-xs font-medium tracking-[.28em] text-[#f4d4b7]"><span className="h-px w-9 bg-[#e6b995]" />{content.heroEyebrow}</p>
+            <h1 className="editorial-title max-w-[780px] text-[clamp(3.4rem,8vw,8.4rem)] font-medium leading-[1.02] tracking-[-.08em]">{content.heroTitle}<br /><span className="text-[#f4c19f]">{content.heroAccent}</span></h1>
+            <p className="mt-8 max-w-[510px] border-l-2 border-[#e9b68f] pl-5 text-base leading-8 text-[#f6ede2] sm:text-lg">{content.heroDescription}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/shop" className="editorial-action inline-flex min-h-12 items-center justify-center gap-3 bg-[#a96043] px-6 text-sm font-semibold text-white hover:bg-[#8e4d36]">{content.heroPrimaryLabel}<ArrowRight size={17} /></Link>
-              <button type="button" onClick={() => openCalculator(suggestedProduct?.id ?? null)} className="editorial-action inline-flex min-h-12 items-center justify-center gap-3 border border-[#cdbbae] px-6 text-sm font-semibold text-[#44392f] hover:border-[#a96043] hover:bg-white"><Calculator size={17} />{content.heroSecondaryLabel}</button>
+              <Link href="/shop" className="editorial-action inline-flex min-h-13 items-center justify-center gap-3 bg-[#d88358] px-7 text-sm font-semibold text-[#241e18] hover:bg-[#e9a074]">{content.heroPrimaryLabel}<ArrowRight size={17} /></Link>
+              {suggestedProduct ? <button type="button" onClick={() => openCalculator(suggestedProduct.id)} className="editorial-action inline-flex min-h-13 items-center justify-center gap-3 border border-white/65 px-6 text-sm font-semibold text-white hover:bg-white/10"><Calculator size={17} />{content.heroSecondaryLabel}</button> : <Link href="/shop" className="editorial-action inline-flex min-h-13 items-center justify-center gap-3 border border-white/65 px-6 text-sm font-semibold text-white hover:bg-white/10">看看適合的選物 <ArrowRight size={17} /></Link>}
             </div>
-            <a href="#our-approach" className="mt-14 inline-flex w-fit items-center gap-2 text-xs font-medium text-[#806f5f] hover:text-[#a96043]">往下認識我們 <ArrowDown size={14} /></a>
-          </div>
-          <div className="relative min-h-[420px] lg:-mr-[max(1.5rem,calc((100vw-1320px)/2))]">
-            <Image src={content.heroImage} alt={content.heroImageAlt} fill priority sizes="(max-width:1024px) 100vw,54vw" className="object-cover object-center" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#302b26]/35 via-transparent to-transparent" />
-            <div className="absolute bottom-7 left-7 right-7 flex max-w-[360px] items-center gap-3 border border-white/70 bg-[#f8f4ed]/95 px-5 py-4 shadow-[0_18px_36px_-26px_#2d211b] backdrop-blur-sm sm:left-10"><PawPrint size={22} className="shrink-0 text-[#a96043]" /><div className="min-w-0"><p className="text-xs text-[#806d5e]">為 {pet.name} 留一份剛剛好的照顧</p><p className="truncate text-sm font-semibold">{suggestedProduct?.name ?? "從認識毛孩開始"}</p></div></div>
-          </div>
+          </motion.div>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/30 pt-5 text-xs tracking-wide text-[#f3e6d9]"><span>陪牠生活的每一天，都值得認真對待。</span><a href="#our-approach" className="inline-flex items-center gap-2 hover:text-[#ffcba8]">往下探索 <ArrowDown size={15} /></a></div>
         </div>
       </section>
 
@@ -60,8 +60,8 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
 
       <section className="bg-[#e7e2d7] py-20 lg:py-28">
         <div className="page-shell grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-24">
-          <div className="relative min-h-[520px] overflow-hidden bg-[#d4c9bb]"><Image src={featured?.image ?? "/images/salmon-cat.png"} alt={featured?.name ?? "PURESPOT 主食包裝"} fill sizes="(max-width:1024px) 100vw,50vw" className="object-cover" /><div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#24221f]/75 to-transparent p-7 pt-24 text-white"><p className="text-xs tracking-[.2em]">FEATURED RECIPE</p><p className="mt-2 text-xl font-semibold">{featured?.name ?? "精選配方"}</p></div></div>
-          <motion.div {...reveal}><span className="editorial-kicker">02 / THE EVERYDAY RITUAL</span><h2 className="editorial-title mt-5 text-4xl font-medium leading-[1.3] tracking-[-.055em] sm:text-5xl">好好吃飯，是每天都做得到的愛。</h2><p className="mt-7 max-w-lg text-base leading-8 text-[#675e53]">從成分、份量到補貨節奏，讓每一次選擇都更有把握。先看清楚，再選適合 {pet.name} 的那一包。</p><div className="mt-9 border-y border-[#bfb3a5] py-5"><div className="flex items-center justify-between gap-5 text-sm"><span className="text-[#74695e]">今日精選</span><strong>{featured?.name ?? "主食選物"}</strong></div><div className="mt-3 flex items-center justify-between gap-5 text-sm"><span className="text-[#74695e]">規格與價格</span><strong>{featured ? `${featured.bagGrams}g · ${money(featured.priceNt)}` : "前往商城查看"}</strong></div></div><Link href={featured ? `/products/${featured.slug}` : "/shop"} className="editorial-action mt-8 inline-flex min-h-12 items-center gap-3 bg-[#302b26] px-6 text-sm font-semibold text-white hover:bg-[#53453a]">查看商品與配方 <ArrowRight size={17} /></Link></motion.div>
+          <div className="relative min-h-[520px] overflow-hidden bg-[#d4c9bb]"><Image src={content.shopImage} alt="毛孩居家選物情境" fill sizes="(max-width:1024px) 100vw,50vw" className="object-cover transition-transform duration-700 hover:scale-[1.03]" /><div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#24221f]/75 to-transparent p-7 pt-24 text-white"><p className="text-xs tracking-[.2em]">THE DAILY SELECTION</p><p className="mt-2 text-xl font-semibold">吃飯、玩耍與休息，都有好選擇。</p></div></div>
+          <motion.div {...reveal}><span className="editorial-kicker">02 / THE EVERYDAY RITUAL</span><h2 className="editorial-title mt-5 text-4xl font-medium leading-[1.3] tracking-[-.055em] sm:text-5xl">從一餐飯，到一個安心的角落。</h2><p className="mt-7 max-w-lg text-base leading-8 text-[#675e53]">吃得好、玩得開心、在家自在休息。從適用動物、價格到商品細節，把每一次選擇都整理得更清楚。</p><div className="mt-9 border-y border-[#bfb3a5] py-5"><div className="flex items-center justify-between gap-5 text-sm"><span className="text-[#74695e]">今日精選</span><strong>{featured?.name ?? "主食選物"}</strong></div><div className="mt-3 flex items-center justify-between gap-5 text-sm"><span className="text-[#74695e]">規格與價格</span><strong>{featured ? `${featured.bagGrams}g · ${money(featured.priceNt)}` : "前往商城查看"}</strong></div></div><Link href={featured ? `/products/${featured.slug}` : "/shop"} className="editorial-action mt-8 inline-flex min-h-12 items-center gap-3 bg-[#302b26] px-6 text-sm font-semibold text-white hover:bg-[#53453a]">查看商品詳情 <ArrowRight size={17} /></Link></motion.div>
         </div>
       </section>
 
@@ -74,7 +74,7 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
 
       <section className="bg-[#3c483b] py-20 text-[#f7f3e9] lg:py-24"><div className="page-shell flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between"><div><span className="text-xs font-semibold tracking-[.22em] text-[#d2bd9e]">THE 7C PERSPECTIVE</span><h2 className="editorial-title mt-5 max-w-2xl text-4xl font-medium leading-[1.25] sm:text-5xl">每一份安心，都應該有資訊可以對照。</h2></div><Link href="/transparency" className="editorial-action inline-flex min-h-12 w-fit items-center gap-3 border border-[#d5c7ad] px-6 text-sm font-semibold text-[#f7f3e9] hover:bg-white/10">查看透明資訊 <ArrowRight size={17} /></Link></div><div className="page-shell mt-12 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/20 pt-7 text-sm text-[#e3e3d8]">{["成分", "營養", "批次", "適配提醒"].map((item) => <span key={item} className="inline-flex items-center gap-2"><Check size={14} className="text-[#d6bfa3]" />{item}</span>)}</div></section>
 
-      <section className="page-shell grid gap-8 py-20 sm:py-28 lg:grid-cols-[1fr_auto] lg:items-end"><motion.div {...reveal}><span className="editorial-kicker">BEGIN WITH ONE GOOD CHOICE</span><h2 className="editorial-title mt-5 text-4xl font-medium leading-[1.3] tracking-[-.055em] sm:text-5xl">{content.finalTitle}</h2><p className="mt-5 max-w-xl leading-8 text-[#71675c]">{content.finalDescription}</p></motion.div><button type="button" onClick={() => openCalculator(suggestedProduct?.id ?? null)} className="editorial-action inline-flex min-h-12 w-fit items-center gap-3 bg-[#a96043] px-6 text-sm font-semibold text-white hover:bg-[#8e4d36]"><Calculator size={17} />開始配糧試算 <ArrowRight size={17} /></button></section>
+      <section className="page-shell grid gap-8 py-20 sm:py-28 lg:grid-cols-[1fr_auto] lg:items-end"><motion.div {...reveal}><span className="editorial-kicker">BEGIN WITH ONE GOOD CHOICE</span><h2 className="editorial-title mt-5 text-4xl font-medium leading-[1.3] tracking-[-.055em] sm:text-5xl">{content.finalTitle}</h2><p className="mt-5 max-w-xl leading-8 text-[#71675c]">{content.finalDescription}</p></motion.div>{suggestedProduct ? <button type="button" onClick={() => openCalculator(suggestedProduct.id)} className="editorial-action inline-flex min-h-12 w-fit items-center gap-3 bg-[#a96043] px-6 text-sm font-semibold text-white hover:bg-[#8e4d36]"><Calculator size={17} />開始配糧試算 <ArrowRight size={17} /></button> : <Link href="/shop" className="editorial-action inline-flex min-h-12 w-fit items-center gap-3 bg-[#a96043] px-6 text-sm font-semibold text-white hover:bg-[#8e4d36]">探索商城 <ArrowRight size={17} /></Link>}</section>
     </main>
   );
 }

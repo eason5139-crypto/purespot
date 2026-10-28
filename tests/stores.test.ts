@@ -1,6 +1,8 @@
 import { beforeEach, describe, it, expect } from "vitest";
 import { usePetContextStore } from "../src/store/usePetContextStore";
 import { useCartStore } from "../src/store/useCartStore";
+import { useFavoritesStore } from "../src/store/useFavoritesStore";
+import { useCompareStore } from "../src/store/useCompareStore";
 import { initialPets, products } from "../src/lib/catalog";
 import { matchProduct } from "../src/lib/matching";
 import { cartTotals } from "../src/lib/cart";
@@ -17,8 +19,23 @@ beforeEach(() => {
     activePetId: "pet-mochi",
   });
   useCartStore.setState({ items: [] });
+  useFavoritesStore.setState({ ids: [] });
+  useCompareStore.getState().clear();
 });
 describe("毛孩與購物袋的狀態邊界", () => {
+  it("收藏可加入與移除，比較最多三款且不重複", () => {
+    useFavoritesStore.getState().toggle("salmon-cat");
+    expect(useFavoritesStore.getState().ids).toEqual(["salmon-cat"]);
+    useFavoritesStore.getState().toggle("salmon-cat");
+    expect(useFavoritesStore.getState().ids).toEqual([]);
+    const compare = useCompareStore.getState();
+    expect(compare.add("salmon-cat")).toBe(true);
+    expect(compare.add("salmon-cat")).toBe(true);
+    expect(compare.add("chicken-cat")).toBe(true);
+    expect(compare.add("chicken-dog")).toBe(true);
+    expect(compare.add("beef-dog")).toBe(false);
+    expect(useCompareStore.getState().ids).toHaveLength(3);
+  });
   it("切換不存在的毛孩不污染狀態", () => {
     usePetContextStore.getState().setActivePet("missing");
     expect(usePetContextStore.getState().activePetId).toBe("pet-mochi");

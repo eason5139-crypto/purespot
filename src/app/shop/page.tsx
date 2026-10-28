@@ -4,7 +4,7 @@ import { readSiteContent } from "@/server/siteContentRepository";
 
 export const metadata: Metadata = {
   title: "精品商城｜PURESPOT",
-  description: "依毛孩資料查看主食適配提示，搜尋成分、篩選有貨商品並比較售價與營養資訊。",
+  description: "探索貓、狗、倉鼠與兔兔的食物和用品，依種類、價格與收藏篩選，並排比較商品資訊。",
 };
 
 export default async function ShopPage() {

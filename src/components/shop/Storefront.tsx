@@ -12,21 +12,25 @@ import {
   PawPrint,
   CircleHelp,
   ArrowUpRight,
+  Heart,
 } from "lucide-react";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
 import { ugcPosts } from "@/lib/catalog";
 import { shopCategories } from "@/lib/productCategories";
 import { useCatalogStore } from "@/store/useCatalogStore";
+import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { decimal, money } from "@/lib/utils";
 import { petLabels, supportsFoodCalculator, type PetType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "./ProductCard";
+import { ProductComparison } from "./ProductComparison";
 import type { SiteContent } from "@/lib/siteContent";
 export function Storefront({ content }: { content: SiteContent }) {
   const products = useCatalogStore((s) => s.products);
+  const favorites = useFavoritesStore((s) => s.ids);
   const pet = useActivePet();
   const edit = useUiStore((s) => s.setPetEditorOpen);
   const openCalc = useUiStore((s) => s.openCalculator);
@@ -37,6 +41,8 @@ export function Storefront({ content }: { content: SiteContent }) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"fit" | "price-asc" | "price-desc" | "name">("fit");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [priceCeiling, setPriceCeiling] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(8);
   const counts = new Map<string, number>();
   for (const product of products) counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
@@ -70,6 +76,8 @@ export function Storefront({ content }: { content: SiteContent }) {
             : p.type === species) &&
         (kind === "all" || (p.kind ?? "FOOD") === kind) &&
         (productCategory === "all" || p.category === productCategory) &&
+        (!favoritesOnly || favorites.includes(p.id)) &&
+        (priceCeiling === null || p.priceNt <= priceCeiling) &&
         `${p.name}${p.subtitle}${p.category}${p.ingredients.join("")}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()) &&
         (!inStockOnly || p.stock > 0),
     )
@@ -96,30 +104,30 @@ export function Storefront({ content }: { content: SiteContent }) {
         </button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_330px]">
-        <section className="hero-panel relative min-h-[365px] overflow-hidden bg-[#e9e2d6] text-[#302b26]">
+        <section className="hero-panel relative min-h-[425px] overflow-hidden bg-[#303a31] text-[#fffaf2]">
           <Image
             src={content.shopImage}
-            alt="毛孩享用餐點的品牌情境示意"
+            alt="貓與兔兔在家中探索食物和用品的生活場景"
             fill
             priority
             sizes="(max-width:1024px) 100vw,70vw"
-            className="object-cover object-[75%_center] opacity-60 lg:opacity-100"
+            className="object-cover object-[75%_center]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#e9e2d6_0%,#e9e2d6ef_36%,#e9e2d6a6_64%,#e9e2d600_100%)]" />
-          <div className="relative z-10 flex h-full max-w-[560px] flex-col justify-center p-7 sm:p-10">
-            <div className="editorial-kicker mb-5">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(27,43,36,.95)_0%,rgba(27,43,36,.78)_38%,rgba(27,43,36,.08)_100%)]" />
+          <div className="relative z-10 flex h-full max-w-[590px] flex-col justify-center p-8 sm:p-11">
+            <div className="mb-5 text-xs font-semibold tracking-[.2em] text-[#e9c5a5]">
               {content.shopBadge}
             </div>
-            <h1 className="editorial-title text-[clamp(2.5rem,4vw,4.2rem)] leading-[1.15] tracking-[-.06em]">
-              為{pet.name}的每一口，
+            <h1 className="editorial-title text-[clamp(2.5rem,4.5vw,4.8rem)] leading-[1.12] tracking-[-.06em]">
+              為{pet.name}的每一天，
               <br />
-              <span className="text-[#9c5b43]">{content.shopTitleAccent}</span>
+              <span className="text-[#e9b08c]">{content.shopTitleAccent}</span>
             </h1>
-            <p className="mt-5 max-w-[330px] text-sm leading-7 text-[#665b50]">
+            <p className="mt-5 max-w-[360px] text-sm leading-7 text-[#f5eade]">
               {content.shopDescription}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button type="button" className="editorial-action min-h-11 bg-[#955a42] px-5 text-sm font-semibold text-white hover:bg-[#7e4833]"
+              <button type="button" className="editorial-action min-h-11 bg-[#d9865d] px-5 text-sm font-semibold text-[#261e19] hover:bg-[#ecaa84]"
                 onClick={() =>
                   document
                     .getElementById("products")
@@ -128,7 +136,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               >
                 探索專屬選物
               </button>
-              <button type="button" className="editorial-action inline-flex min-h-11 items-center gap-2 border border-[#b5a494] px-5 text-sm font-semibold text-[#4b4036] hover:bg-white/70"
+              <button type="button" className="editorial-action inline-flex min-h-11 items-center gap-2 border border-[#f4e8d8]/70 px-5 text-sm font-semibold text-[#fff9ee] hover:bg-white/10"
                 onClick={() =>
                   recommended ? openCalc(recommended.id) : edit(true)
                 }
@@ -139,7 +147,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             </div>
           </div>
         </section>
-        <section className="relative flex flex-col justify-between border border-[#d9cbbd] bg-[#f1ebe2] p-6">
+        {supportsFoodCalculator(pet.type) ? <section className="relative flex flex-col justify-between border border-[#d9cbbd] bg-[#f1ebe2] p-6">
           <div>
             <div className="flex items-center justify-between">
               <span className="editorial-kicker">今日營養提案</span>
@@ -197,7 +205,10 @@ export function Storefront({ content }: { content: SiteContent }) {
               <Button onClick={() => edit(true)}>檢查毛孩資料</Button>
             </div>
           )}
-        </section>
+        </section> : <section className="relative flex flex-col justify-between border border-[#c4d0bf] bg-[#e7eee4] p-7">
+          <div><p className="text-xs font-semibold tracking-[.18em] text-[#59715c]">A LITTLE LIFE, FULL OF JOY</p><h2 className="editorial-title mt-5 text-3xl leading-tight text-[#334737]">{pet.name}的日常，<br />從喜歡的事開始。</h2><p className="mt-5 text-sm leading-7 text-[#5c705e]">食物、玩具與舒適的小空間，為{petLabels[pet.type]}慢慢挑。食量資訊請以實品標示及專業建議為準。</p></div>
+          <button type="button" className="editorial-action mt-8 min-h-11 bg-[#3d5944] px-5 text-sm font-semibold text-white hover:bg-[#294233]" onClick={() => { setSpecies(pet.type); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }}>看{pet.name}的選物 <ArrowUpRight size={15} className="ml-1 inline" /></button>
+        </section>}
       </div>
       <div className="my-9 grid grid-cols-1 divide-y divide-[#d9cbbd] border-y border-[#d9cbbd] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {[
@@ -232,34 +243,35 @@ export function Storefront({ content }: { content: SiteContent }) {
           </div>
         ))}
       </div>
-      <section className="mb-12" aria-labelledby="category-heading">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <section className="mb-16 border-t border-[#cbbdb0] pt-12" aria-labelledby="category-heading">
+        <div className="grid gap-8 lg:grid-cols-[minmax(270px,.8fr)_minmax(0,1.2fr)] lg:gap-16">
           <div>
             <p className="editorial-kicker">THE COLLECTION / 依喜好慢慢挑</p>
-            <h2 id="category-heading" className="editorial-title mt-2 text-3xl sm:text-4xl">{catalogCategories.length} 種吃喝玩用，陪牠好好生活。</h2>
+            <h2 id="category-heading" className="editorial-title mt-4 max-w-md text-4xl leading-[1.2] sm:text-5xl">把每一天，<br /><em className="font-normal text-[#a35f44]">過成牠喜歡的樣子。</em></h2>
+            <p className="mt-5 max-w-md text-sm leading-7 text-[#71675c]">從一餐飯到一件玩具，{catalogCategories.length} 個主題裡，慢慢找到適合你們的日常。</p>
+            <div className="relative mt-8 hidden aspect-[4/5] max-w-[480px] overflow-hidden bg-[#d5c8b7] lg:block"><Image src="/images/editorial/small-friends-v2.png" alt="倉鼠與兔兔在家中的生活片刻" fill sizes="40vw" className="object-cover transition-transform duration-700 hover:scale-[1.03]" /><span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#202c27]/75 to-transparent px-6 pb-5 pt-20 text-xs tracking-[.18em] text-white">SMALL MOMENTS, BIG LOVE</span></div>
           </div>
-          <button type="button" onClick={() => { setProductCategory("all"); setKind("all"); setSpecies("all"); setVisibleCount(8); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">
-            看全部 {products.length} 款 <ArrowUpRight size={16} />
-          </button>
-        </div>
-        <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="食物或用品">
-          {([ ["all", "全部分類"], ["FOOD", "食物與點心"], ["SUPPLIES", "用品與玩具"] ] as const).map(([value, label]) => (
-            <button key={value} type="button" aria-pressed={kind === value} onClick={() => { setKind(value); setProductCategory("all"); setVisibleCount(8); }} className={`rounded-full border px-5 py-2 text-sm transition-all hover:-translate-y-0.5 ${kind === value ? "border-[#925a43] bg-[#925a43] text-white" : "border-[#cbb9a7] bg-[#fffaf4] text-[#655244]"}`}>{label}</button>
-          ))}
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {catalogCategories.filter((name) => kind === "all" || (shopCategories.find((item) => item.name === name)?.kind ?? (products.find((p) => p.category === name)?.kind ?? "FOOD")) === kind).map((name) => {
-            const info = shopCategories.find((item) => item.name === name) ?? { name, english: "MORE TO EXPLORE", description: "探索更多日常選物。", tint: "#e8e1d8" };
-            const selected = productCategory === name;
-            return (
-              <button key={name} type="button" aria-pressed={selected} onClick={() => { setProductCategory(selected ? "all" : name); setVisibleCount(8); document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className={`group relative flex min-h-40 flex-col items-start overflow-hidden border p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-22px_#594a3f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9c6048] ${selected ? "border-[#9c6048] ring-1 ring-[#9c6048]" : "border-[#d6c9bc] hover:border-[#b7957e]"}`} style={{ backgroundColor: info.tint }}>
-                <span className="text-[10px] font-semibold tracking-[.18em] text-[#746254]">{info.english}</span>
-                <strong className="editorial-title mt-4 text-2xl text-[#352c27]">{name}</strong>
-                <span className="mt-2 text-xs leading-5 text-[#6d6158]">{info.description}</span>
-                <span className="mt-auto flex w-full items-center justify-between pt-4 text-xs font-semibold text-[#7d5140]">{counts.get(name)} 款選品 <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
-              </button>
-            );
-          })}
+          <div>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="食物或用品">
+                {([ ["all", "全部"], ["FOOD", "食物"], ["SUPPLIES", "用品"] ] as const).map(([value, label]) => (
+                  <button key={value} type="button" aria-pressed={kind === value} onClick={() => { setKind(value); setProductCategory("all"); setVisibleCount(8); }} className={`min-h-11 rounded-full border px-5 text-sm transition-all ${kind === value ? "border-[#3e4c3c] bg-[#3e4c3c] text-white" : "border-[#cbb9a7] text-[#655244] hover:border-[#7a8a70]"}`}>{label}</button>
+                ))}
+              </div>
+              <button type="button" onClick={() => { setProductCategory("all"); setKind("all"); setSpecies("all"); setVisibleCount(8); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">看全部 {products.length} 款 <ArrowUpRight size={16} /></button>
+            </div>
+            <div className="grid gap-x-7 sm:grid-cols-2">
+              {catalogCategories.filter((name) => kind === "all" || (shopCategories.find((item) => item.name === name)?.kind ?? (products.find((p) => p.category === name)?.kind ?? "FOOD")) === kind).map((name, index) => {
+                const info = shopCategories.find((item) => item.name === name) ?? { name, english: "MORE TO EXPLORE", description: "探索更多日常選物。", tint: "#e8e1d8" };
+                const selected = productCategory === name;
+                return <button key={name} type="button" aria-pressed={selected} onClick={() => { setProductCategory(selected ? "all" : name); setVisibleCount(8); document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className={`group flex min-h-28 items-center gap-4 border-b py-5 text-left transition-colors hover:border-[#9a7157] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9c6048] ${selected ? "border-[#955a42] text-[#955a42]" : "border-[#d5c8ba] text-[#302b26]"}`}>
+                  <span className="self-start pt-1 font-mono text-xs text-[#a38672]">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="min-w-0 flex-1"><strong className="editorial-title block text-[1.55rem] leading-tight group-hover:text-[#9a6046]">{name}</strong><span className="mt-2 block text-xs leading-5 text-[#807266]">{info.description}</span></span>
+                  <span className="flex shrink-0 flex-col items-end gap-2 text-xs text-[#97775f]"><ArrowUpRight size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />{counts.get(name)} 款</span>
+                </button>;
+              })}
+            </div>
+          </div>
         </div>
       </section>
       <section id="products" className="scroll-mt-32">
@@ -309,6 +321,10 @@ export function Storefront({ content }: { content: SiteContent }) {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button type="button" aria-pressed={favoritesOnly} onClick={() => { setFavoritesOnly((value) => !value); setVisibleCount(8); }} className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${favoritesOnly ? "border-[#a96043] bg-[#f9e5d9] text-[#934d34]" : "border-[#d6c7b8] text-[#76685d] hover:bg-[#fffaf4]"}`}><Heart size={15} fill={favoritesOnly ? "currentColor" : "none"} />我的收藏 {favorites.length}</button>
+            <label className="flex items-center gap-2 text-xs text-[#806c60]">價格
+              <select aria-label="價格範圍" value={priceCeiling ?? "all"} onChange={(event) => { setPriceCeiling(event.target.value === "all" ? null : Number(event.target.value)); setVisibleCount(8); }} className="min-h-10 rounded-lg border border-[#d6c7b8] bg-white px-2 text-sm text-[#3b2b24]"><option value="all">不限</option><option value="300">$300 以下</option><option value="500">$500 以下</option><option value="1000">$1,000 以下</option><option value="1500">$1,500 以下</option></select>
+            </label>
             <label className="flex items-center gap-2 text-xs text-slate-400">
               <input type="checkbox" checked={inStockOnly} onChange={(event) => { setInStockOnly(event.target.checked); setVisibleCount(8); }} />
               只看有貨
@@ -343,6 +359,8 @@ export function Storefront({ content }: { content: SiteContent }) {
                 setKind("all");
                 setProductCategory("all");
                 setInStockOnly(false);
+                setFavoritesOnly(false);
+                setPriceCeiling(null);
                 setSort("fit");
                 setVisibleCount(8);
               }}
@@ -406,6 +424,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         </div>
       </section>
       </div>
+      <ProductComparison products={products} />
     </main>
   );
 }

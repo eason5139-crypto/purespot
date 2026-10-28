@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Calculator, ChevronRight, ExternalLink, Repeat2, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ArrowRight, Calculator, ChevronRight, ExternalLink, Repeat2, ShieldCheck, ShoppingBag, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { NutritionalTrendChart } from "@/components/analytics/NutritionalTrendChart";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
+import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { matchProduct } from "@/lib/matching";
 import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
@@ -25,6 +26,8 @@ export function ProductDetail({ product }: { product: Product }) {
   const openCart = useUiStore((state) => state.setCartOpen);
   const openPetEditor = useUiStore((state) => state.setPetEditorOpen);
   const openCalculator = useUiStore((state) => state.openCalculator);
+  const isFavorite = useFavoritesStore((state) => state.ids.includes(product.id));
+  const toggleFavorite = useFavoritesStore((state) => state.toggle);
   const available = product.stock > 0 && fit.safe;
 
   function addOnce() {
@@ -91,6 +94,7 @@ export function ProductDetail({ product }: { product: Product }) {
               {canCalculate && <button type="button" disabled={!fit.safe} onClick={() => openCalculator(product.id)} className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 border border-[#9e8d7c] px-5 text-sm font-semibold text-[#4e443a] hover:bg-[#ebe3d8] disabled:cursor-not-allowed disabled:opacity-45"><Calculator size={17} />試算每日份量</button>}
               {!canCalculate && <Link href="/shop" className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 border border-[#9e8d7c] px-5 text-sm font-semibold text-[#4e443a] hover:bg-[#ebe3d8]">繼續逛逛選物 <ArrowRight size={17} /></Link>}
             </div>
+            <button type="button" aria-pressed={isFavorite} onClick={() => { toggleFavorite(product.id); toast.success(isFavorite ? "已移除收藏" : "已加入收藏"); }} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#795340] underline underline-offset-4"><Heart size={17} fill={isFavorite ? "currentColor" : "none"} />{isFavorite ? "已收藏這件選物" : "收藏這件選物"}</button>
             {product.autoshipEligible && <Link href="/autoship" className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-[#795340] underline underline-offset-4"><Repeat2 size={16} />了解定期配送 <ArrowRight size={15} /></Link>}
 
             {canCalculate && <div className="mt-10 grid grid-cols-3 divide-x divide-[#d9cfc3] border-y border-[#d9cfc3] py-5 text-center">

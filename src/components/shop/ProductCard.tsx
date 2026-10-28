@@ -3,11 +3,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShieldCheck, TriangleAlert, Plus, FlaskConical } from "lucide-react";
+import { ShieldCheck, TriangleAlert, Plus, FlaskConical, Heart, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
+import { useFavoritesStore } from "@/store/useFavoritesStore";
+import { useCompareStore } from "@/store/useCompareStore";
 import { matchProduct } from "@/lib/matching";
 import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
@@ -20,6 +22,11 @@ export function ProductCard({ product }: { product: Product }) {
   const canCalculate = product.kind !== "SUPPLIES" && supportsFoodCalculator(product.type) && product.kcalPer100g > 0;
   const add = useCartStore((s) => s.addItem);
   const calculator = useUiStore((s) => s.openCalculator);
+  const isFavorite = useFavoritesStore((s) => s.ids.includes(product.id));
+  const toggleFavorite = useFavoritesStore((s) => s.toggle);
+  const isCompared = useCompareStore((s) => s.ids.includes(product.id));
+  const addCompare = useCompareStore((s) => s.add);
+  const removeCompare = useCompareStore((s) => s.remove);
   function addToCart() {
     try {
       add({
@@ -37,8 +44,8 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <motion.article
       layout
-      whileHover={{ y: -3 }}
-      className="product-card group relative overflow-hidden border border-[#d9cbbd] bg-[#fffdf9] transition-all hover:border-[#a96e51] hover:shadow-[0_18px_36px_-28px_#735646]"
+      whileHover={{ y: -5 }}
+      className="product-card group relative overflow-hidden border border-[#d9cbbd] bg-[#fffdf9] transition-all duration-300 hover:border-[#a96e51] hover:shadow-[0_22px_45px_-29px_#735646]"
     >
       <div className="relative aspect-[1.02] overflow-hidden bg-[#ede6dc]">
         <Link
@@ -77,6 +84,7 @@ export function ProductCard({ product }: { product: Product }) {
         <span className="absolute bottom-2 right-3 bg-[#f8f4ed]/80 px-1 text-[10px] text-[#766c62]">
           概念包裝示意
         </span>
+        <button type="button" aria-label={isFavorite ? `取消收藏${product.name}` : `收藏${product.name}`} aria-pressed={isFavorite} onClick={() => { toggleFavorite(product.id); toast.success(isFavorite ? "已移除收藏" : "已加入收藏"); }} className={`absolute bottom-3 left-3 flex size-11 items-center justify-center rounded-full border bg-[#fffaf4]/95 shadow-sm transition-transform hover:scale-105 ${isFavorite ? "border-[#ab6c51] text-[#a65a3f]" : "border-[#dfd0c0] text-[#705f51]"}`}><Heart size={19} fill={isFavorite ? "currentColor" : "none"} /></button>
       </div>
       <div className="p-5">
         <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
@@ -122,6 +130,7 @@ export function ProductCard({ product }: { product: Product }) {
             <Plus />
           </Button>
         </div>
+        <button type="button" aria-pressed={isCompared} onClick={() => { if (isCompared) { removeCompare(product.id); return; } if (!addCompare(product.id)) toast.error("最多比較 3 款商品"); }} className="mt-3 inline-flex min-h-9 items-center gap-1.5 text-xs font-medium text-[#856650] underline-offset-4 hover:text-[#9b563b] hover:underline"><Scale size={15} />{isCompared ? "已加入比較 · 點擊移除" : "加入商品比較"}</button>
       </div>
     </motion.article>
   );
