@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Cat,
   Dog,
+  PawPrint,
   ChevronDown,
   ShoppingBag,
   Check,
@@ -50,7 +51,7 @@ export function Navbar({ announcement }: { announcement: string }) {
   const setAuthOpen = useUiStore((s) => s.setAuthOpen);
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const PetIcon = pet.type === "CAT" ? Cat : Dog;
+  const PetIcon = pet.type === "CAT" ? Cat : pet.type === "DOG" ? Dog : PawPrint;
   return (
     <header className={`sticky top-0 z-40 border-b backdrop-blur-xl ${light ? "border-[#eadbcb] bg-[#fffaf3]/95" : "border-[#f4a261]/10 bg-[#1b110d]/92"}`}>
       <div className={`flex h-8 items-center justify-center gap-2 border-b px-3 text-xs tracking-wide ${light ? "border-[#eadbcb] bg-[#f5e9dc] text-[#95684e]" : "border-[#f4a261]/10 bg-[#f4a261]/7 text-[#f7c9a7]"}`}>
@@ -128,7 +129,7 @@ export function Navbar({ announcement }: { announcement: string }) {
             <DropdownMenuContent align="end">
               {pets.map((p) => (
                 <DropdownMenuItem key={p.id} onSelect={() => setActive(p.id)}>
-                  {p.type === "CAT" ? <Cat size={20} /> : <Dog size={20} />}
+                  {p.type === "CAT" ? <Cat size={20} /> : p.type === "DOG" ? <Dog size={20} /> : <PawPrint size={20} />}
                   <span className="flex-1">
                     {p.name}
                     <span className="ml-2 text-xs text-slate-400">

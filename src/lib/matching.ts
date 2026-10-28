@@ -1,4 +1,4 @@
-import type { ActivePet, Product } from "./types";
+import { petLabels, type ActivePet, type Product } from "./types";
 export function matchProduct(product: Product, pet: ActivePet) {
   const conflicts = pet.allergies.filter((allergen) =>
     product.allergens.includes(allergen),
@@ -7,11 +7,11 @@ export function matchProduct(product: Product, pet: ActivePet) {
     pet.ageMonths < 12 ? "JUNIOR" : pet.ageMonths >= 84 ? "SENIOR" : "ADULT";
   const sameSpecies = product.type === pet.type;
   const sameStage = product.lifeStages.includes(stage);
-  const safe = sameSpecies && sameStage && conflicts.length === 0;
+  const safe = sameSpecies && (product.kind === "SUPPLIES" || (sameStage && conflicts.length === 0));
   const label = !sameSpecies
-    ? product.type === "CAT"
-      ? "貓咪專用"
-      : "狗狗專用"
+    ? `${petLabels[product.type]}適用`
+    : product.kind === "SUPPLIES"
+      ? `適合${pet.name}的生活用品`
     : conflicts.length
       ? `過敏原警示：${conflicts.join("、")}`
       : !sameStage

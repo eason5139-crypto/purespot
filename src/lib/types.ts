@@ -2,9 +2,9 @@ import { z } from "zod";
 export const petSchema = z.object({
   id: z.string().min(1).max(100),
   name: z.string().trim().min(1, "請填寫毛孩名稱").max(24),
-  type: z.enum(["CAT", "DOG"]),
+  type: z.enum(["CAT", "DOG", "HAMSTER", "RABBIT"]),
   breed: z.string().max(40),
-  weightKg: z.number().finite().min(0.5).max(90),
+  weightKg: z.number().finite().min(0.02).max(90),
   ageMonths: z.number().int().min(1).max(360),
   isNeutered: z.boolean(),
   activityLevel: z.enum(["SEDENTARY", "MODERATE", "HIGH", "ATHLETIC"]),
@@ -14,6 +14,8 @@ export const petSchema = z.object({
 });
 export type ActivePet = z.infer<typeof petSchema>;
 export type PetType = ActivePet["type"];
+export const petLabels: Record<PetType, string> = { CAT: "貓咪", DOG: "狗狗", HAMSTER: "倉鼠", RABBIT: "兔兔" };
+export const supportsFoodCalculator = (type: PetType) => type === "CAT" || type === "DOG";
 export type ActivityLevel = ActivePet["activityLevel"];
 export interface BatchRecord {
   date: string;
@@ -28,6 +30,7 @@ export interface Product {
   name: string;
   subtitle: string;
   type: PetType;
+  kind?: "FOOD" | "SUPPLIES";
   category: string;
   lifeStages: ("JUNIOR" | "ADULT" | "SENIOR")[];
   ingredients: string[];

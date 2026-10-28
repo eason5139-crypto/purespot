@@ -34,6 +34,7 @@ async function seed() {
         allergens: product.allergens,
         lifeStages: product.lifeStages,
         guaranteedAnalysis: {
+          kind: product.kind ?? "FOOD",
           kcalPer100g: product.kcalPer100g,
           proteinMin: product.proteinMin,
           moistureMax: product.moistureMax,

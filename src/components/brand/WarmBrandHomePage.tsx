@@ -22,7 +22,7 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
   const products = useCatalogStore((state) => state.products);
   const pet = useActivePet();
   const openCalculator = useUiStore((state) => state.openCalculator);
-  const suggestedProduct = products.find((product) => matchProduct(product, pet).safe);
+  const suggestedProduct = products.find((product) => product.kind !== "SUPPLIES" && product.autoshipEligible && matchProduct(product, pet).safe);
   const featured = products.find((product) => product.stock > 0);
   const benefits = [
     [content.benefit1Title, content.benefit1Text],

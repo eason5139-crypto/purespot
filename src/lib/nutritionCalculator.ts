@@ -30,6 +30,8 @@ export function calculatePetNutrition(
   bagGrams = 2000,
   bagPriceNt = 980,
 ): NutritionResult {
+  if (input.petType !== "CAT" && input.petType !== "DOG")
+    throw new Error("倉鼠與兔兔的食量需依實際產品及獸醫建議，暫不提供自動試算");
   if (
     ![
       input.weightKg,

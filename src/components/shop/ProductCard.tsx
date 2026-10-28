@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldCheck, TriangleAlert, Plus, FlaskConical } from "lucide-react";
@@ -10,10 +11,13 @@ import { useUiStore } from "@/store/useUiStore";
 import { matchProduct } from "@/lib/matching";
 import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
+import { petLabels, supportsFoodCalculator } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 export function ProductCard({ product }: { product: Product }) {
+  const router = useRouter();
   const pet = useActivePet();
   const fit = matchProduct(product, pet);
+  const canCalculate = product.kind !== "SUPPLIES" && supportsFoodCalculator(product.type) && product.kcalPer100g > 0;
   const add = useCartStore((s) => s.addItem);
   const calculator = useUiStore((s) => s.openCalculator);
   function addToCart() {
@@ -51,7 +55,7 @@ export function ProductCard({ product }: { product: Product }) {
         </Link>
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-1">
           <span className="bg-[#f8f4ed]/95 px-2 py-1 text-xs font-medium text-[#6b5547]">
-            {product.type === "CAT" ? "貓咪" : "狗狗"}
+            {petLabels[product.type]} · {product.kind === "SUPPLIES" ? "用品" : "食物"}
           </span>
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
@@ -79,10 +83,10 @@ export function ProductCard({ product }: { product: Product }) {
           <span>
             {packageSize(product.bagGrams)} · {product.category}
           </span>
-          <span className="flex items-center gap-1 text-cyan-400">
+          {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-cyan-400">
             <FlaskConical size={12} />
             {product.batches.length ? "批次履歷" : "配方資料"}
-          </span>
+          </span>}
         </div>
         <Link
           href={`/products/${product.slug}`}
@@ -95,18 +99,18 @@ export function ProductCard({ product }: { product: Product }) {
           <strong className="font-mono text-2xl font-medium">
             {money(product.priceNt)}
           </strong>
-          <span className="text-xs text-cyan-300">
+          {product.autoshipEligible && <span className="text-xs text-cyan-300">
             循環價 {money(Math.round(product.priceNt * 0.9))}
-          </span>
+          </span>}
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
             className="flex-1 text-sm"
-            onClick={() => calculator(product.id)}
-            disabled={!fit.safe}
+            onClick={() => canCalculate ? calculator(product.id) : router.push(`/products/${product.slug}`)}
+            disabled={canCalculate && !fit.safe}
           >
-            試算專屬食量
+            {canCalculate ? "試算專屬食量" : "查看商品詳情"}
           </Button>
           <Button
             size="icon"

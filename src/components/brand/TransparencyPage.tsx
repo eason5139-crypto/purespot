@@ -63,7 +63,7 @@ export function TransparencyPage({ content }: { content: SiteContent }) {
             <article key={product.id} className="border border-[#d9cbbd] bg-[#fffdf9] p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs text-[#a17a61]">{product.type === "CAT" ? "貓咪" : "狗狗"} · {product.category}</p>
+                  <p className="text-xs text-[#a17a61]">{product.type === "CAT" ? "貓咪" : product.type === "DOG" ? "狗狗" : product.type === "HAMSTER" ? "倉鼠" : "兔兔"} · {product.category}</p>
                   <h3 className="mt-1 text-xl font-semibold">{product.name}</h3>
                   <p className="mt-1 text-sm text-[#806a5c]">{product.subtitle}</p>
                 </div>

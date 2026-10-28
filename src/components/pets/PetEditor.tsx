@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Cat, Dog } from "lucide-react";
+import { Plus, Cat, Dog, Rabbit, Mouse } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
-import { petSchema, type ActivePet } from "@/lib/types";
+import { petSchema, petLabels, type ActivePet } from "@/lib/types";
 const allergens = ["雞肉", "牛肉", "魚類", "大豆", "乳製品", "小麥"];
 export function PetEditor() {
   const pet = useActivePet();
@@ -25,7 +25,7 @@ export function PetEditor() {
     e.preventDefault();
     const parsed = petSchema.safeParse(draft);
     if (!parsed.success) {
-      setError("請確認姓名、體重（0.5–90 公斤）與月齡（1–360 個月）。");
+      setError("請確認姓名、體重（0.02–90 公斤）與月齡（1–360 個月）。");
       return;
     }
     try {
@@ -47,21 +47,23 @@ export function PetEditor() {
           每一個細節，都讓我們更懂牠的需要。
         </DialogDescription>
         <form onSubmit={save} className="mt-6 space-y-5">
-          <div className="grid grid-cols-2 gap-3">
-            {(["CAT", "DOG"] as const).map((type) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(["CAT", "DOG", "HAMSTER", "RABBIT"] as const).map((type) => (
               <Button
                 key={type}
+                type="button"
                 variant={draft.type === type ? "default" : "secondary"}
                 onClick={() =>
                   setDraft((d) => ({
                     ...d,
                     type,
-                    breed: type === "CAT" ? "家貓" : "家犬",
+                    breed: type === "CAT" ? "家貓" : type === "DOG" ? "家犬" : type === "HAMSTER" ? "倉鼠" : "家兔",
+                    weightKg: type === "HAMSTER" ? 0.1 : type === "RABBIT" ? 2 : d.weightKg < 0.5 ? 4 : d.weightKg,
                   }))
                 }
               >
-                {type === "CAT" ? <Cat /> : <Dog />}
-                {type === "CAT" ? "貓咪" : "狗狗"}
+                {type === "CAT" ? <Cat /> : type === "DOG" ? <Dog /> : type === "HAMSTER" ? <Mouse /> : <Rabbit />}
+                {petLabels[type]}
               </Button>
             ))}
           </div>
@@ -94,9 +96,9 @@ export function PetEditor() {
               <input
                 className="input"
                 type="number"
-                min="0.5"
+                min="0.02"
                 max="90"
-                step="0.1"
+                step="0.01"
                 required
                 value={draft.weightKg}
                 onChange={(e) =>
@@ -181,6 +183,7 @@ export function PetEditor() {
           <div className="flex justify-between gap-3 pt-2">
             <Button
               variant="ghost"
+              type="button"
               onClick={() => {
                 setIsNew(true);
                 setDraft({

@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-test("商城六個分類各能查看五款商品", async ({ page }) => {
+test("商城十二個分類各能查看五款商品", async ({ page }) => {
   await page.goto("/shop");
-  for (const name of ["主食乾糧", "主食罐頭", "鮮食餐包", "凍乾主食", "風乾主食", "機能配方"]) {
+  for (const name of ["主食乾糧", "主食罐頭", "鮮食餐包", "凍乾主食", "風乾主食", "機能配方", "小動物主食", "零食點心", "玩具互動", "居家用品", "清潔照護", "外出用品"]) {
     await page.getByRole("button", { name: new RegExp(name) }).first().click();
     await expect(page.locator(".product-card")).toHaveCount(5);
   }
-  await page.getByRole("button", { name: /看全部 30 款/ }).click();
+  await page.getByRole("button", { name: /看全部 60 款/ }).click();
   await expect(page.getByRole("button", { name: "查看更多商品" })).toBeVisible();
 });
 test("未登入無法讀取管理 API，並會導向後台登入", async ({ page, request }) => {
@@ -28,7 +28,9 @@ test("首頁、毛孩切換與重新整理後的資料保留", async ({ page }) 
   await expect(
     page.getByRole("heading", { name: /為芒果的每一口/ }),
   ).toBeVisible();
-  await expect(page.getByText("過敏原警示：牛肉")).toBeVisible();
+  await page.getByRole("button", { name: "狗狗", exact: true }).click();
+  await page.getByPlaceholder("搜尋商品或成分").fill("牛肉");
+  await expect(page.getByText("過敏原警示：牛肉").first()).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("heading", { name: /為芒果的每一口/ }),

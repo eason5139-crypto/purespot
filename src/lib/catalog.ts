@@ -1,5 +1,6 @@
 import type { ActivePet, Product, UgcPost } from "./types";
 import { supplementalProducts } from "./catalogExpansion";
+import { lifestyleProducts } from "./lifestyleProducts";
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
 export const initialPets: ActivePet[] = [
   {
@@ -144,6 +145,7 @@ export const products: Product[] = [
       "牛肉蛋白搭配植物纖維，提供全齡犬日常主食。含牛肉成分，請先確認毛孩的過敏原紀錄。",
   },
   ...supplementalProducts,
+  ...lifestyleProducts,
 ];
 export const ugcPosts: UgcPost[] = [
   {

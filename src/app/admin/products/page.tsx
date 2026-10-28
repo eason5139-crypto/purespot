@@ -9,12 +9,14 @@ import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { adminProductInputSchema, type AdminProductInput } from "@/lib/adminTypes";
 import { shopCategories } from "@/lib/productCategories";
 import type { Product } from "@/lib/types";
+import { petLabels, type PetType } from "@/lib/types";
 import { money } from "@/lib/utils";
 
 const emptyProduct: AdminProductInput = {
   name: "",
   subtitle: "",
   type: "CAT",
+  kind: "FOOD",
   category: "主食乾糧",
   priceNt: 0,
   stock: 0,
@@ -48,6 +50,7 @@ function fromProduct(product: Product): AdminProductInput {
     name: product.name,
     subtitle: product.subtitle,
     type: product.type,
+    kind: product.kind ?? "FOOD",
     category: product.category,
     priceNt: product.priceNt,
     stock: product.stock,
@@ -104,7 +107,8 @@ export default function AdminProductsPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"ALL" | "CAT" | "DOG" | "DRAFT">("ALL");
+  const [filter, setFilter] = useState<"ALL" | PetType | "DRAFT">("ALL");
+  const [kindFilter, setKindFilter] = useState<"all" | "FOOD" | "SUPPLIES">("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -133,8 +137,9 @@ export default function AdminProductsPage() {
     const searchText = `${product.name} ${product.subtitle} ${product.category} ${product.ingredients.join(" ")}`.toLowerCase();
     return searchText.includes(query.toLowerCase()) &&
       (filter === "ALL" || (filter === "DRAFT" ? !product.isPublished : product.type === filter)) &&
+      (kindFilter === "all" || (product.kind ?? "FOOD") === kindFilter) &&
       (categoryFilter === "all" || product.category === categoryFilter);
-  }), [products, query, filter, categoryFilter]);
+  }), [products, query, filter, kindFilter, categoryFilter]);
   const availableCategories = [...new Set(products.map((product) => product.category))];
 
   function update<K extends keyof AdminProductInput>(key: K, value: AdminProductInput[K]) {
@@ -164,7 +169,7 @@ export default function AdminProductsPage() {
     if (!validation.success) {
       const issue = validation.error.issues[0];
       const field = String(issue?.path[0] ?? "");
-      const target: EditorTab = ["name", "subtitle", "type", "category", "description"].includes(field)
+      const target: EditorTab = ["name", "subtitle", "type", "kind", "category", "description"].includes(field)
         ? "basic"
         : ["image", "gallery", "videoUrl"].includes(field)
           ? "media"
@@ -252,7 +257,9 @@ export default function AdminProductsPage() {
                   <TextField label="副標題" required value={form.subtitle} onChange={(value) => update("subtitle", value)} />
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">適用毛孩</span><select className="input" value={form.type} onChange={(event) => update("type", event.target.value as "CAT" | "DOG")}><option value="CAT">貓咪</option><option value="DOG">狗狗</option></select></label>
+                  <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">適用動物</span><select className="input" value={form.type} onChange={(event) => { const type = event.target.value as PetType; setForm((previous) => ({ ...previous, type, autoshipEligible: (type === "CAT" || type === "DOG") && previous.kind === "FOOD" && previous.autoshipEligible })); }}>{(Object.entries(petLabels) as [PetType, string][]).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                  <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">商品類型</span><select className="input" value={form.kind} onChange={(event) => { const kind = event.target.value as "FOOD" | "SUPPLIES"; setForm((previous) => ({ ...previous, kind, autoshipEligible: kind === "FOOD" && (previous.type === "CAT" || previous.type === "DOG") && previous.autoshipEligible })); }}><option value="FOOD">食物與點心</option><option value="SUPPLIES">用品與玩具</option></select></label>
+                </div><div className="grid gap-5 sm:grid-cols-2">
                   <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">分類</span><input className="input" list="product-category-options" required value={form.category} onChange={(event) => update("category", event.target.value)} /><datalist id="product-category-options">{shopCategories.map(({ name }) => <option key={name} value={name} />)}</datalist><span className="mt-1 block text-xs text-[#a78c7c]">可選既有分類，也可輸入新分類名稱。</span></label>
                 </div>
                 <label className="block"><span className="mb-2 block text-sm font-medium text-[#f4e5d9]">商品詳細介紹</span><textarea className="input min-h-36" required value={form.description} onChange={(event) => update("description", event.target.value)} /></label>
@@ -278,6 +285,8 @@ export default function AdminProductsPage() {
             )}
             {tab === "nutrition" && (
               <div className="grid gap-5">
+                {form.kind === "SUPPLIES" && <p className="text-sm text-[#d6bdaa]">用品無須填寫熱量及營養數值；可在基本資料寫明材質、尺寸與使用方式。</p>}
+                {form.kind === "FOOD" && <>
                 <div className="grid gap-5 sm:grid-cols-3">
                   <TextField label="每 100g 熱量（kcal）" type="number" value={form.kcalPer100g} onChange={(value) => update("kcalPer100g", Number(value))} />
                   <TextField label="最低粗蛋白（%）" type="number" value={form.proteinMin} onChange={(value) => update("proteinMin", Number(value))} />
@@ -286,6 +295,7 @@ export default function AdminProductsPage() {
                 <TextField label="最高粗灰分（%）" type="number" value={form.ashMax} onChange={(value) => update("ashMax", Number(value))} />
                 <TextField label="主要成分（使用頓號分隔）" value={form.ingredients.join("、")} onChange={(value) => update("ingredients", value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean))} />
                 <TextField label="過敏原（使用頓號分隔，可留空）" value={form.allergens.join("、")} onChange={(value) => update("allergens", value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean))} />
+                </>}
                 <fieldset><legend className="mb-2 text-sm font-medium text-[#f4e5d9]">適用生命階段</legend><div className="flex flex-wrap gap-4">{(["JUNIOR", "ADULT", "SENIOR"] as const).map((stage) => <label key={stage} className="flex items-center gap-2 text-sm text-[#d6bdaa]"><input type="checkbox" checked={form.lifeStages.includes(stage)} onChange={(event) => update("lifeStages", event.target.checked ? [...form.lifeStages, stage] : form.lifeStages.filter((value) => value !== stage))} />{stage === "JUNIOR" ? "幼年" : stage === "ADULT" ? "成年" : "熟齡"}</label>)}</div></fieldset>
               </div>
             )}
@@ -296,7 +306,7 @@ export default function AdminProductsPage() {
                   <TextField label="庫存（包）" type="number" value={form.stock} onChange={(value) => update("stock", Number(value))} />
                   <TextField label="包裝重量（g）" type="number" value={form.bagGrams} onChange={(value) => update("bagGrams", Number(value))} />
                 </div>
-                <label className="flex items-center gap-3 rounded-xl border border-white/10 p-4 text-sm text-[#e9d4c4]"><input type="checkbox" checked={form.autoshipEligible} onChange={(event) => update("autoshipEligible", event.target.checked)} />提供循環補貨</label>
+                {form.kind === "FOOD" && (form.type === "CAT" || form.type === "DOG") && <label className="flex items-center gap-3 rounded-xl border border-white/10 p-4 text-sm text-[#e9d4c4]"><input type="checkbox" checked={form.autoshipEligible} onChange={(event) => update("autoshipEligible", event.target.checked)} />提供循環補貨</label>}
                 <label className="flex items-center gap-3 rounded-xl border border-white/10 p-4 text-sm text-[#e9d4c4]"><input type="checkbox" checked={form.isPublished} onChange={(event) => update("isPublished", event.target.checked)} />在官網上架並可供選購</label>
                 <p className="text-sm text-[#a78c7c]">先保存為草稿，確認圖片與規格後再上架。下架商品保留資料，可隨時重新發布。</p>
               </div>
@@ -315,10 +325,13 @@ export default function AdminProductsPage() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋名稱、分類或成分" aria-label="搜尋商品" className="input pl-10" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {([["ALL", "全部"], ["CAT", "貓咪"], ["DOG", "狗狗"], ["DRAFT", "草稿／下架"]] as const).map(([value, label]) => (
+              {([["ALL", "全部"], ["CAT", "貓咪"], ["DOG", "狗狗"], ["HAMSTER", "倉鼠"], ["RABBIT", "兔兔"], ["DRAFT", "草稿／下架"]] as const).map(([value, label]) => (
                 <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-11 rounded-xl px-4 text-sm ${filter === value ? "bg-[#f4a261] text-[#2b170f]" : "bg-white/5 text-[#c1aa9b]"}`}>{label}</button>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-xs text-[#c1aa9b]">商品類型
+              <select aria-label="篩選商品類型" value={kindFilter} onChange={(event) => setKindFilter(event.target.value as typeof kindFilter)} className="min-h-11 rounded-xl border border-white/10 bg-[#2a1b15] px-3 text-sm text-[#f4e5d9]"><option value="all">全部</option><option value="FOOD">食物</option><option value="SUPPLIES">用品</option></select>
+            </label>
             <label className="flex items-center gap-2 text-xs text-[#c1aa9b]">商品分類
               <select aria-label="篩選商品分類" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="min-h-11 rounded-xl border border-white/10 bg-[#2a1b15] px-3 text-sm text-[#f4e5d9]">
                 <option value="all">全部分類</option>
@@ -335,7 +348,7 @@ export default function AdminProductsPage() {
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-[#1b120e]"><Image src={product.image} alt={product.name} fill sizes="80px" className="object-cover" /></div>
                   <div className="min-w-[190px] flex-1">
                     <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-[#fff7ec]">{product.name}</h2><span className={`rounded-full px-2 py-0.5 text-xs ${product.isPublished ? "bg-emerald-400/10 text-emerald-200" : "bg-white/10 text-[#b79d8e]"}`}>{product.isPublished ? "上架中" : "草稿／下架"}</span></div>
-                    <p className="mt-1 text-sm text-[#a78c7c]">{product.type === "CAT" ? "貓咪" : "狗狗"} · {product.category} · {product.bagGrams}g</p>
+                    <p className="mt-1 text-sm text-[#a78c7c]">{petLabels[product.type]} · {product.kind === "SUPPLIES" ? "用品" : "食物"} · {product.category} · {product.bagGrams}g</p>
                     <p className="mt-1 text-sm text-[#eeb98e]">{money(product.priceNt)} · 庫存 {product.stock}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">

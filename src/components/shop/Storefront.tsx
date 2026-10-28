@@ -21,6 +21,7 @@ import { useCatalogStore } from "@/store/useCatalogStore";
 import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { decimal, money } from "@/lib/utils";
+import { petLabels, supportsFoodCalculator, type PetType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "./ProductCard";
 import type { SiteContent } from "@/lib/siteContent";
@@ -30,7 +31,8 @@ export function Storefront({ content }: { content: SiteContent }) {
   const edit = useUiStore((s) => s.setPetEditorOpen);
   const openCalc = useUiStore((s) => s.openCalculator);
   const openUgc = useUiStore((s) => s.openUgc);
-  const [category, setCategory] = useState("all");
+  const [species, setSpecies] = useState<"all" | "personal" | PetType>("all");
+  const [kind, setKind] = useState<"all" | "FOOD" | "SUPPLIES">("all");
   const [productCategory, setProductCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"fit" | "price-asc" | "price-desc" | "name">("fit");
@@ -42,8 +44,8 @@ export function Storefront({ content }: { content: SiteContent }) {
     ...shopCategories.map(({ name }) => name).filter((name) => counts.has(name)),
     ...[...counts.keys()].filter((name) => !shopCategories.some((category) => category.name === name)).sort((a, b) => a.localeCompare(b, "zh-Hant")),
   ];
-  const recommended = products.find((p) => matchProduct(p, pet).safe);
-  const result = recommended
+  const recommended = products.find((p) => p.kind !== "SUPPLIES" && p.autoshipEligible && matchProduct(p, pet).safe);
+  const result = recommended && supportsFoodCalculator(pet.type)
     ? calculatePetNutrition(
         {
           petType: pet.type,
@@ -61,11 +63,12 @@ export function Storefront({ content }: { content: SiteContent }) {
   const filtered = products
     .filter(
       (p) =>
-        (category === "personal"
+        (species === "personal"
           ? p.type === pet.type
-          : category === "all"
+          : species === "all"
             ? true
-            : p.type === category) &&
+            : p.type === species) &&
+        (kind === "all" || (p.kind ?? "FOOD") === kind) &&
         (productCategory === "all" || p.category === productCategory) &&
         `${p.name}${p.subtitle}${p.category}${p.ingredients.join("")}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()) &&
         (!inStockOnly || p.stock > 0),
@@ -233,14 +236,19 @@ export function Storefront({ content }: { content: SiteContent }) {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="editorial-kicker">THE COLLECTION / 依喜好慢慢挑</p>
-            <h2 id="category-heading" className="editorial-title mt-2 text-3xl sm:text-4xl">{catalogCategories.length} 種餐桌靈感，剛好遇見牠。</h2>
+            <h2 id="category-heading" className="editorial-title mt-2 text-3xl sm:text-4xl">{catalogCategories.length} 種吃喝玩用，陪牠好好生活。</h2>
           </div>
-          <button type="button" onClick={() => { setProductCategory("all"); setVisibleCount(8); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">
+          <button type="button" onClick={() => { setProductCategory("all"); setKind("all"); setSpecies("all"); setVisibleCount(8); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">
             看全部 {products.length} 款 <ArrowUpRight size={16} />
           </button>
         </div>
+        <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="食物或用品">
+          {([ ["all", "全部分類"], ["FOOD", "食物與點心"], ["SUPPLIES", "用品與玩具"] ] as const).map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={kind === value} onClick={() => { setKind(value); setProductCategory("all"); setVisibleCount(8); }} className={`rounded-full border px-5 py-2 text-sm transition-all hover:-translate-y-0.5 ${kind === value ? "border-[#925a43] bg-[#925a43] text-white" : "border-[#cbb9a7] bg-[#fffaf4] text-[#655244]"}`}>{label}</button>
+          ))}
+        </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {catalogCategories.map((name) => {
+          {catalogCategories.filter((name) => kind === "all" || (shopCategories.find((item) => item.name === name)?.kind ?? (products.find((p) => p.category === name)?.kind ?? "FOOD")) === kind).map((name) => {
             const info = shopCategories.find((item) => item.name === name) ?? { name, english: "MORE TO EXPLORE", description: "探索更多日常選物。", tint: "#e8e1d8" };
             const selected = productCategory === name;
             return (
@@ -259,7 +267,7 @@ export function Storefront({ content }: { content: SiteContent }) {
           <div>
             <div className="eyebrow mb-2">由牠出發的好選擇</div>
             <h2 className="text-2xl font-semibold">
-              {productCategory === "all" ? `${pet.name}的專屬選物` : productCategory}
+              {productCategory === "all" ? (species === "personal" ? `${pet.name}的專屬選物` : "探索全部選物") : productCategory}
               <span className="ml-3 align-middle text-sm font-normal text-slate-500">
                 {filtered.length} 款商品
               </span>
@@ -283,19 +291,18 @@ export function Storefront({ content }: { content: SiteContent }) {
           <div
             className="flex flex-wrap gap-2"
             role="group"
-            aria-label="商品分類"
+            aria-label="適用動物"
           >
             {[
               { id: "personal", label: "專屬推薦" },
               { id: "all", label: "全部選物" },
-              { id: "CAT", label: "貓咪主食" },
-              { id: "DOG", label: "狗狗主食" },
+              ...(["CAT", "DOG", "HAMSTER", "RABBIT"] as const).map((id) => ({ id, label: petLabels[id] })),
             ].map((tab) => (
               <button
                 key={tab.id}
-                aria-pressed={category === tab.id}
-                className={`rounded-lg px-4 py-2 text-sm transition-colors ${category === tab.id ? "bg-[#f7e4d5] text-[#9a5036] ring-1 ring-[#e8af8e]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
-                onClick={() => { setCategory(tab.id); setVisibleCount(8); }}
+                aria-pressed={species === tab.id}
+                className={`rounded-lg px-4 py-2 text-sm transition-colors ${species === tab.id ? "bg-[#f7e4d5] text-[#9a5036] ring-1 ring-[#e8af8e]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
+                onClick={() => { setSpecies(tab.id as typeof species); setVisibleCount(8); }}
               >
                 {tab.label}
               </button>
@@ -332,7 +339,8 @@ export function Storefront({ content }: { content: SiteContent }) {
               className="mt-3"
               onClick={() => {
                 setQuery("");
-                setCategory("all");
+                setSpecies("all");
+                setKind("all");
                 setProductCategory("all");
                 setInStockOnly(false);
                 setSort("fit");

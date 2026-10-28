@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/utils";
+import { petLabels, type PetType } from "@/lib/types";
 
 const LOW_STOCK_THRESHOLD = 20;
 const CRITICAL_THRESHOLD = 10;
@@ -21,7 +22,7 @@ interface InventoryProduct {
   id: string;
   name: string;
   subtitle: string;
-  type: "CAT" | "DOG";
+  type: PetType;
   category: string;
   priceNt: number;
   stock: number;
@@ -157,7 +158,7 @@ export default function AdminInventoryPage() {
                             : "bg-amber-400/10 text-amber-300"
                         }`}
                       >
-                        {p.type === "CAT" ? "貓咪" : "狗狗"}
+                        {petLabels[p.type]}
                       </span>
                     </td>
                     <td className="p-4 text-center font-mono font-bold text-base">

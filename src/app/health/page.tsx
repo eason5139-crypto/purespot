@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {
   Cat,
   Dog,
@@ -19,12 +20,22 @@ import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { Button } from "@/components/ui/button";
 import { PetWeightTrendChart } from "@/components/analytics/PetWeightTrendChart";
+import { petLabels, supportsFoodCalculator } from "@/lib/types";
 
 export default function HealthPage() {
   const products = useCatalogStore((s) => s.products);
   const pet = useActivePet();
   const edit = useUiStore((s) => s.setPetEditorOpen);
   const calc = useUiStore((s) => s.openCalculator);
+
+  if (!supportsFoodCalculator(pet.type)) return (
+    <main id="main-content" className="page-shell py-16">
+      <span className="eyebrow">毛孩生活檔案</span>
+      <h1 className="mt-3 text-3xl font-semibold">{pet.name}的日常</h1>
+      <p className="mt-5 max-w-xl leading-8 text-slate-400">{petLabels[pet.type]}的飲食需求與貓狗不同，因此這裡不套用貓狗熱量公式。你仍可管理牠的資料，並挑選適合的食物與用品。</p>
+      <div className="mt-7 flex gap-3"><Button onClick={() => edit(true)}>編輯毛孩資料</Button><Link href="/shop" className="inline-flex min-h-11 items-center rounded-lg border border-white/20 px-5 text-sm">逛逛適用選物</Link></div>
+    </main>
+  );
 
   const defaultProduct = products[0]!;
   const matchedProduct =

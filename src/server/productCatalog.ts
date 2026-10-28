@@ -24,6 +24,7 @@ export function toCatalogProduct(record: DatabaseProduct): Product {
     name: record.name,
     subtitle: record.brief,
     type: record.targetPetType,
+    kind: analysis.kind === "SUPPLIES" ? "SUPPLIES" : "FOOD",
     category: record.category.name,
     lifeStages: record.lifeStages.filter(
       (value): value is Product["lifeStages"][number] =>

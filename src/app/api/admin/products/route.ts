@@ -27,6 +27,7 @@ function productData(input: AdminProductInput, categoryId: string) {
     allergens: input.allergens,
     lifeStages: input.lifeStages,
     guaranteedAnalysis: {
+      kind: input.kind,
       kcalPer100g: input.kcalPer100g,
       proteinMin: input.proteinMin,
       moistureMax: input.moistureMax,
@@ -89,7 +90,7 @@ export async function PATCH(request: Request) {
     verifyOrigin(request);
     const input = await readBody(
       request,
-      adminProductInputSchema.extend({ id: z.string().min(1).max(100) }).strict(),
+      adminProductInputSchema.safeExtend({ id: z.string().min(1).max(100) }).strict(),
     );
     const id = String(input.id);
     const existing = await db.product.findUnique({ where: { id }, include: { variants: true } });
