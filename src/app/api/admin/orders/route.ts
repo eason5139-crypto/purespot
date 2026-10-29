@@ -57,17 +57,48 @@ export async function GET() {
   }
 }
 
-// 公司端修改訂單狀態
+// 公司端修改訂單狀態（連動進銷存：取消時自動還原庫存）
 export async function PATCH(request: Request) {
   try {
     await requireAdminSession();
     verifyOrigin(request);
     const { orderId, status } = await readBody(request, updateOrderStatusSchema);
 
-    const updated = await db.order.update({
-      where: { id: orderId },
-      data: { status },
-      include: { items: true },
+    const updated = await db.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { items: true },
+      });
+      if (!current) throw new Error("找不到該訂單");
+
+      // 若從非取消狀態轉為取消，將品項庫存返還
+      if (current.status !== "CANCELLED" && status === "CANCELLED") {
+        for (const item of current.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+      // 若從取消狀態恢復，重新扣除庫存
+      if (current.status === "CANCELLED" && status !== "CANCELLED") {
+        for (const item of current.items) {
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { decrement: item.quantity } },
+            });
+          }
+        }
+      }
+
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status },
+        include: { items: true },
+      });
     });
 
     return NextResponse.json({ success: true, order: updated });

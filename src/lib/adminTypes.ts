@@ -53,3 +53,46 @@ export interface SalesHistoryPoint {
   revenueNt: number;
   ordersCount: number;
 }
+
+/** 付款方式明細 */
+export interface PaymentBreakdown {
+  method: string;
+  count: number;
+  amountNt: number;
+  pct: number;
+}
+
+/** 品類銷售貢獻 */
+export interface CategoryBreakdown {
+  category: string;
+  amountNt: number;
+  pct: number;
+}
+
+/** 寵物類型銷售分佈 */
+export interface PetTypeBreakdown {
+  type: string;
+  label: string;
+  count: number;
+  amountNt: number;
+  pct: number;
+}
+
+/** ABC 分析所需商品銷售資料 */
+export interface ABCProductData {
+  productId: string;
+  name: string;
+  salesQty: number;
+  revenue: number;
+  qtyRecent: number;  // 近 7 天
+  qtyPrior: number;   // 前 7-14 天
+}
+
+/** 回購率詳細指標 */
+export interface RepeatPurchaseDetail {
+  totalBuyers: number;
+  repeatBuyers: number;
+  rate: number;
+  avgOrdersPerRepeatBuyer: number;
+  avgDaysBetweenOrders: number;
+}
