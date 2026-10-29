@@ -96,8 +96,8 @@ const productSeries = [
     label: "貓咪系列",
     emoji: "🐱",
     desc: "無穀主食凍乾・原肉主食罐・機能保健補充",
-    color: "from-cyan-950/60 to-violet-950/40",
-    border: "border-cyan-400/20",
+    color: "from-[#fbf8f3] to-[#f4ece1]",
+    border: "border-[#e8ded3]",
     img: "/images/salmon-cat.png",
   },
   {
@@ -105,33 +105,31 @@ const productSeries = [
     label: "狗狗系列",
     emoji: "🐶",
     desc: "高蛋白天然乾糧・全齡主食罐・關節機能配方",
-    color: "from-amber-950/60 to-orange-950/40",
-    border: "border-amber-400/20",
+    color: "from-[#fbf8f3] to-[#f4ece1]",
+    border: "border-[#e8ded3]",
     img: "/images/chicken-dog.png",
   },
 ];
 
 const iconColor: Record<string, string> = {
-  cyan: "text-cyan-400 bg-cyan-400/10",
-  emerald: "text-emerald-400 bg-emerald-400/10",
-  violet: "text-violet-400 bg-violet-400/10",
-  green: "text-green-400 bg-green-400/10",
-  amber: "text-amber-400 bg-amber-400/10",
-  blue: "text-blue-400 bg-blue-400/10",
-  rose: "text-rose-400 bg-rose-400/10",
+  cyan: "text-[#935941] bg-[#935941]/10",
+  emerald: "text-[#425847] bg-[#425847]/10",
+  violet: "text-[#7a6452] bg-[#7a6452]/10",
+  green: "text-[#5b7b63] bg-[#5b7b63]/10",
+  amber: "text-[#a36341] bg-[#a36341]/10",
+  blue: "text-[#586c75] bg-[#586c75]/10",
+  rose: "text-[#935941] bg-[#935941]/10",
 };
 
 export function BrandHomePage() {
   const openCalc = useUiStore((s) => s.openCalculator);
 
   return (
-    <main id="main-content">
+    <main id="main-content" className="bg-[#f8f5ef] text-[#302b26]">
       {/* ── Hero Section ── */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         {/* Background gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#090D16] via-[#0a1628] to-[#090D16]" />
-        <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full bg-cyan-500/5 blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-500/5 blur-[100px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,#93594112,transparent_32%),radial-gradient(circle_at_82%_76%,#e8ded380,transparent_28%)]" />
 
         <div className="relative page-shell py-20">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -141,17 +139,17 @@ export function BrandHomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-4 py-1.5 text-xs text-cyan-300 mb-6">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#d9cfc3] bg-[#fbf8f3] px-4 py-1.5 text-xs font-semibold text-[#935941] mb-6">
                   <Sparkles size={12} />
                   台灣唯一 7C 透明成分寵物主食品牌
                 </span>
-                <h1 className="text-5xl font-bold leading-tight tracking-tight text-white lg:text-6xl xl:text-7xl">
+                <h1 className="text-5xl font-bold leading-tight tracking-tight text-[#302b26] lg:text-6xl xl:text-7xl">
                   懂牠，<br />
-                  <span className="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+                  <span className="text-[#935941]">
                     從每一口開始
                   </span>
                 </h1>
-                <p className="mt-6 text-lg leading-8 text-slate-400 max-w-lg">
+                <p className="mt-6 text-lg leading-8 text-[#675e53] max-w-lg">
                   我們相信，知道吃什麼、從哪裡來、怎麼製作，才是真正對毛孩負責。
                   PURESPOT 以 7C 透明標準，讓每一份餐食都能被驗證、被信任。
                 </p>
@@ -163,7 +161,7 @@ export function BrandHomePage() {
                 transition={{ duration: 0.6, delay: 0.15 }}
                 className="mt-10 flex flex-wrap gap-4"
               >
-                <Button asChild size="lg" className="gap-2 text-base px-6">
+                <Button asChild size="lg" className="gap-2 text-base px-6 bg-[#935941] text-white hover:bg-[#794632]">
                   <Link href="/shop">
                     立即選購主食
                     <ArrowRight size={18} />
@@ -172,7 +170,7 @@ export function BrandHomePage() {
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="gap-2 text-base"
+                  className="gap-2 text-base border border-[#d9cfc3] bg-[#fbf8f3] text-[#4e443a] hover:bg-[#ede5da]"
                   onClick={() => openCalc(null)}
                 >
                   <Calculator size={18} />
@@ -184,18 +182,18 @@ export function BrandHomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="mt-10 flex items-center gap-6 text-sm text-slate-500"
+                className="mt-10 flex items-center gap-6 text-sm text-[#7e7266]"
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-emerald-400" />
+                  <span className="size-2 rounded-full bg-[#425847]" />
                   SGS 第三方檢驗
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-cyan-400" />
+                  <span className="size-2 rounded-full bg-[#935941]" />
                   台灣在地溯源
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-violet-400" />
+                  <span className="size-2 rounded-full bg-[#7a6452]" />
                   定期配享 9 折
                 </span>
               </motion.div>
@@ -208,7 +206,7 @@ export function BrandHomePage() {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="relative hidden lg:block"
             >
-              <div className="relative h-[520px] rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#111827] to-[#0a0f1c]">
+              <div className="relative h-[520px] rounded-3xl overflow-hidden border border-[#e8ded3] bg-[#ede5da]">
                 <Image
                   src="/images/cat-life.png"
                   alt="貓咪正在享用 PURESPOT 天然主食"
@@ -218,14 +216,14 @@ export function BrandHomePage() {
                 />
                 {/* Overlay card */}
                 <div className="absolute bottom-6 left-6 right-6">
-                  <div className="rounded-2xl border border-white/10 bg-[#090D16]/80 backdrop-blur-xl p-4">
+                  <div className="rounded-2xl border border-[#e8ded3] bg-white/95 backdrop-blur-xl p-4 shadow-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-slate-400">AI 今日推薦</p>
-                        <p className="mt-0.5 font-semibold text-white">深海鮭魚主食凍乾</p>
-                        <p className="text-xs text-cyan-300">每日建議：32g · NT$29/日</p>
+                        <p className="text-xs text-[#8a7f75]">AI 今日推薦</p>
+                        <p className="mt-0.5 font-semibold text-[#302b26]">深海鮭魚主食凍乾</p>
+                        <p className="text-xs font-semibold text-[#935941]">每日建議：32g · NT$29/日</p>
                       </div>
-                      <Button size="sm" asChild>
+                      <Button size="sm" asChild className="bg-[#935941] text-white hover:bg-[#794632]">
                         <Link href="/shop">選購</Link>
                       </Button>
                     </div>
@@ -238,12 +236,12 @@ export function BrandHomePage() {
       </section>
 
       {/* ── 媒體露出 ── */}
-      <section className="border-y border-white/5 bg-white/[0.02] py-8">
+      <section className="border-y border-[#e8ded3] bg-white/50 py-8">
         <div className="page-shell">
-          <p className="text-center text-xs text-slate-600 uppercase tracking-widest mb-6">媒體報導</p>
+          <p className="text-center text-xs text-[#8a7f75] uppercase tracking-widest mb-6 font-semibold">媒體報導</p>
           <div className="flex flex-wrap justify-center gap-8 items-center">
             {mediaLogos.map((name) => (
-              <span key={name} className="text-slate-500 font-medium text-sm hover:text-slate-300 transition-colors">
+              <span key={name} className="text-[#675e53] font-medium text-sm hover:text-[#302b26] transition-colors">
                 {name}
               </span>
             ))}
@@ -261,8 +259,8 @@ export function BrandHomePage() {
             className="text-center mb-16"
           >
             <span className="eyebrow">我們的信念</span>
-            <h2 className="mt-3 text-4xl font-bold text-white">7C 透明承諾</h2>
-            <p className="mt-4 text-slate-400 max-w-xl mx-auto">
+            <h2 className="mt-3 text-4xl font-bold text-[#302b26]">7C 透明承諾</h2>
+            <p className="mt-4 text-[#675e53] max-w-xl mx-auto">
               七個維度的透明標準，構成 PURESPOT 每一份主食的品質基礎。
               不是口號，每一項都可以被驗證。
             </p>
@@ -281,8 +279,8 @@ export function BrandHomePage() {
                 <span className={`inline-flex size-10 items-center justify-center rounded-xl ${iconColor[v.color]}`}>
                   <v.icon size={20} />
                 </span>
-                <h3 className="mt-4 font-semibold text-white text-sm">{v.title}</h3>
-                <p className="mt-2 text-xs leading-6 text-slate-400">{v.desc}</p>
+                <h3 className="mt-4 font-semibold text-[#302b26] text-sm">{v.title}</h3>
+                <p className="mt-2 text-xs leading-6 text-[#675e53]">{v.desc}</p>
               </motion.div>
             ))}
             {/* CTA card */}
@@ -291,14 +289,14 @@ export function BrandHomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.35 }}
-              className="panel p-6 bg-gradient-to-br from-cyan-950/40 to-[#111827] border-cyan-400/20 flex flex-col justify-between"
+              className="panel p-6 border-[#e8ded3] bg-[#fbf8f3] flex flex-col justify-between"
             >
               <div>
-                <span className="text-xs text-cyan-400 uppercase tracking-widest font-medium">查看完整報告</span>
-                <h3 className="mt-3 text-lg font-bold text-white">7C 成分<br />透明度報告</h3>
-                <p className="mt-2 text-xs text-slate-400 leading-6">含產地地圖、第三方檢驗結果與完整成分對照表。</p>
+                <span className="text-xs text-[#935941] uppercase tracking-widest font-semibold">查看完整報告</span>
+                <h3 className="mt-3 text-lg font-bold text-[#302b26]">7C 成分<br />透明度報告</h3>
+                <p className="mt-2 text-xs text-[#675e53] leading-6">含產地地圖、第三方檢驗結果與完整成分對照表。</p>
               </div>
-              <Button asChild className="mt-6 w-full gap-1.5">
+              <Button asChild className="mt-6 w-full gap-1.5 bg-[#935941] text-white hover:bg-[#794632]">
                 <Link href="/transparency">
                   查看報告
                   <ChevronRight size={14} />
@@ -310,7 +308,7 @@ export function BrandHomePage() {
       </section>
 
       {/* ── 產品系列 ── */}
-      <section className="py-20 bg-white/[0.015]">
+      <section className="py-20 bg-white/40 border-y border-[#e8ded3]">
         <div className="page-shell">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -319,7 +317,7 @@ export function BrandHomePage() {
             className="text-center mb-12"
           >
             <span className="eyebrow">精選系列</span>
-            <h2 className="mt-3 text-4xl font-bold text-white">為你的毛孩量身配糧</h2>
+            <h2 className="mt-3 text-4xl font-bold text-[#302b26]">為你的毛孩量身配糧</h2>
           </motion.div>
           <div className="grid gap-6 lg:grid-cols-2">
             {productSeries.map((series, i) => (
@@ -332,9 +330,9 @@ export function BrandHomePage() {
               >
                 <div className="relative z-10">
                   <span className="text-4xl">{series.emoji}</span>
-                  <h3 className="mt-4 text-2xl font-bold text-white">{series.label}</h3>
-                  <p className="mt-2 text-slate-400 text-sm">{series.desc}</p>
-                  <Button asChild className="mt-6 gap-2">
+                  <h3 className="mt-4 text-2xl font-bold text-[#302b26]">{series.label}</h3>
+                  <p className="mt-2 text-[#675e53] text-sm">{series.desc}</p>
+                  <Button asChild className="mt-6 gap-2 bg-[#935941] text-white hover:bg-[#794632]">
                     <Link href={`/shop?type=${series.type}`}>
                       瀏覽系列
                       <ArrowRight size={16} />
@@ -350,27 +348,26 @@ export function BrandHomePage() {
         </div>
       </section>
 
-
       {/* ── 底部 CTA ── */}
-      <section className="py-24 bg-gradient-to-b from-transparent to-cyan-950/10">
+      <section className="py-24 bg-[#f4eee6]">
         <div className="page-shell text-center">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold text-white">今天，開始給牠<br />真正知道的食物</h2>
-            <p className="mt-4 text-slate-400 max-w-md mx-auto">
+            <h2 className="text-4xl font-bold text-[#302b26]">今天，開始給牠<br />真正知道的食物</h2>
+            <p className="mt-4 text-[#675e53] max-w-md mx-auto">
               輸入毛孩資料，讓 AI 推薦最適合的主食，計算每日份量，一鍵加入定期配計畫。
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button asChild size="lg" className="gap-2 text-base px-8">
+              <Button asChild size="lg" className="gap-2 text-base px-8 bg-[#935941] text-white hover:bg-[#794632]">
                 <Link href="/shop">
                   立即選購
                   <ArrowRight size={18} />
                 </Link>
               </Button>
-              <Button variant="secondary" size="lg" asChild className="gap-2 text-base">
+              <Button variant="secondary" size="lg" asChild className="gap-2 text-base border border-[#d9cfc3] bg-[#fbf8f3] text-[#4e443a] hover:bg-[#ede5da]">
                 <Link href="/transparency">
                   <FlaskConical size={18} />
                   查看透明度報告

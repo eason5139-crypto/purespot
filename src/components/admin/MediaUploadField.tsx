@@ -56,10 +56,10 @@ export function MediaUploadField({
 
   return (
     <div>
-      <p className="mb-2 text-sm font-medium text-[#f4e5d9]">{label}</p>
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#e9a06d]/20 bg-white/5 p-3">
-        <div className="relative h-24 w-32 overflow-hidden rounded-xl bg-[#1b120e]">
-          {value && <Image src={value} alt={label} fill sizes="128px" className="object-cover" />}
+      <p className="mb-2 text-sm font-medium text-[#302b26]">{label}</p>
+      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#e8ded3] bg-[#fbf8f4] p-3">
+        <div className="relative h-24 w-32 overflow-hidden rounded-xl bg-[#ebe5da] border border-[#e8ded3]">
+          {value && <Image src={value} alt={label} fill sizes="128px" className="object-contain p-1" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-2">
@@ -67,17 +67,22 @@ export function MediaUploadField({
               type="button"
               disabled={busy}
               onClick={() => inputRef.current?.click()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#f4a261] px-4 text-sm font-semibold text-[#2b170f] disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#935941] px-4 text-sm font-semibold text-white hover:bg-[#794632] shadow-sm disabled:opacity-50 transition-colors"
             >
               {busy ? <LoaderCircle size={16} className="animate-spin" /> : <ImagePlus size={16} />}
               {busy ? "處理中" : "上傳圖片"}
             </button>
-            <button type="button" disabled={busy} onClick={() => void toggleLibrary()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#e9a06d]/25 px-4 text-sm text-[#f3d3bd] disabled:opacity-50">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void toggleLibrary()}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#4e443a] hover:bg-[#ede5da] disabled:opacity-50 transition-colors"
+            >
               <Images size={16} />從媒體庫選擇
             </button>
           </div>
-          <p className="mt-2 truncate text-xs text-[#b99e8d]">{value || "尚未選擇圖片"}</p>
-          <p className="text-xs text-[#8d776b]">PNG、JPG 或 WebP，最多 4 MB</p>
+          <p className="mt-2 truncate text-xs text-[#8a7f75]">{value || "尚未選擇圖片"}</p>
+          <p className="text-xs text-[#8a7f75]">PNG、JPG 或 WebP，最多 4 MB</p>
         </div>
       </div>
       <input
@@ -91,16 +96,16 @@ export function MediaUploadField({
         }}
       />
       {libraryOpen && (
-        <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-[#e9a06d]/20 bg-[#21140f] p-3 sm:grid-cols-4">
+        <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-[#e8ded3] bg-white p-3 shadow-md sm:grid-cols-4">
           {library.map((url) => (
-            <button key={url} type="button" onClick={() => { onChange(url); setLibraryOpen(false); }} className="overflow-hidden rounded-lg border border-white/10 text-left hover:border-[#f4a261]" aria-label={`選擇圖片 ${url}`}>
-              <span className="relative block aspect-square"><Image src={url} alt="" fill sizes="120px" className="object-cover" /></span>
-              <span className="block truncate p-1 text-[10px] text-[#d0b5a5]">{url.split("/").at(-1)}</span>
+            <button key={url} type="button" onClick={() => { onChange(url); setLibraryOpen(false); }} className="overflow-hidden rounded-lg border border-[#e8ded3] text-left hover:border-[#935941] transition-colors" aria-label={`選擇圖片 ${url}`}>
+              <span className="relative block aspect-square bg-[#ebe5da]"><Image src={url} alt="" fill sizes="120px" className="object-contain p-1" /></span>
+              <span className="block truncate p-1 text-[10px] text-[#675e53]">{url.split("/").at(-1)}</span>
             </button>
           ))}
         </div>
       )}
-      {error && <p role="alert" className="mt-2 text-sm text-rose-300">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">{error}</p>}
     </div>
   );
 }

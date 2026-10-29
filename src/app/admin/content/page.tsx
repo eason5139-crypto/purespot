@@ -59,14 +59,14 @@ const sections: Section[] = [
     ],
   },
   {
-    id: "shop",
-    title: "商城與透明資訊",
-    description: "商城開場文案和透明資訊頁的說明。",
+    id: "pages",
+    title: "其他頁面文案",
+    description: "商城引言與 7C 透明度頁面的標題與說明。",
     fields: [
-      { key: "shopBadge", label: "商城眉標" },
+      { key: "shopBadge", label: "商城區塊標籤" },
       { key: "shopTitleAccent", label: "商城標題強調文字" },
-      { key: "shopDescription", label: "商城介紹", kind: "long" },
-      { key: "shopImage", label: "商城主照片", kind: "image" },
+      { key: "shopDescription", label: "商城說明", kind: "long" },
+      { key: "shopImage", label: "商城選物專區形象照", kind: "image" },
       { key: "transparencyTitle", label: "透明資訊頁標題" },
       { key: "transparencyDescription", label: "透明資訊頁說明", kind: "long" },
     ],
@@ -134,37 +134,41 @@ export default function AdminContentPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="eyebrow">內容管理</span>
-          <h1 className="mt-2 text-3xl font-semibold text-[#fff7ec]">網站內容編輯</h1>
-          <p className="mt-2 text-sm text-[#bda595]">按頁面區塊修改文字與照片，儲存後立即用官網預覽。</p>
+          <span className="eyebrow text-[#935941]">內容管理</span>
+          <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">網站內容編輯</h1>
+          <p className="mt-2 text-sm text-[#675e53]">按頁面區塊修改文字與照片，儲存後立即用官網預覽。</p>
         </div>
-        <Link href="/" target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#e9a06d]/25 px-4 text-sm text-[#f5bc8f]">
+        <Link href="/" target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#935941] hover:bg-[#ede5da]">
           <ExternalLink size={16} /> 開啟官網
         </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-        <nav aria-label="內容分類" className="flex gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-[#2a1b15] p-3 lg:block lg:space-y-1">
+        <nav aria-label="內容分類" className="flex gap-2 overflow-x-auto rounded-2xl border border-[#e8ded3] bg-white p-3 shadow-sm lg:block lg:space-y-1">
           {sections.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setActive(item.id)}
               aria-current={active === item.id ? "page" : undefined}
-              className={`whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors lg:w-full ${active === item.id ? "bg-[#f4a261] text-[#2b170f]" : "text-[#b9a394] hover:bg-white/5 hover:text-white"}`}
+              className={`whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-medium transition-all lg:w-full ${
+                active === item.id
+                  ? "bg-[#935941] text-white shadow-sm font-semibold"
+                  : "text-[#675e53] hover:bg-[#f5ede3] hover:text-[#302b26]"
+              }`}
             >
               {item.title}
             </button>
           ))}
         </nav>
 
-        <form onSubmit={save} className="rounded-[1.75rem] border border-[#e9a06d]/20 bg-[#2a1b15] p-5 sm:p-8">
-          <div className="border-b border-white/10 pb-5">
-            <h2 className="text-xl font-semibold text-[#fff7ec]">{section.title}</h2>
-            <p className="mt-1 text-sm text-[#ad9586]">{section.description}</p>
+        <form onSubmit={save} className="rounded-2xl border border-[#e8ded3] bg-white p-5 sm:p-8 shadow-sm">
+          <div className="border-b border-[#e8ded3] pb-5">
+            <h2 className="text-xl font-semibold text-[#302b26]">{section.title}</h2>
+            <p className="mt-1 text-sm text-[#8a7f75]">{section.description}</p>
           </div>
           {loading ? (
-            <p className="py-12 text-[#ad9586]">載入網站內容中…</p>
+            <p className="py-12 text-[#8a7f75]">載入網站內容中…</p>
           ) : (
             <div className="grid gap-6 py-7">
               {section.fields.map((field) => (
@@ -173,7 +177,7 @@ export default function AdminContentPage() {
                     <MediaUploadField label={field.label} value={content[field.key]} onChange={(url) => change(field.key, url)} />
                   ) : (
                     <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-[#f4e5d9]">{field.label}</span>
+                      <span className="mb-2 block text-sm font-medium text-[#302b26]">{field.label}</span>
                       {field.kind === "long" ? (
                         <textarea
                           required
@@ -192,14 +196,14 @@ export default function AdminContentPage() {
                       )}
                     </label>
                   )}
-                  {field.help && <p className="mt-2 text-xs text-[#9c8374]">{field.help}</p>}
+                  {field.help && <p className="mt-2 text-xs text-[#8a7f75]">{field.help}</p>}
                 </div>
               ))}
             </div>
           )}
-          {error && <p role="alert" className="mb-4 rounded-xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p>}
-          {message && <p role="status" className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-400/10 p-3 text-sm text-emerald-200"><CheckCircle2 size={16} />{message}</p>}
-          <div className="flex justify-end border-t border-white/10 pt-5">
+          {error && <p role="alert" className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>}
+          {message && <p role="status" className="mb-4 flex items-center gap-2 rounded-xl bg-[#eef0e8] border border-[#68856b]/30 p-3 text-sm text-[#425847] font-medium"><CheckCircle2 size={16} />{message}</p>}
+          <div className="flex justify-end border-t border-[#e8ded3] pt-5">
             <Button type="submit" disabled={loading || saving} className="gap-2"><Save size={16} />{saving ? "儲存中…" : "儲存網站內容"}</Button>
           </div>
         </form>

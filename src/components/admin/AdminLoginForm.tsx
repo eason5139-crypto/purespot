@@ -45,42 +45,42 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="w-full max-w-md rounded-[2rem] border border-[#d59664]/25 bg-[#2c1d17]/90 p-7 shadow-[0_30px_90px_-35px_#120b08] backdrop-blur-xl sm:p-9"
+      className="w-full max-w-md rounded-[2rem] border border-[#e8ded3] bg-white p-7 shadow-[0_20px_60px_-25px_rgba(147,89,65,0.15)] sm:p-9"
     >
       <div className="mb-8">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#f4a261]/10 px-3 py-1.5 text-xs font-medium text-[#ffc38e]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#935941]/10 px-3 py-1.5 text-xs font-semibold text-[#935941]">
           <LockKeyhole size={14} />
           授權管理員專區
         </span>
-        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-[#fff7ec]">
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-[#302b26]">
           歡迎回來
         </h1>
-        <p className="mt-2 text-sm leading-6 text-[#cbb4a6]">
+        <p className="mt-2 text-sm leading-6 text-[#675e53]">
           登入後即可管理商品、訂單、會員與營運數據。
         </p>
       </div>
 
       <div className="space-y-5">
         <label className="block">
-          <span className="text-sm font-medium text-[#f1dfd1]">管理員帳號</span>
-          <span className="mt-2 flex items-center gap-3 rounded-xl border border-white/10 bg-[#1d120e]/70 px-4 focus-within:border-[#f4a261]/60">
-            <Mail size={18} className="text-[#bc8a69]" />
+          <span className="text-sm font-medium text-[#4a4036]">管理員帳號</span>
+          <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d9cfc3] bg-[#faf7f2] px-4 transition-colors focus-within:border-[#935941] focus-within:bg-white">
+            <Mail size={18} className="text-[#935941]" />
             <input
               type="email"
               autoComplete="username"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="min-h-12 w-full bg-transparent text-sm text-[#fff7ec] outline-none placeholder:text-[#806b60]"
+              className="min-h-12 w-full bg-transparent text-sm text-[#302b26] outline-none placeholder:text-[#9c9287]"
               placeholder="name@purespot.tw"
             />
           </span>
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-[#f1dfd1]">密碼</span>
-          <span className="mt-2 flex items-center gap-3 rounded-xl border border-white/10 bg-[#1d120e]/70 px-4 focus-within:border-[#f4a261]/60">
-            <LockKeyhole size={18} className="text-[#bc8a69]" />
+          <span className="text-sm font-medium text-[#4a4036]">密碼</span>
+          <span className="mt-2 flex items-center gap-3 rounded-xl border border-[#d9cfc3] bg-[#faf7f2] px-4 transition-colors focus-within:border-[#935941] focus-within:bg-white">
+            <LockKeyhole size={18} className="text-[#935941]" />
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
@@ -88,13 +88,13 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
               minLength={12}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="min-h-12 w-full bg-transparent text-sm text-[#fff7ec] outline-none placeholder:text-[#806b60]"
+              className="min-h-12 w-full bg-transparent text-sm text-[#302b26] outline-none placeholder:text-[#9c9287]"
               placeholder="輸入管理員密碼"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="rounded-lg p-1.5 text-[#9d8172] transition-colors hover:bg-white/5 hover:text-[#fff7ec]"
+              className="rounded-lg p-1.5 text-[#7d7165] transition-colors hover:bg-[#f2ebe1] hover:text-[#302b26]"
               aria-label={showPassword ? "隱藏密碼" : "顯示密碼"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -108,7 +108,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
           role="alert"
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 rounded-xl border border-rose-300/15 bg-rose-400/10 px-4 py-3 text-sm text-rose-200"
+          className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
         >
           {error}
         </motion.p>
@@ -117,7 +117,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
       <Button
         type="submit"
         disabled={submitting}
-        className="mt-7 h-12 w-full bg-gradient-to-r from-[#f4a261] to-[#e76f51] text-[#2a1710] shadow-[0_16px_40px_-18px_#f4a261] hover:from-[#ffb372] hover:to-[#f07d5d]"
+        className="mt-7 h-12 w-full bg-[#935941] text-white shadow-[0_14px_35px_-15px_rgba(147,89,65,0.4)] hover:bg-[#794632]"
       >
         {submitting ? (
           <>
@@ -129,7 +129,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
         )}
       </Button>
 
-      <p className="mt-5 text-center text-xs leading-5 text-[#8f7668]">
+      <p className="mt-5 text-center text-xs leading-5 text-[#8a7f75]">
         為保護營運資料，登入狀態會在 8 小時後自動失效。
       </p>
     </motion.form>

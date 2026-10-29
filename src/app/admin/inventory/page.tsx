@@ -63,9 +63,9 @@ export default function AdminInventoryPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow">管理端</span>
-          <h1 className="mt-2 text-2xl font-bold text-white">庫存警報</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <span className="eyebrow text-[#935941]">管理端</span>
+          <h1 className="mt-2 text-2xl font-bold text-[#302b26]">庫存警報</h1>
+          <p className="mt-1 text-sm text-[#675e53]">
             即時監控真實資料庫在架商品庫存量，低於警戒值時自動標示警示。
           </p>
         </div>
@@ -77,20 +77,20 @@ export default function AdminInventoryPage() {
 
       {/* 統計卡片 */}
       <div className="grid gap-4 sm:grid-cols-3 mb-8">
-        <div className="panel p-5 border-rose-400/20 bg-rose-950/10">
-          <XCircle size={20} className="text-rose-400 mb-3" />
-          <p className="text-xs text-rose-300">嚴重缺貨（≤ {CRITICAL_THRESHOLD} 包）</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-rose-300">{criticalCount}</p>
+        <div className="panel p-5 bg-white border border-rose-200 shadow-sm">
+          <XCircle size={20} className="text-rose-600 mb-3" />
+          <p className="text-xs text-rose-700 font-medium">嚴重缺貨（≤ {CRITICAL_THRESHOLD} 包）</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-rose-700">{criticalCount}</p>
         </div>
-        <div className="panel p-5 border-amber-400/20 bg-amber-950/10">
-          <AlertTriangle size={20} className="text-amber-400 mb-3" />
-          <p className="text-xs text-amber-300">庫存偏低（≤ {LOW_STOCK_THRESHOLD} 包）</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-amber-300">{lowCount}</p>
+        <div className="panel p-5 bg-white border border-[#e2a84c]/30 shadow-sm">
+          <AlertTriangle size={20} className="text-[#8a5a14] mb-3" />
+          <p className="text-xs text-[#8a5a14] font-medium">庫存偏低（≤ {LOW_STOCK_THRESHOLD} 包）</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#8a5a14]">{lowCount}</p>
         </div>
-        <div className="panel p-5 border-emerald-400/20 bg-emerald-950/10">
-          <CheckCircle2 size={20} className="text-emerald-400 mb-3" />
-          <p className="text-xs text-emerald-300">庫存充足</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-emerald-300">{okCount}</p>
+        <div className="panel p-5 bg-white border border-[#68856b]/30 shadow-sm">
+          <CheckCircle2 size={20} className="text-[#425847] mb-3" />
+          <p className="text-xs text-[#425847] font-medium">庫存充足</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#425847]">{okCount}</p>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default function AdminInventoryPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center gap-3 rounded-xl border border-rose-400/20 bg-rose-500/10 px-5 py-3 text-sm text-rose-300"
+          className="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm text-rose-700"
         >
           <AlertTriangle size={16} />
           有 <strong>{criticalCount}</strong> 款商品庫存嚴重不足，建議立即補貨以免影響出貨。
@@ -107,9 +107,9 @@ export default function AdminInventoryPage() {
       )}
 
       {/* 商品庫存表 */}
-      <div className="overflow-hidden rounded-2xl border border-white/10">
+      <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/5 text-xs text-slate-400">
+          <thead className="border-b border-[#e8ded3] bg-[#fcfaf7] text-xs font-semibold text-[#675e53]">
             <tr>
               <th className="p-4">商品</th>
               <th className="p-4">物種</th>
@@ -118,17 +118,17 @@ export default function AdminInventoryPage() {
               <th className="p-4 text-right">售價</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[#e8ded3]">
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-400">
-                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent mb-2" />
+                <td colSpan={5} className="p-8 text-center text-[#8a7f75]">
+                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#935941] border-t-transparent mb-2" />
                   同步最新商品庫存中...
                 </td>
               </tr>
             ) : sorted.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">
+                <td colSpan={5} className="p-8 text-center text-[#8a7f75]">
                   資料庫目前尚無在架商品
                 </td>
               </tr>
@@ -138,15 +138,15 @@ export default function AdminInventoryPage() {
                 const isLow = !isCritical && p.stock <= LOW_STOCK_THRESHOLD;
 
                 return (
-                  <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                  <tr key={p.id} className="hover:bg-[#fbf8f4] transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                          <Image src={p.image} alt={p.name} fill className="object-cover" />
+                        <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-[#ebe5da]">
+                          <Image src={p.image} alt={p.name} fill sizes="48px" className="object-contain p-1" />
                         </div>
                         <div>
-                          <p className="font-medium text-white">{p.name}</p>
-                          <p className="text-xs text-slate-400">{p.subtitle}</p>
+                          <p className="font-medium text-[#302b26]">{p.name}</p>
+                          <p className="text-xs text-[#8a7f75]">{p.subtitle}</p>
                         </div>
                       </div>
                     </td>
@@ -154,8 +154,8 @@ export default function AdminInventoryPage() {
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           p.type === "CAT"
-                            ? "bg-cyan-400/10 text-cyan-300"
-                            : "bg-amber-400/10 text-amber-300"
+                            ? "bg-[#935941]/10 text-[#935941]"
+                            : "bg-[#fdf6ea] text-[#8a5a14] border border-[#e2a84c]/20"
                         }`}
                       >
                         {petLabels[p.type]}
@@ -165,30 +165,30 @@ export default function AdminInventoryPage() {
                       <span
                         className={
                           isCritical
-                            ? "text-rose-400"
+                            ? "text-rose-600"
                             : isLow
-                              ? "text-amber-400"
-                              : "text-emerald-400"
+                              ? "text-[#8a5a14]"
+                              : "text-[#425847]"
                         }
                       >
                         {p.stock}
                       </span>
-                      <span className="text-xs text-slate-500 font-normal ml-1">包</span>
+                      <span className="text-xs text-[#8a7f75] font-normal ml-1">包</span>
                     </td>
                     <td className="p-4 text-center">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
                           isCritical
-                            ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
+                            ? "border-rose-200 bg-rose-50 text-rose-700"
                             : isLow
-                              ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
-                              : "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                              ? "border-[#e2a84c]/30 bg-[#fdf6ea] text-[#8a5a14]"
+                              : "border-[#68856b]/30 bg-[#eef0e8] text-[#425847]"
                         }`}
                       >
                         {isCritical ? "嚴重缺貨" : isLow ? "庫存偏低" : "正常供應"}
                       </span>
                     </td>
-                    <td className="p-4 text-right font-mono font-medium text-cyan-300">
+                    <td className="p-4 text-right font-mono font-semibold text-[#935941]">
                       {money(p.priceNt)}
                     </td>
                   </tr>

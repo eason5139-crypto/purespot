@@ -118,9 +118,9 @@ export default function AdminMembersPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow">管理端</span>
-          <h1 className="mt-2 text-2xl font-bold text-white">會員管理</h1>
-          <p className="mt-1 text-sm text-slate-400">真實 Neon 資料庫會員清單，支援即時新增、查詢與刪除會員。</p>
+          <span className="eyebrow text-[#935941]">管理端</span>
+          <h1 className="mt-2 text-2xl font-bold text-[#302b26]">會員管理</h1>
+          <p className="mt-1 text-sm text-[#675e53]">真實 Neon 資料庫會員清單，支援即時新增、查詢與刪除會員。</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void fetchMembers()}>
@@ -136,29 +136,29 @@ export default function AdminMembersPage() {
 
       {/* 概覽統計 */}
       <div className="grid gap-4 sm:grid-cols-3 mb-8">
-        <div className="panel p-5">
-          <Users size={20} className="text-cyan-400 mb-3" />
-          <p className="text-xs text-slate-400">真實註冊會員數</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-white">{activeCount}</p>
+        <div className="panel p-5 bg-white">
+          <Users size={20} className="text-[#935941] mb-3" />
+          <p className="text-xs text-[#8a7f75]">真實註冊會員數</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#302b26]">{activeCount}</p>
         </div>
-        <div className="panel p-5">
-          <ShoppingBag size={20} className="text-emerald-400 mb-3" />
-          <p className="text-xs text-slate-400">會員下單總數</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-white">
+        <div className="panel p-5 bg-white">
+          <ShoppingBag size={20} className="text-[#425847] mb-3" />
+          <p className="text-xs text-[#8a7f75]">會員下單總數</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#302b26]">
             {members.reduce((s, m) => s + m.ordersCount, 0)}
           </p>
         </div>
-        <div className="panel p-5">
-          <Shield size={20} className="text-amber-400 mb-3" />
-          <p className="text-xs text-slate-400">會員累計總消費</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-white">{money(totalRevenue)}</p>
+        <div className="panel p-5 bg-white">
+          <Shield size={20} className="text-[#8a5a14] mb-3" />
+          <p className="text-xs text-[#8a7f75]">會員累計總消費</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#935941]">{money(totalRevenue)}</p>
         </div>
       </div>
 
       {/* 搜尋列 */}
       <div className="flex flex-wrap gap-3 mb-5">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a7f75]" />
           <input
             type="text"
             placeholder="搜尋姓名、Email 或手機..."
@@ -170,9 +170,9 @@ export default function AdminMembersPage() {
       </div>
 
       {/* 會員列表 */}
-      <div className="overflow-hidden rounded-2xl border border-white/10">
+      <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/5 text-xs text-slate-400">
+          <thead className="border-b border-[#e8ded3] bg-[#fcfaf7] text-xs font-semibold text-[#675e53]">
             <tr>
               <th className="p-4">會員資訊</th>
               <th className="p-4">加入日期</th>
@@ -182,53 +182,53 @@ export default function AdminMembersPage() {
               <th className="p-4 text-right">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[#e8ded3]">
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-400">
-                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent mb-2" />
+                <td colSpan={6} className="p-8 text-center text-[#8a7f75]">
+                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#935941] border-t-transparent mb-2" />
                   載入真實會員名單中...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-500">
+                <td colSpan={6} className="p-8 text-center text-[#8a7f75]">
                   {search ? "查無符合條件的會員" : "資料庫目前尚無會員資料（點擊右上角新增會員）"}
                 </td>
               </tr>
             ) : (
               filtered.map((m) => (
-                <tr key={m.id} className="hover:bg-white/[0.02] transition-colors">
+                <tr key={m.id} className="hover:bg-[#fbf8f4] transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="size-9 rounded-full bg-cyan-400/10 text-cyan-300 font-bold flex items-center justify-center text-sm border border-cyan-400/20">
+                      <div className="size-9 rounded-full bg-[#935941]/10 text-[#935941] font-bold flex items-center justify-center text-sm border border-[#935941]/20">
                         {m.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-white">{m.name}</p>
-                        <p className="text-xs text-slate-400">{m.email}</p>
+                        <p className="font-medium text-[#302b26]">{m.name}</p>
+                        <p className="text-xs text-[#8a7f75]">{m.email}</p>
                         {m.phone && m.phone !== "未填寫" && (
-                          <p className="text-xs text-slate-500">{m.phone}</p>
+                          <p className="text-xs text-[#8a7f75]">{m.phone}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-xs text-slate-400">
+                  <td className="p-4 text-xs text-[#8a7f75]">
                     {dateLabel(m.joinedAt)}
                   </td>
-                  <td className="p-4 text-center font-mono text-slate-300">
+                  <td className="p-4 text-center font-mono text-[#675e53]">
                     {m.petCount}
                   </td>
-                  <td className="p-4 text-center font-mono text-slate-300">
+                  <td className="p-4 text-center font-mono text-[#675e53]">
                     {m.ordersCount}
                   </td>
-                  <td className="p-4 text-right font-mono font-medium text-cyan-300">
+                  <td className="p-4 text-right font-mono font-medium text-[#935941]">
                     {money(m.totalSpentNt)}
                   </td>
                   <td className="p-4 text-right">
                     <button
                       onClick={() => void handleDeleteMember(m.id, m.name)}
-                      className="inline-flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded hover:bg-rose-500/10 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 px-2.5 py-1 rounded-lg hover:bg-rose-50 transition-colors"
                       title="刪除此會員"
                     >
                       <Trash2 size={14} />
@@ -245,27 +245,27 @@ export default function AdminMembersPage() {
       {/* 新增會員彈窗 */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md rounded-2xl border border-white/15 bg-[#0f1523] p-6 shadow-2xl relative"
+              className="w-full max-w-md rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 shadow-2xl relative"
             >
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="absolute right-4 top-4 text-slate-400 hover:text-white"
+                className="absolute right-4 top-4 text-[#8a7f75] hover:text-[#302b26]"
               >
                 ✕
               </button>
 
-              <div className="flex items-center gap-2 mb-4 text-cyan-300">
+              <div className="flex items-center gap-2 mb-4 text-[#935941]">
                 <Users size={20} />
-                <h3 className="text-lg font-bold text-white">公司端手動建立新會員</h3>
+                <h3 className="text-lg font-bold text-[#302b26]">公司端手動建立新會員</h3>
               </div>
 
               {errorMsg && (
-                <div className="mb-4 rounded-lg bg-rose-500/10 border border-rose-400/20 p-3 text-xs text-rose-300">
+                <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
                   {errorMsg}
                 </div>
               )}

@@ -22,33 +22,33 @@ export default function AdminMediaPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <span className="eyebrow">網站與商品</span>
-      <h1 className="mt-2 text-3xl font-semibold text-[#fff7ec]">圖片媒體庫</h1>
-      <p className="mt-2 text-sm text-[#bda595]">上傳品牌或商品照片；圖片可在網站內容與商品編輯器中選用。</p>
-      <div className="mt-8 max-w-xl rounded-2xl border border-[#e9a06d]/20 bg-[#2a1b15] p-5">
+      <span className="eyebrow text-[#935941]">網站與商品</span>
+      <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">圖片媒體庫</h1>
+      <p className="mt-2 text-sm text-[#675e53]">上傳品牌或商品照片；圖片可在網站內容與商品編輯器中選用。</p>
+      <div className="mt-8 max-w-xl rounded-2xl border border-[#e8ded3] bg-white p-5 shadow-sm">
         <MediaUploadField
           label="新增圖片"
           value=""
           onChange={(url) => setImages((previous) => [url, ...previous])}
         />
       </div>
-      {error && <p role="alert" className="mt-5 rounded-xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p>}
+      {error && <p role="alert" className="mt-5 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>}
       <div className="mt-10 flex items-center gap-2">
-        <Images size={20} className="text-[#f4a261]" />
-        <h2 className="text-xl font-semibold text-[#fff7ec]">已上傳與內建圖片</h2>
-        <span className="text-sm text-[#a78c7c]">({images.length})</span>
+        <Images size={20} className="text-[#935941]" />
+        <h2 className="text-xl font-semibold text-[#302b26]">已上傳與內建圖片</h2>
+        <span className="text-sm text-[#8a7f75]">({images.length})</span>
       </div>
       <div className="mt-5 grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
         {images.map((url) => (
-          <article key={url} className="overflow-hidden rounded-2xl border border-[#e9a06d]/15 bg-[#2a1b15]">
-            <div className="relative aspect-[1.2]"><Image src={url} alt={url.split("/").at(-1) || "媒體圖片"} fill sizes="(max-width:640px) 100vw,25vw" className="object-cover" /></div>
-            <div className="flex items-center gap-2 p-3">
-              <code className="min-w-0 flex-1 truncate text-xs text-[#c7ae9d]">{url}</code>
+          <article key={url} className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm hover:border-[#935941]/40 transition-all">
+            <div className="relative aspect-[1.2] bg-[#ebe5da]"><Image src={url} alt={url.split("/").at(-1) || "媒體圖片"} fill sizes="(max-width:640px) 100vw,25vw" className="object-contain p-2" /></div>
+            <div className="flex items-center gap-2 p-3 border-t border-[#e8ded3]">
+              <code className="min-w-0 flex-1 truncate text-xs text-[#675e53] font-mono">{url}</code>
               <button
                 type="button"
                 aria-label={`複製 ${url} 路徑`}
                 onClick={async () => { await navigator.clipboard.writeText(url); setCopied(url); }}
-                className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[#f4a261]"
+                className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#f5ede3] text-[#935941] hover:bg-[#ede5da] transition-colors"
               >
                 {copied === url ? <Check size={16} /> : <Copy size={16} />}
               </button>

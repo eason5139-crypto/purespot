@@ -23,6 +23,7 @@ import { matchProduct } from "@/lib/matching";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
+
 export function UgcFeedModal() {
   const id = useUiStore((s) => s.ugcPostId);
   const close = useUiStore((s) => s.openUgc);
@@ -32,6 +33,7 @@ export function UgcFeedModal() {
   const video = useRef<HTMLVideoElement>(null);
   const post = ugcPosts.find((p) => p.id === id);
   const product = getProduct(post?.productId ?? "");
+
   useEffect(() => {
     const element = video.current;
     return () => {
@@ -42,8 +44,10 @@ export function UgcFeedModal() {
       }
     };
   }, [id]);
+
   if (!post || !product) return null;
   const fit = matchProduct(product, pet);
+
   function addItem() {
     if (!product) return;
     try {
@@ -59,6 +63,7 @@ export function UgcFeedModal() {
       toast.error(e instanceof Error ? e.message : "無法加入商品");
     }
   }
+
   return (
     <Dialog
       open
@@ -66,10 +71,10 @@ export function UgcFeedModal() {
         if (!open) close(null);
       }}
     >
-      <DialogContent side="right" className="!max-w-5xl !p-0">
+      <DialogContent side="right" className="!max-w-5xl !p-0 bg-[#faf7f2] border-[#e8ded3]">
         <div className="grid min-h-full lg:grid-cols-[1.15fr_1fr]">
-          <div className="bg-[#090d16]">
-            <div className="relative aspect-square">
+          <div className="bg-[#f0ece4] border-r border-[#e8ded3]">
+            <div className="relative aspect-square bg-[#ebe5da]">
               {post.media.kind === "video" ? (
                 <video
                   ref={video}
@@ -94,27 +99,27 @@ export function UgcFeedModal() {
                   alt={post.title}
                   fill
                   sizes="(max-width:1024px) 100vw,50vw"
-                  className="object-cover"
+                  className="object-contain p-4"
                 />
               )}
             </div>
             <div className="p-6">
-              <span className="text-xs text-amber-300">
+              <span className="text-xs text-[#8a5a14] font-medium bg-[#fdf6ea] px-2 py-0.5 rounded">
                 開箱情境示範 · AI 生成圖片
               </span>
-              <DialogTitle className="mt-3 text-2xl font-semibold leading-relaxed">
+              <DialogTitle className="mt-3 text-2xl font-semibold leading-relaxed text-[#302b26]">
                 {post.title}
               </DialogTitle>
-              <DialogDescription className="mt-3 text-sm leading-7 text-slate-400">
+              <DialogDescription className="mt-3 text-sm leading-7 text-[#675e53]">
                 {post.text}
               </DialogDescription>
-              <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-5">
-                <span className="flex size-10 items-center justify-center rounded-full bg-amber-400/10 text-amber-300">
+              <div className="mt-5 flex items-center gap-3 border-t border-[#e8ded3] pt-5">
+                <span className="flex size-10 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
                   <Heart size={18} />
                 </span>
                 <div>
-                  <p className="text-sm">{post.author}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-[#302b26]">{post.author}</p>
+                  <p className="mt-1 text-xs text-[#8a7f75]">
                     {post.breed} · {post.age} · {post.weight}
                   </p>
                 </div>
@@ -124,24 +129,30 @@ export function UgcFeedModal() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col justify-center p-6 sm:p-8"
+            className="flex flex-col justify-center p-6 sm:p-8 bg-white"
           >
-            <span className="eyebrow mb-5">讓喜歡，成為日常</span>
-            <h3 className="text-xl font-semibold">帶走毛孩同款</h3>
-            <Image
-              src={product.image}
-              alt="同款商品概念包裝示意"
-              width={300}
-              height={300}
-              className="mx-auto my-5 aspect-square w-full max-w-64 rounded-2xl object-cover"
-            />
-            <h4 className="text-xl font-semibold">{product.name}</h4>
-            <p className="mt-2 text-sm text-slate-400">
+            <span className="eyebrow mb-5 text-[#935941]">讓喜歡，成為日常</span>
+            <h3 className="text-xl font-semibold text-[#302b26]">帶走毛孩同款</h3>
+            <div className="relative mx-auto my-5 aspect-square w-full max-w-64 overflow-hidden rounded-2xl bg-[#ebe5da]">
+              <Image
+                src={product.image}
+                alt="同款商品概念包裝示意"
+                fill
+                sizes="256px"
+                className="object-contain p-3"
+              />
+            </div>
+            <h4 className="text-xl font-semibold text-[#302b26]">{product.name}</h4>
+            <p className="mt-2 text-sm text-[#8a7f75]">
               {product.bagGrams / 1000} 公斤 · {product.subtitle}
             </p>
-            <p className="my-5 font-mono text-3xl">{money(product.priceNt)}</p>
+            <p className="my-5 font-mono text-3xl font-bold text-[#935941]">{money(product.priceNt)}</p>
             <div
-              className={`mb-5 flex items-center gap-2 rounded-xl border p-3 text-sm ${fit.safe ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-300" : "border-amber-400/20 bg-amber-400/5 text-amber-300"}`}
+              className={`mb-5 flex items-center gap-2 rounded-xl border p-3 text-sm ${
+                fit.safe
+                  ? "border-[#68856b]/30 bg-[#eef0e8] text-[#425847]"
+                  : "border-[#e2a84c]/30 bg-[#fdf6ea] text-[#8a5a14]"
+              }`}
             >
               {fit.safe ? (
                 <ShieldCheck size={17} />
@@ -166,7 +177,7 @@ export function UgcFeedModal() {
               <Calculator />
               先幫{pet.name}算份量
             </Button>
-            <p className="mt-4 text-center text-xs text-slate-500">
+            <p className="mt-4 text-center text-xs text-[#8a7f75]">
               不離開日常靈感，也能完成選購。
             </p>
           </motion.div>

@@ -46,23 +46,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {storageError && (
         <p
           role="status"
-          className="bg-amber-400/10 p-3 text-center text-sm text-amber-200"
+          className="border-b border-[#ebd7be] bg-[#fbf3e6] p-3 text-center text-sm text-[#8c5d33]"
         >
           瀏覽器儲存空間無法使用，本次資料可能不會保留。
         </p>
       )}
       {children}
       <Toaster
-        theme="dark"
+        theme="light"
         position="bottom-right"
         richColors
         closeButton
         toastOptions={{
           style: {
             fontFamily: "inherit",
-            background: "#2a1a14",
-            border: "1px solid #f4a26130",
-            color: "#fff7ec",
+            background: "#ffffff",
+            border: "1px solid #e8ded3",
+            color: "#302b26",
+            boxShadow: "0 10px 30px -10px rgba(147, 89, 65, 0.15)",
           },
         }}
       />

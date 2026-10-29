@@ -13,13 +13,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!admin) redirect("/admin-login?next=/admin");
 
   return (
-    <div className="admin-shell flex min-h-screen bg-[#1b120e]">
+    <div className="admin-shell flex min-h-screen bg-[#f8f5ef] text-[#302b26]">
       <AdminSidebar adminEmail={admin.email} />
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         <main id="main-content" className="flex-1 p-6 lg:p-8 overflow-auto">
           {children}
         </main>
-        <footer className="border-t border-[#f4a261]/10 px-8 py-3 text-xs text-[#876f63]">
+        <footer className="border-t border-[#e8ded3] bg-[#f4ece1] px-8 py-3 text-xs text-[#8a7f75]">
           PURESPOT 營運管理中心 · 僅限授權管理員存取
         </footer>
       </div>

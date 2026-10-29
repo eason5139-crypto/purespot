@@ -31,9 +31,16 @@ export default function HealthPage() {
   if (!supportsFoodCalculator(pet.type)) return (
     <main id="main-content" className="page-shell py-16">
       <span className="eyebrow">毛孩生活檔案</span>
-      <h1 className="mt-3 text-3xl font-semibold">{pet.name}的日常</h1>
-      <p className="mt-5 max-w-xl leading-8 text-slate-400">{petLabels[pet.type]}的飲食需求與貓狗不同，因此這裡不套用貓狗熱量公式。你仍可管理牠的資料，並挑選適合的食物與用品。</p>
-      <div className="mt-7 flex gap-3"><Button onClick={() => edit(true)}>編輯毛孩資料</Button><Link href="/shop" className="inline-flex min-h-11 items-center rounded-lg border border-white/20 px-5 text-sm">逛逛適用選物</Link></div>
+      <h1 className="mt-3 text-3xl font-semibold text-[#302b26]">{pet.name}的日常</h1>
+      <p className="mt-5 max-w-xl leading-8 text-[#675e53]">
+        {petLabels[pet.type]}的飲食需求與貓狗不同，因此這裡不套用貓狗熱量公式。你仍可管理牠的資料，並挑選適合的食物與用品。
+      </p>
+      <div className="mt-7 flex gap-3">
+        <Button onClick={() => edit(true)}>編輯毛孩資料</Button>
+        <Link href="/shop" className="inline-flex min-h-11 items-center rounded-xl border border-[#d9cfc3] bg-white px-5 text-sm font-semibold text-[#4e443a] hover:bg-[#ede5da]">
+          逛逛適用選物
+        </Link>
+      </div>
     </main>
   );
 
@@ -43,7 +50,6 @@ export default function HealthPage() {
 
   const Icon = pet.type === "CAT" ? Cat : Dog;
 
-  // 營養學公式計算：RER 與 DER
   let nutrition = null;
   try {
     nutrition = calculatePetNutrition(
@@ -74,12 +80,12 @@ export default function HealthPage() {
     <main id="main-content" className="page-shell py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="eyebrow flex items-center gap-1.5">
+          <span className="eyebrow flex items-center gap-1.5 text-[#935941]">
             <HeartPulse size={14} />
             健康指標分析
           </span>
-          <h1 className="mt-2 text-3xl font-semibold">{pet.name}的健康儀表板</h1>
-          <p className="mt-2 text-slate-400">
+          <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">{pet.name}的健康儀表板</h1>
+          <p className="mt-2 text-[#675e53]">
             結合生理特徵、能量代謝公式與即時體態監控。
           </p>
         </div>
@@ -95,19 +101,19 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="panel p-6"
+          className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Icon size={28} className="text-cyan-300" />
-            <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-400">
+            <Icon size={28} className="text-[#935941]" />
+            <span className="rounded-md bg-[#f5ede3] px-2.5 py-0.5 text-xs text-[#675e53] font-medium">
               {pet.type === "CAT" ? "貓咪" : "狗狗"}
             </span>
           </div>
-          <h2 className="mt-4 text-lg font-semibold">{pet.name}</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="mt-4 text-lg font-semibold text-[#302b26]">{pet.name}</h2>
+          <p className="mt-1 text-sm text-[#8a7f75]">
             {pet.breed} · {pet.isNeutered ? "已結紮" : "未結紮"}
           </p>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-[#8a7f75]">
             目標：{pet.goal === "WEIGHT_LOSS" ? "健康減重" : "體重維持"}
           </p>
         </motion.section>
@@ -116,20 +122,20 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          className="panel p-6"
+          className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Scale size={28} className="text-cyan-300" />
-            <span className="rounded-md bg-cyan-400/10 px-2 py-0.5 text-xs text-cyan-300">
+            <Scale size={28} className="text-[#935941]" />
+            <span className="rounded-md bg-[#eef0e8] border border-[#68856b]/30 px-2 py-0.5 text-xs text-[#425847] font-medium">
               最新紀錄
             </span>
           </div>
-          <p className="mt-4 text-xs text-slate-400">目前體重</p>
-          <p className="mt-1 font-mono text-3xl font-semibold">
+          <p className="mt-4 text-xs text-[#8a7f75]">目前體重</p>
+          <p className="mt-1 font-mono text-3xl font-semibold text-[#302b26]">
             {pet.weightKg}
-            <span className="ml-1.5 text-sm font-normal text-slate-400">公斤</span>
+            <span className="ml-1.5 text-sm font-normal text-[#8a7f75]">公斤</span>
           </p>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-[#8a7f75]">
             活動度：{activityLabels[pet.activityLevel] || "標準"}
           </p>
         </motion.section>
@@ -138,22 +144,22 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="panel p-6"
+          className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <CalendarDays size={28} className="text-amber-300" />
-            <span className="rounded-md bg-amber-400/10 px-2 py-0.5 text-xs text-amber-300">
+            <CalendarDays size={28} className="text-[#8a5a14]" />
+            <span className="rounded-md bg-[#fdf6ea] border border-[#e2a84c]/30 px-2 py-0.5 text-xs text-[#8a5a14] font-medium">
               生理年齡
             </span>
           </div>
-          <p className="mt-4 text-xs text-slate-400">陪伴的日子</p>
-          <p className="mt-1 font-mono text-3xl font-semibold">
+          <p className="mt-4 text-xs text-[#8a7f75]">陪伴的日子</p>
+          <p className="mt-1 font-mono text-3xl font-semibold text-[#302b26]">
             {Math.floor(pet.ageMonths / 12)}
-            <span className="mx-1 text-sm font-normal text-slate-400">歲</span>
+            <span className="mx-1 text-sm font-normal text-[#8a7f75]">歲</span>
             {pet.ageMonths % 12}
-            <span className="text-sm font-normal text-slate-400">個月</span>
+            <span className="text-sm font-normal text-[#8a7f75]">個月</span>
           </p>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-[#8a7f75]">
             生長階段：
             {pet.ageMonths < 12
               ? "幼年成長期"
@@ -167,20 +173,20 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.15 }}
-          className="panel p-6"
+          className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Flame size={28} className="text-emerald-300" />
-            <span className="rounded-md bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-300">
+            <Flame size={28} className="text-[#425847]" />
+            <span className="rounded-md bg-[#eef0e8] border border-[#68856b]/30 px-2 py-0.5 text-xs text-[#425847] font-medium">
               代謝基準 (DER)
             </span>
           </div>
-          <p className="mt-4 text-xs text-slate-400">每日建議攝取</p>
-          <p className="mt-1 font-mono text-3xl font-semibold text-emerald-300">
+          <p className="mt-4 text-xs text-[#8a7f75]">每日建議攝取</p>
+          <p className="mt-1 font-mono text-3xl font-semibold text-[#425847]">
             {nutrition ? Math.round(nutrition.der) : "—"}
-            <span className="ml-1.5 text-sm font-normal text-slate-400">kcal</span>
+            <span className="ml-1.5 text-sm font-normal text-[#8a7f75]">kcal</span>
           </p>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-[#8a7f75]">
             靜止能量 (RER): {nutrition ? Math.round(nutrition.rer) : "—"} kcal
           </p>
         </motion.section>
@@ -206,53 +212,53 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.25 }}
-          className="panel p-7"
+          className="panel p-7 bg-white"
         >
           <div className="flex items-center gap-2">
-            <Activity size={20} className="text-cyan-300" />
-            <h2 className="text-lg font-semibold">專屬配糧與代謝分析</h2>
+            <Activity size={20} className="text-[#935941]" />
+            <h2 className="text-lg font-semibold text-[#302b26]">專屬配糧與代謝分析</h2>
           </div>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[#675e53]">
             依據 FEDIAF 與 WSAVA 營養指引，精準匹配日常能量耗損。
           </p>
 
           <div className="mt-6 space-y-4">
-            <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
+            <div className="flex items-center justify-between rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4">
               <div>
-                <p className="text-sm font-medium">每日建議乾糧克數</p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="text-sm font-medium text-[#302b26]">每日建議乾糧克數</p>
+                <p className="mt-0.5 text-xs text-[#8a7f75]">
                   以目前適配商品 {matchedProduct.name} 計算
                 </p>
               </div>
-              <span className="font-mono text-2xl font-bold text-cyan-300">
+              <span className="font-mono text-2xl font-bold text-[#935941]">
                 {nutrition ? Math.round(nutrition.dailyGrams) : "—"}{" "}
-                <span className="text-sm font-normal text-slate-400">克 / 天</span>
+                <span className="text-sm font-normal text-[#8a7f75]">克 / 天</span>
               </span>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
+            <div className="flex items-center justify-between rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4">
               <div>
-                <p className="text-sm font-medium">單包建議食用天數</p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="text-sm font-medium text-[#302b26]">單包建議食用天數</p>
+                <p className="mt-0.5 text-xs text-[#8a7f75]">
                   規格：{matchedProduct.bagGrams / 1000} 公斤裝
                 </p>
               </div>
-              <span className="font-mono text-2xl font-bold text-slate-200">
+              <span className="font-mono text-2xl font-bold text-[#302b26]">
                 {nutrition ? Math.round(nutrition.bagDurationDays) : "—"}{" "}
-                <span className="text-sm font-normal text-slate-400">天</span>
+                <span className="text-sm font-normal text-[#8a7f75]">天</span>
               </span>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
+            <div className="flex items-center justify-between rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4">
               <div>
-                <p className="text-sm font-medium">循環補貨週期推薦</p>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="text-sm font-medium text-[#302b26]">循環補貨週期推薦</p>
+                <p className="mt-0.5 text-xs text-[#8a7f75]">
                   預留緩衝天數，避免斷糧
                 </p>
               </div>
-              <span className="font-mono text-2xl font-bold text-emerald-300">
+              <span className="font-mono text-2xl font-bold text-[#425847]">
                 每 {nutrition?.recommendedIntervalDays ?? 28}{" "}
-                <span className="text-sm font-normal text-slate-400">天一配送</span>
+                <span className="text-sm font-normal text-[#8a7f75]">天一配送</span>
               </span>
             </div>
           </div>
@@ -270,51 +276,51 @@ export default function HealthPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.3 }}
-          className="panel p-7"
+          className="panel p-7 bg-white"
         >
           <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-emerald-300" />
-            <h2 className="text-lg font-semibold">飲食偏好與過敏原過濾</h2>
+            <ShieldCheck size={20} className="text-[#425847]" />
+            <h2 className="text-lg font-semibold text-[#302b26]">飲食偏好與過敏原過濾</h2>
           </div>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[#675e53]">
             全站商品皆依據 {pet.name} 的飲食限制進行自動安全標註。
           </p>
 
           <div className="my-6">
-            <p className="text-xs text-slate-400">已登錄之過敏原項目</p>
+            <p className="text-xs text-[#8a7f75]">已登錄之過敏原項目</p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {pet.allergies.length ? (
                 pet.allergies.map((a) => (
                   <span
                     key={a}
-                    className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3.5 py-1.5 text-sm font-medium text-amber-200"
+                    className="rounded-lg border border-[#e2a84c]/30 bg-[#fdf6ea] px-3.5 py-1.5 text-sm font-medium text-[#8a5a14]"
                   >
                     避開 {a}
                   </span>
                 ))
               ) : (
-                <span className="rounded-lg bg-white/5 px-3 py-1.5 text-sm text-slate-400">
+                <span className="rounded-lg border border-[#e8ded3] bg-[#f7f2ea] px-3 py-1.5 text-sm text-[#8a7f75]">
                   尚未設定過敏原
                 </span>
               )}
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/5 bg-white/5 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
-              <Sparkles size={16} className="text-cyan-300" />
+          <div className="rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#302b26]">
+              <Sparkles size={16} className="text-[#935941]" />
               目前最適配商品
             </div>
-            <p className="mt-2 text-sm text-slate-300">
+            <p className="mt-2 text-sm font-semibold text-[#302b26]">
               {matchedProduct.name} ({matchedProduct.subtitle})
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-[#8a7f75]">
               粗蛋白保證值 {matchedProduct.proteinMin}% · 熱量{" "}
               {matchedProduct.kcalPer100g} kcal/100g
             </p>
           </div>
 
-          <p className="mt-6 text-xs leading-6 text-slate-500">
+          <p className="mt-6 text-xs leading-6 text-[#8a7f75]">
             提示：若毛孩體重、活動量或健康目標有調整，請隨時點選「編輯毛孩資料」或更新配糧試算，系統將自動同步購物袋與補貨建議。
           </p>
         </motion.section>

@@ -8,7 +8,6 @@ import type { SiteContent } from "@/lib/siteContent";
 export function SiteChrome({ children, content }: { children: React.ReactNode; content: SiteContent }) {
   const path = usePathname();
   const isBackoffice = path.startsWith("/admin") || path === "/admin-login";
-  const light = path === "/" || path === "/transparency" || path === "/shop" || path.startsWith("/products/");
 
   if (isBackoffice) return <>{children}</>;
 
@@ -16,8 +15,8 @@ export function SiteChrome({ children, content }: { children: React.ReactNode; c
     <>
       <Navbar announcement={content.announcement} />
       {children}
-      <footer className={`border-t py-8 ${light ? "border-[#e8d9ca] bg-[#f4e8d9]" : "border-[#f3b77d]/12 bg-[#1c110d]"}`}>
-        <div className={`page-shell flex flex-wrap items-center justify-between gap-3 text-xs leading-6 ${light ? "text-[#806756]" : "text-[#a88d7d]"}`}>
+      <footer className="border-t border-[#e8ded3] bg-[#f4ece1] py-8 text-[#7c6f63]">
+        <div className="page-shell flex flex-wrap items-center justify-between gap-3 text-xs leading-6">
           <span>{content.footerTagline}</span>
           <span>{content.footerNotice}</span>
         </div>

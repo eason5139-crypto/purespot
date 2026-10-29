@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+
 const links = [
   { href: "/", label: "品牌首頁" },
   { href: "/shop", label: "精品商城" },
@@ -37,9 +38,9 @@ const links = [
   { href: "/health", label: "健康儀表板" },
   { href: "/account", label: "我的帳戶" },
 ];
+
 export function Navbar({ announcement }: { announcement: string }) {
   const path = usePathname();
-  const light = path === "/" || path === "/transparency" || path === "/shop" || path.startsWith("/products/");
   const pet = useActivePet();
   const pets = usePetContextStore((s) => s.allPets);
   const setActive = usePetContextStore((s) => s.setActivePet);
@@ -52,14 +53,15 @@ export function Navbar({ announcement }: { announcement: string }) {
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const PetIcon = pet.type === "CAT" ? Cat : pet.type === "DOG" ? Dog : PawPrint;
+
   return (
-    <header className={`sticky top-0 z-40 border-b backdrop-blur-xl ${light ? "border-[#eadbcb] bg-[#fffaf3]/95" : "border-[#f4a261]/10 bg-[#1b110d]/92"}`}>
-      <div className={`flex h-8 items-center justify-center gap-2 border-b px-3 text-xs tracking-wide ${light ? "border-[#eadbcb] bg-[#f5e9dc] text-[#95684e]" : "border-[#f4a261]/10 bg-[#f4a261]/7 text-[#f7c9a7]"}`}>
+    <header className="sticky top-0 z-40 border-b border-[#e8ded3] bg-white/95 backdrop-blur-xl">
+      <div className="flex h-8 items-center justify-center gap-2 border-b border-[#e8ded3] bg-[#f5ebe0] px-3 text-xs tracking-wide text-[#935941]">
         <Repeat2 size={13} />
         <span>{announcement}</span>
         <Link
           href="/autoship"
-          className="hidden underline decoration-[#f4a261]/50 underline-offset-4 sm:inline"
+          className="hidden underline decoration-[#935941]/40 underline-offset-4 sm:inline hover:text-[#794632]"
         >
           循環補貨享 9 折 · 滿 $699 免運
         </Link>
@@ -83,75 +85,81 @@ export function Navbar({ announcement }: { announcement: string }) {
           aria-label="主要導覽"
           className="hidden h-full items-center gap-7 lg:flex"
         >
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              aria-current={path === link.href ? "page" : undefined}
-              className={`relative flex h-full items-center text-sm font-medium transition-colors ${light ? "hover:text-[#a75b3d]" : "hover:text-[#fff7ec]"} ${path === link.href ? (light ? "text-[#ad5c3c]" : "text-[#f4a261]") : (light ? "text-[#796354]" : "text-[#b79d8e]")}`}
-            >
-              {link.label}
-              {path === link.href && (
-                <motion.span
-                  layoutId="nav-indicator"
-                  className="absolute inset-x-0 bottom-0 h-0.5 bg-[#f4a261]"
-                />
-              )}
-            </Link>
-          ))}
+          {links.map((link) => {
+            const active = path === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`relative flex h-full items-center text-sm font-medium transition-colors hover:text-[#935941] ${
+                  active ? "text-[#935941]" : "text-[#5e544a]"
+                }`}
+              >
+                {link.label}
+                {active && (
+                  <motion.span
+                    layoutId="nav-indicator"
+                    className="absolute inset-x-0 bottom-0 h-0.5 bg-[#935941]"
+                  />
+                )}
+              </Link>
+            );
+          })}
         </nav>
         <div className="flex items-center gap-1.5 sm:gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
-                className={`gap-2 px-2 sm:px-3 ${light ? "!border-[#e6d5c3] !bg-white !text-[#4f382c]" : ""}`}
+                className="gap-2 px-2 sm:px-3 !border-[#d9cfc3] !bg-[#fcfaf7] !text-[#302b26] hover:!bg-[#f4eee6]"
                 aria-label="切換毛孩"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-[#f4a261]/10 text-[#f4a261]">
-                  <PetIcon />
+                <span className="flex size-7 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
+                  <PetIcon size={16} />
                 </span>
-                <span className={`hidden sm:inline ${light ? "text-[#977b68]" : "text-slate-400"}`}>正在為</span>
+                <span className="hidden sm:inline text-[#8a7f75]">正在為</span>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
                     key={pet.id}
                     initial={{ y: 4, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -4, opacity: 0 }}
-                    className="hidden min-[420px]:inline"
+                    className="hidden min-[420px]:inline font-medium"
                   >
                     {pet.name}
                   </motion.span>
                 </AnimatePresence>
-                <ChevronDown className="hidden text-slate-500 min-[420px]:block" />
+                <ChevronDown className="hidden text-[#8a7f75] min-[420px]:block" size={14} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {pets.map((p) => (
                 <DropdownMenuItem key={p.id} onSelect={() => setActive(p.id)}>
-                  {p.type === "CAT" ? <Cat size={20} /> : p.type === "DOG" ? <Dog size={20} /> : <PawPrint size={20} />}
+                  {p.type === "CAT" ? <Cat size={18} /> : p.type === "DOG" ? <Dog size={18} /> : <PawPrint size={18} />}
                   <span className="flex-1">
                     {p.name}
-                    <span className="ml-2 text-xs text-slate-400">
+                    <span className="ml-2 text-xs text-[#8a7f75]">
                       {p.weightKg} 公斤
                     </span>
                   </span>
                   {p.id === pet.id && (
-                    <Check size={16} className="text-[#f4a261]" />
+                    <Check size={16} className="text-[#935941]" />
                   )}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setPetEditorOpen(true)}>
-                <SlidersHorizontal size={17} />
+                <SlidersHorizontal size={16} />
                 管理毛孩資料
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
           <Button
             variant="ghost"
             size="icon"
-            className={`relative ${light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}`}
+            className="relative !text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
             aria-label={`購物車，${count} 件商品`}
             onClick={() => setCartOpen(true)}
           >
@@ -161,21 +169,27 @@ export function Navbar({ announcement }: { announcement: string }) {
                 key={count}
                 initial={{ scale: 0.6 }}
                 animate={{ scale: 1 }}
-                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-[#f4a261] px-1 text-xs leading-5 text-[#2b170f]"
+                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-[#935941] px-1 text-xs font-semibold leading-5 text-white"
               >
                 {count}
               </motion.span>
             )}
           </Button>
+
           {authUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="會員選單" className={light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="會員選單"
+                  className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
+                >
                   <User className="!size-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem disabled className="text-xs text-slate-500">
+                <DropdownMenuItem disabled className="text-xs text-[#8a7f75]">
                   {authUser.name ?? authUser.email}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -185,7 +199,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={() => void logout()}
-                  className="text-rose-300 focus:text-rose-200"
+                  className="text-rose-600 focus:text-rose-700 focus:bg-rose-50"
                 >
                   <LogOut size={16} />
                   登出
@@ -198,17 +212,18 @@ export function Navbar({ announcement }: { announcement: string }) {
               size="icon"
               aria-label="會員登入"
               onClick={() => setAuthOpen(true)}
-              className={light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}
+              className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
             >
               <LogIn className="!size-5" />
             </Button>
           )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className={`lg:hidden ${light ? "!text-[#715647] hover:!bg-[#f5e9dc]" : ""}`}
+                className="lg:hidden !text-[#5e544a] hover:!bg-[#f5ebe0]"
                 aria-label="開啟導覽選單"
               >
                 <Menu />

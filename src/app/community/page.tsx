@@ -286,34 +286,34 @@ export default function CommunityPage() {
   return (
     <main id="main-content" className="page-shell py-8">
       {/* 頂部社群 Banner 與肉肉幣資產總覽 */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e8ded3] pb-6">
         <div>
-          <span className="eyebrow flex items-center gap-1.5 text-cyan-400">
+          <span className="eyebrow flex items-center gap-1.5 text-[#935941]">
             <Sparkles size={14} />
             PET UGC SOCIAL COMMERCE · 原生毛孩社交電商
           </span>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#302b26]">
             毛孩日常與真實飼餵圈
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[#675e53]">
             點擊照片小白點標籤即可一鍵買同款；分享真實好物賺取「肉肉幣」折抵商城！
           </p>
         </div>
 
         {/* 肉肉幣錢包與發文按鈕 */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-950/20 px-4 py-2">
+          <div className="flex items-center gap-2 rounded-2xl border border-[#e8ded3] bg-white p-3 shadow-sm">
             <span className="text-xl">🪙</span>
             <div>
-              <p className="text-[10px] uppercase font-semibold text-amber-300">我的肉肉幣</p>
-              <p className="font-mono text-base font-bold text-amber-200">
-                {meatCoins} <span className="text-xs font-normal text-slate-400">枚 (可折 NT${meatCoins})</span>
+              <p className="text-[10px] uppercase font-semibold text-[#8a5a14]">我的肉肉幣</p>
+              <p className="font-mono text-base font-bold text-[#935941]">
+                {meatCoins} <span className="text-xs font-normal text-[#8a7f75]">枚 (可折 NT${meatCoins})</span>
               </p>
             </div>
           </div>
           <Button
             onClick={() => setIsPostModalOpen(true)}
-            className="gap-1.5 shadow-lg shadow-cyan-500/20"
+            className="gap-1.5"
           >
             <Camera size={16} />
             發布生活日記 (+50幣)
@@ -321,9 +321,9 @@ export default function CommunityPage() {
         </div>
       </div>
 
-      {/* 5大分流標籤列 (7C 簡報 Slide 21) */}
+      {/* 5大分流標籤列 */}
       <div className="my-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#111827] p-1.5">
+        <div className="flex items-center gap-2 rounded-xl border border-[#e8ded3] bg-white p-1.5 shadow-sm">
           {[
             { id: "RECOMMEND", label: "推薦" },
             { id: "FOLLOWING", label: "關注" },
@@ -336,24 +336,24 @@ export default function CommunityPage() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
                 activeTab === tab.id
-                  ? "bg-cyan-500 text-slate-950 font-semibold shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-[#935941] text-white font-semibold shadow-sm"
+                  : "text-[#675e53] hover:text-[#302b26] hover:bg-[#f5ede3]"
               }`}
             >
               {tab.label}
             </button>
           ))}
         </div>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-[#8a7f75]">
           全站共累積 <strong>28,490</strong> 篇飼主認證生活好物分享
         </span>
       </div>
 
-      {/* 專屬同好圈推薦卡片列 (7C 創新機制 3) */}
+      {/* 專屬同好圈推薦卡片列 */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Users size={13} className="text-cyan-400" />
+          <span className="text-xs font-semibold text-[#8a7f75] uppercase tracking-wider flex items-center gap-1.5">
+            <Users size={13} className="text-[#935941]" />
             專屬細分同好圈 (點擊加入即時交流)
           </span>
         </div>
@@ -361,67 +361,67 @@ export default function CommunityPage() {
           {CIRCLES.map((c) => (
             <div
               key={c.id}
-              className="panel group cursor-pointer p-4 transition-all hover:border-cyan-400/40 hover:bg-white/[0.03]"
+              className="panel group cursor-pointer p-4 transition-all bg-white hover:border-[#935941]/50 hover:shadow-md"
               onClick={() => toast.success(`已加入「${c.name}」！`)}
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl">{c.icon}</span>
-                <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-mono text-cyan-300">
+                <span className="rounded-full bg-[#f5ede3] px-2.5 py-0.5 text-[10px] font-mono text-[#935941] font-semibold">
                   {c.members} 成員
                 </span>
               </div>
-              <h2 className="mt-2 text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
+              <h2 className="mt-2 text-sm font-semibold text-[#302b26] group-hover:text-[#935941] transition-colors">
                 {c.name}
               </h2>
-              <p className="mt-1 text-xs text-slate-400 line-clamp-1">{c.desc}</p>
+              <p className="mt-1 text-xs text-[#8a7f75] line-clamp-1">{c.desc}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* UGC 動態瀑布流 (搭載生活標籤一鍵買同款) */}
+      {/* UGC 動態瀑布流 */}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {posts.map((post) => (
           <div
             key={post.id}
-            className="panel overflow-hidden border-white/10 bg-[#0f1523] flex flex-col justify-between"
+            className="panel overflow-hidden bg-white flex flex-col justify-between shadow-sm"
           >
             {/* 貼文作者與毛孩主頁 Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <div className="flex items-center justify-between p-4 border-b border-[#e8ded3]">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 text-white font-bold text-sm shadow">
+                <div className="flex size-10 items-center justify-center rounded-full bg-[#f5ede3] text-[#935941] font-bold text-sm shadow-sm">
                   {post.authorAvatar}
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-white">{post.petName}</p>
-                    <span className="rounded-md bg-white/10 px-1.5 py-0.2 text-[10px] text-cyan-300 font-medium">
+                    <p className="text-sm font-semibold text-[#302b26]">{post.petName}</p>
+                    <span className="rounded-md bg-[#eef0e8] border border-[#68856b]/30 px-1.5 py-0.2 text-[10px] text-[#425847] font-medium">
                       {post.breed} · {post.age}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">{post.author}</p>
+                  <p className="text-xs text-[#8a7f75]">{post.author}</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                className="h-7 text-xs text-[#935941] hover:text-[#794632] hover:bg-[#f5ede3]"
                 onClick={() => toast.success(`已關注 ${post.petName}！`)}
               >
                 + 關注
               </Button>
             </div>
 
-            {/* 貼文照片與生活標籤 (7C 創新機制 2: 生活標籤一鍵買同款) */}
-            <div className="relative aspect-square w-full overflow-hidden bg-black/40">
+            {/* 貼文照片與生活標籤 */}
+            <div className="relative aspect-square w-full overflow-hidden bg-[#ebe5da]">
               <Image
                 src={post.image}
                 alt={post.content}
                 fill
-                className="object-cover transition-transform duration-500 hover:scale-105"
+                className="object-contain p-4 transition-transform duration-500 hover:scale-105"
               />
 
-              {/* 脈動白色互動標籤 (White Dot Tag) */}
+              {/* 脈動白色互動標籤 */}
               {post.shoppableProduct && post.tagPosition && (
                 <button
                   type="button"
@@ -435,16 +435,16 @@ export default function CommunityPage() {
                   onClick={() => setActiveProductModal(post.shoppableProduct ?? null)}
                 >
                   <div className="relative group">
-                    <span className="absolute -inset-1.5 animate-ping rounded-full bg-white/70" />
-                    <div className="relative flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md px-3 py-1.5 text-xs text-white shadow-xl border border-white/30 hover:scale-105 transition-transform">
-                      <span className="size-2 rounded-full bg-cyan-400" />
+                    <span className="absolute -inset-1.5 animate-ping rounded-full bg-[#935941]/30" />
+                    <div className="relative flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-md px-3 py-1.5 text-xs text-[#302b26] shadow-lg border border-[#e8ded3] hover:scale-105 transition-transform">
+                      <span className="size-2 rounded-full bg-[#935941]" />
                       <span className="font-medium truncate max-w-[140px]">
                         {post.shoppableProduct.name}
                       </span>
-                      <span className="font-mono text-cyan-300 font-semibold">
+                      <span className="font-mono text-[#935941] font-bold">
                         ${post.shoppableProduct.priceNt}
                       </span>
-                      <ShoppingBag size={12} className="text-amber-400" />
+                      <ShoppingBag size={12} className="text-[#8a5a14]" />
                     </div>
                   </div>
                 </button>
@@ -454,12 +454,12 @@ export default function CommunityPage() {
             {/* 貼文互動按鈕與內文 */}
             <div className="p-5 flex-1 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between text-slate-400 mb-3">
+                <div className="flex items-center justify-between text-[#8a7f75] mb-3">
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => handleLike(post.id)}
                       className={`flex items-center gap-1.5 text-xs transition-colors ${
-                        post.isLiked ? "text-rose-400 font-semibold" : "hover:text-white"
+                        post.isLiked ? "text-rose-600 font-semibold" : "hover:text-[#302b26]"
                       }`}
                     >
                       <Heart
@@ -474,26 +474,26 @@ export default function CommunityPage() {
                     </span>
                     <button
                       onClick={() => toast.success("已複製分享連結！")}
-                      className="hover:text-white transition-colors"
+                      className="hover:text-[#302b26] transition-colors"
                     >
                       <Share2 size={16} />
                     </button>
                   </div>
                   <button
                     onClick={() => toast.success("已加入好物收藏！")}
-                    className="hover:text-white transition-colors"
+                    className="hover:text-[#302b26] transition-colors"
                   >
                     <Bookmark size={16} />
                   </button>
                 </div>
 
-                <p className="text-sm text-slate-300 leading-relaxed">{post.content}</p>
+                <p className="text-sm text-[#4e443a] leading-relaxed">{post.content}</p>
 
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] text-cyan-300 hover:bg-white/10 cursor-pointer"
+                      className="rounded-md bg-[#f5ede3] px-2 py-0.5 text-[11px] text-[#935941] hover:bg-[#ede5da] cursor-pointer"
                     >
                       {tag}
                     </span>
@@ -502,11 +502,11 @@ export default function CommunityPage() {
               </div>
 
               {/* 留言列表與輸入框 */}
-              <div className="mt-4 border-t border-white/5 pt-3">
+              <div className="mt-4 border-t border-[#e8ded3] pt-3">
                 <div className="space-y-1.5 max-h-24 overflow-y-auto mb-2 text-xs">
                   {post.comments.map((cm) => (
-                    <p key={cm.id} className="text-slate-400">
-                      <strong className="text-white mr-1">{cm.author}:</strong>
+                    <p key={cm.id} className="text-[#675e53]">
+                      <strong className="text-[#302b26] mr-1">{cm.author}:</strong>
                       {cm.text}
                     </p>
                   ))}
@@ -539,10 +539,10 @@ export default function CommunityPage() {
         ))}
       </div>
 
-      {/* 生活標籤彈出商品卡片 (Slide 21 核心體驗：一鍵加入購物車 vs 加入家庭清單) */}
+      {/* 生活標籤彈出商品卡片 */}
       <AnimatePresence>
         {activeProductModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -550,44 +550,44 @@ export default function CommunityPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-2xl border border-cyan-400/40 bg-[#0f1523] p-6 shadow-2xl relative"
+              className="w-full max-w-sm rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 shadow-2xl relative"
             >
               <button
                 onClick={() => setActiveProductModal(null)}
                 aria-label="關閉商品資訊"
-                className="absolute right-4 top-4 text-slate-400 hover:text-white"
+                className="absolute right-4 top-4 text-[#8a7f75] hover:text-[#302b26]"
               >
                 ✕
               </button>
 
-              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black/50 mb-4 border border-white/10">
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-[#ebe5da] mb-4 border border-[#e8ded3]">
                 <Image
                   src={activeProductModal.image}
                   alt={activeProductModal.name}
                   fill
-                  className="object-cover"
+                  className="object-contain p-2"
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-amber-300">
+              <div className="flex items-center gap-2 text-xs text-[#8a5a14]">
                 {activeProductModal.reviewsCount > 0 ? (
                   <>
                     <span>★ {activeProductModal.rating}</span>
-                    <span className="text-slate-500">({activeProductModal.reviewsCount} 則飼主評價)</span>
+                    <span className="text-[#8a7f75]">({activeProductModal.reviewsCount} 則飼主評價)</span>
                   </>
                 ) : (
-                  <span className="text-slate-500">暫無評價（等待首位飼主分享）</span>
+                  <span className="text-[#8a7f75]">暫無評價（等待首位飼主分享）</span>
                 )}
               </div>
 
-              <h2 className="mt-1 text-lg font-bold text-white">{activeProductModal.name}</h2>
-              <p className="mt-1 font-mono text-2xl font-bold text-cyan-300">
+              <h2 className="mt-1 text-lg font-bold text-[#302b26]">{activeProductModal.name}</h2>
+              <p className="mt-1 font-mono text-2xl font-bold text-[#935941]">
                 {money(activeProductModal.priceNt)}
               </p>
 
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {activeProductModal.tags.map((t) => (
-                  <span key={t} className="rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-300">
+                  <span key={t} className="rounded-md bg-white border border-[#e8ded3] px-2 py-0.5 text-xs text-[#675e53]">
                     {t}
                   </span>
                 ))}
@@ -599,11 +599,11 @@ export default function CommunityPage() {
                   className="text-xs gap-1.5"
                   onClick={() => handleAddToFamilyList(activeProductModal)}
                 >
-                  <Users size={14} className="text-cyan-400" />
+                  <Users size={14} className="text-[#935941]" />
                   加入家庭清單
                 </Button>
                 <Button
-                  className="text-xs gap-1.5 shadow-md shadow-cyan-500/20"
+                  className="text-xs gap-1.5"
                   onClick={() => handleAddToCart(activeProductModal)}
                 >
                   <ShoppingBag size={14} />
@@ -618,21 +618,21 @@ export default function CommunityPage() {
       {/* 發布生活日記彈窗 */}
       <AnimatePresence>
         {isPostModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0f1523] p-6 shadow-2xl"
+              className="w-full max-w-lg rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center justify-between border-b border-[#e8ded3] pb-4">
                 <div className="flex items-center gap-2">
-                  <Camera className="text-cyan-400" size={18} />
-                  <h2 className="text-lg font-bold text-white">發布毛孩生活日記</h2>
+                  <Camera className="text-[#935941]" size={18} />
+                  <h2 className="text-lg font-bold text-[#302b26]">發布毛孩生活日記</h2>
                 </div>
                 <button
                   onClick={() => setIsPostModalOpen(false)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-[#8a7f75] hover:text-[#302b26]"
                 >
                   ✕
                 </button>
@@ -661,8 +661,8 @@ export default function CommunityPage() {
                   />
                 </div>
 
-                <div className="rounded-xl border border-amber-400/20 bg-amber-950/20 p-3 text-xs text-amber-200 flex items-center gap-2">
-                  <Coins size={16} className="shrink-0 text-amber-400" />
+                <div className="rounded-xl border border-[#e2a84c]/30 bg-[#fdf6ea] p-3 text-xs text-[#8a5a14] flex items-center gap-2">
+                  <Coins size={16} className="shrink-0 text-[#8a5a14]" />
                   <span>發布生活日記成功後，系統將自動為您發放 <strong>50 枚肉肉幣</strong>，可全額折抵商城消費！</span>
                 </div>
 

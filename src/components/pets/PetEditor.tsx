@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
 import { petSchema, petLabels, type ActivePet } from "@/lib/types";
+
 const allergens = ["雞肉", "牛肉", "魚類", "大豆", "乳製品", "小麥"];
+
 export function PetEditor() {
   const pet = useActivePet();
   const [draft, setDraft] = useState<ActivePet>(pet);
@@ -21,6 +23,7 @@ export function PetEditor() {
   const close = useUiStore((s) => s.setPetEditorOpen);
   const update = usePetContextStore((s) => s.updatePet);
   const add = usePetContextStore((s) => s.addPet);
+
   function save(e: React.FormEvent) {
     e.preventDefault();
     const parsed = petSchema.safeParse(draft);
@@ -37,13 +40,14 @@ export function PetEditor() {
       setError(err instanceof Error ? err.message : "儲存失敗，請再試一次");
     }
   }
+
   return (
     <Dialog open onOpenChange={close}>
       <DialogContent className="max-w-xl">
-        <DialogTitle className="pr-10 text-2xl font-semibold">
+        <DialogTitle className="pr-10 text-2xl font-semibold text-[#302b26]">
           {isNew ? "認識新家人" : "毛孩的小檔案"}
         </DialogTitle>
-        <DialogDescription className="mt-2 text-sm text-slate-400">
+        <DialogDescription className="mt-2 text-sm text-[#8a7f75]">
           每一個細節，都讓我們更懂牠的需要。
         </DialogDescription>
         <form onSubmit={save} className="mt-6 space-y-5">
@@ -139,10 +143,10 @@ export function PetEditor() {
               <option value="ATHLETIC">高強度活動</option>
             </select>
           </label>
-          <label className="flex items-center gap-3 text-sm">
+          <label className="flex items-center gap-3 text-sm text-[#302b26]">
             <input
               type="checkbox"
-              className="size-4 accent-cyan-400"
+              className="size-4 accent-[#935941]"
               checked={draft.isNeutered}
               onChange={(e) =>
                 setDraft((d) => ({ ...d, isNeutered: e.target.checked }))
@@ -151,7 +155,7 @@ export function PetEditor() {
             已結紮
           </label>
           <fieldset>
-            <legend className="mb-3 text-sm text-slate-300">
+            <legend className="mb-3 text-sm text-[#5e544a] font-medium">
               需要避開的過敏原
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -168,7 +172,11 @@ export function PetEditor() {
                         : [...d.allergies, a],
                     }))
                   }
-                  className={`rounded-lg border px-3 py-2 text-sm transition-colors ${draft.allergies.includes(a) ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/10 text-slate-400"}`}
+                  className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
+                    draft.allergies.includes(a)
+                      ? "border-[#935941] bg-[#935941]/10 text-[#935941] font-semibold"
+                      : "border-[#d9cfc3] bg-white text-[#675e53] hover:bg-[#f3ede3]"
+                  }`}
                 >
                   {a}
                 </button>
@@ -176,7 +184,7 @@ export function PetEditor() {
             </div>
           </fieldset>
           {error && (
-            <p role="alert" className="text-sm text-rose-300">
+            <p role="alert" className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">
               {error}
             </p>
           )}

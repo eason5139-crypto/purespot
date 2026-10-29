@@ -42,13 +42,13 @@ export function RevenueTrendChart({ data }: Props) {
       height: 260,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#94a3b8",
+        textColor: "#8a7f75",
         fontSize: 12,
         fontFamily: "var(--font-sans)",
       },
       grid: {
-        vertLines: { color: "rgba(255, 255, 255, 0.04)" },
-        horzLines: { color: "rgba(255, 255, 255, 0.04)" },
+        vertLines: { visible: false },
+        horzLines: { color: "#ede4da" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -67,8 +67,8 @@ export function RevenueTrendChart({ data }: Props) {
         dateFormat: "yyyy/MM/dd",
       },
       crosshair: {
-        horzLine: { color: "#06b6d4", labelBackgroundColor: "#0f172a" },
-        vertLine: { color: "#06b6d4", labelBackgroundColor: "#0f172a" },
+        horzLine: { color: "#935941", labelBackgroundColor: "#302b26" },
+        vertLine: { color: "#935941", labelBackgroundColor: "#302b26" },
       },
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
@@ -77,9 +77,9 @@ export function RevenueTrendChart({ data }: Props) {
     chartRef.current = chart;
 
     const series = chart.addSeries(AreaSeries, {
-      topColor: "rgba(6, 182, 212, 0.4)",
-      bottomColor: "rgba(6, 182, 212, 0.01)",
-      lineColor: "#06b6d4",
+      topColor: "rgba(147, 89, 65, 0.3)",
+      bottomColor: "rgba(147, 89, 65, 0.01)",
+      lineColor: "#935941",
       lineWidth: 2,
       pointMarkersVisible: true,
       pointMarkersRadius: 4,
@@ -131,22 +131,22 @@ export function RevenueTrendChart({ data }: Props) {
   const latest = data[data.length - 1];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#111827] p-6">
+    <div className="rounded-2xl border border-[#e8ded3] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="flex items-center gap-2 text-xs font-medium tracking-wider text-cyan-400">
+          <span className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#935941]">
             <TrendingUp size={14} />
             營業額成長動態（30日趨勢）
           </span>
-          <p className="mt-1 text-2xl font-bold font-mono text-white">
+          <p className="mt-1 text-2xl font-bold font-mono text-[#302b26]">
             {hoveredPoint ? money(hoveredPoint.revenue) : latest ? money(latest.revenueNt) : "—"}
-            <span className="ml-2 text-xs font-normal text-slate-400">
+            <span className="ml-2 text-xs font-normal text-[#8a7f75]">
               {hoveredPoint ? hoveredPoint.date : "最新單日營收"}
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1 text-xs text-slate-300">
-          <DollarSign size={13} className="text-cyan-400" />
+        <div className="flex items-center gap-2 rounded-lg border border-[#e8ded3] bg-[#fbf8f3] px-3 py-1 text-xs text-[#675e53]">
+          <DollarSign size={13} className="text-[#935941]" />
           <span>每日自動結算統計</span>
         </div>
       </div>

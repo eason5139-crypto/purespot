@@ -32,13 +32,12 @@ interface Order {
 }
 
 const STATUS_CONFIG = {
-  PENDING: { label: "待確認", color: "text-amber-300 bg-amber-400/10 border-amber-400/20", icon: Clock },
-  PROCESSING: { label: "備貨中", color: "text-blue-300 bg-blue-400/10 border-blue-400/20", icon: ShoppingCart },
-  SHIPPED: { label: "已出貨", color: "text-cyan-300 bg-cyan-400/10 border-cyan-400/20", icon: Truck },
-  DELIVERED: { label: "已送達", color: "text-emerald-300 bg-emerald-400/10 border-emerald-400/20", icon: CheckCircle2 },
-  CANCELLED: { label: "已取消", color: "text-rose-300 bg-rose-400/10 border-rose-400/20", icon: XCircle },
+  PENDING: { label: "待確認", color: "text-[#8a5a14] bg-[#fdf6ea] border-[#e2a84c]/30", icon: Clock },
+  PROCESSING: { label: "備貨中", color: "text-[#5e544a] bg-[#f5ede3] border-[#d9cfc3]", icon: ShoppingCart },
+  SHIPPED: { label: "已出貨", color: "text-[#935941] bg-[#935941]/10 border-[#935941]/30", icon: Truck },
+  DELIVERED: { label: "已送達", color: "text-[#425847] bg-[#eef0e8] border-[#68856b]/30", icon: CheckCircle2 },
+  CANCELLED: { label: "已取消", color: "text-rose-700 bg-rose-50 border-rose-200", icon: XCircle },
 };
-
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -96,9 +95,9 @@ export default function AdminOrdersPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow">管理端</span>
-          <h1 className="mt-2 text-2xl font-bold text-white">訂單管理</h1>
-          <p className="mt-1 text-sm text-slate-400">查看、篩選並更新所有消費者訂單的配送狀態。</p>
+          <span className="eyebrow text-[#935941]">管理端</span>
+          <h1 className="mt-2 text-2xl font-bold text-[#302b26]">訂單管理</h1>
+          <p className="mt-1 text-sm text-[#675e53]">查看、篩選並更新所有消費者訂單的配送狀態。</p>
         </div>
         <Button
           variant="secondary"
@@ -114,7 +113,7 @@ export default function AdminOrdersPage() {
       {/* 篩選列 */}
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a7f75]" />
           <input
             type="text"
             placeholder="搜尋訂單編號、會員姓名..."
@@ -137,12 +136,12 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <div className="py-20 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10">
+        <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/10 bg-white/5 text-xs text-slate-400">
+            <thead className="border-b border-[#e8ded3] bg-[#fcfaf7] text-xs font-semibold text-[#675e53]">
               <tr>
                 <th className="p-4">訂單編號</th>
                 <th className="p-4">顧客</th>
@@ -152,62 +151,61 @@ export default function AdminOrdersPage() {
                 <th className="p-4 text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-[#e8ded3]">
               {filtered.map((order, i) => {
                 const cfg = STATUS_CONFIG[order.status];
                 const StatusIcon = cfg.icon;
                 const isExpanded = expandedId === order.id;
                 return (
-                  <>
+                  <tr key={order.id} className="contents">
                     <motion.tr
-                      key={order.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.04 }}
-                      className="hover:bg-white/[0.02] transition-colors cursor-pointer"
+                      className="hover:bg-[#fbf8f4] transition-colors cursor-pointer"
                       onClick={() => setExpandedId(isExpanded ? null : order.id)}
                     >
-                      <td className="p-4 font-mono text-xs text-slate-300">{order.id}</td>
+                      <td className="p-4 font-mono text-xs text-[#675e53]">{order.id}</td>
                       <td className="p-4">
-                        <p className="text-white">{order.customerName ?? "訪客"}</p>
-                        <p className="text-xs text-slate-500">{order.customerEmail ?? "-"}</p>
+                        <p className="font-medium text-[#302b26]">{order.customerName ?? "訪客"}</p>
+                        <p className="text-xs text-[#8a7f75]">{order.customerEmail ?? "-"}</p>
                       </td>
-                      <td className="p-4 text-xs text-slate-400">{dateLabel(order.createdAt)}</td>
+                      <td className="p-4 text-xs text-[#8a7f75]">{dateLabel(order.createdAt)}</td>
                       <td className="p-4">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs ${cfg.color}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}>
                           <StatusIcon size={11} />
                           {cfg.label}
                         </span>
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-cyan-300">{money(order.totalNt)}</td>
+                      <td className="p-4 text-right font-mono font-semibold text-[#935941]">{money(order.totalNt)}</td>
                       <td className="p-4 text-right">
                         <ChevronDown
                           size={16}
-                          className={`text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          className={`text-[#8a7f75] transition-transform inline-block ${isExpanded ? "rotate-180" : ""}`}
                         />
                       </td>
                     </motion.tr>
                     {isExpanded && (
                       <tr>
-                        <td colSpan={6} className="bg-white/[0.02] border-b border-white/5">
+                        <td colSpan={6} className="bg-[#fcfaf7] border-b border-[#e8ded3]">
                           <div className="p-5 space-y-4">
                             <div>
-                              <p className="text-xs text-slate-500 mb-2">訂購品項</p>
+                              <p className="text-xs font-semibold text-[#8a7f75] mb-2">訂購品項</p>
                               {order.items.map((item) => (
                                 <div key={item.id} className="flex justify-between text-sm py-1">
-                                  <span className="text-slate-300">{item.productName} × {item.quantity}</span>
-                                  <span className="font-mono text-slate-400">{money(item.unitPriceNt * item.quantity)}</span>
+                                  <span className="text-[#302b26]">{item.productName} × {item.quantity}</span>
+                                  <span className="font-mono text-[#8a7f75]">{money(item.unitPriceNt * item.quantity)}</span>
                                 </div>
                               ))}
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500 mb-2">更新配送狀態</p>
+                              <p className="text-xs font-semibold text-[#8a7f75] mb-2">更新配送狀態</p>
                               <div className="flex flex-wrap gap-2">
                                 {(["PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as Order["status"][]).map((s) => (
                                   <Button
                                     key={s}
                                     size="sm"
-                                    variant={order.status === s ? "default" : "ghost"}
+                                    variant={order.status === s ? "default" : "secondary"}
                                     className="text-xs h-7"
                                     onClick={() => void updateStatus(order.id, s)}
                                     disabled={order.status === s}
@@ -221,12 +219,12 @@ export default function AdminOrdersPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </tr>
                 );
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-slate-500 text-sm">
+                  <td colSpan={6} className="py-16 text-center text-[#8a7f75] text-sm">
                     找不到符合條件的訂單
                   </td>
                 </tr>

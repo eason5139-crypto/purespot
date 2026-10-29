@@ -52,7 +52,7 @@ export function AuthModal() {
   return (
     <Dialog open onOpenChange={close}>
       <DialogContent className="max-w-md">
-        <div className="mb-6 flex gap-1 rounded-xl border border-white/10 bg-white/[.03] p-1">
+        <div className="mb-6 flex gap-1 rounded-xl border border-[#e8ded3] bg-[#f5ede3] p-1">
           {(["login", "register"] as const).map((m) => (
             <button
               key={m}
@@ -61,7 +61,11 @@ export function AuthModal() {
                 setMode(m);
                 setError("");
               }}
-              className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${mode === m ? "bg-cyan-400 text-slate-950 shadow" : "text-slate-400 hover:text-white"}`}
+              className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+                mode === m
+                  ? "bg-[#935941] text-white shadow-sm"
+                  : "text-[#675e53] hover:text-[#302b26]"
+              }`}
             >
               {m === "login" ? "會員登入" : "建立帳戶"}
             </button>
@@ -78,7 +82,7 @@ export function AuthModal() {
             <DialogTitle className="sr-only">
               {mode === "login" ? "會員登入" : "建立帳戶"}
             </DialogTitle>
-            <DialogDescription className="mb-5 text-sm text-slate-400">
+            <DialogDescription className="mb-5 text-sm text-[#8a7f75]">
               {mode === "login"
                 ? "登入後，毛孩資料與訂單紀錄都安全保存在雲端。"
                 : "建立帳戶，讓每一份為毛孩的選擇都被記住。"}
@@ -135,21 +139,21 @@ export function AuthModal() {
                   <button
                     type="button"
                     onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-slate-400 hover:text-white"
+                    className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-[#8a7f75] hover:text-[#302b26]"
                     aria-label={showPw ? "隱藏密碼" : "顯示密碼"}
                   >
                     {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
                 {mode === "register" && (
-                  <p className="mt-1.5 text-xs text-slate-500">
+                  <p className="mt-1.5 text-xs text-[#8a7f75]">
                     至少 12 個字元，建議使用大小寫字母與數字混合。
                   </p>
                 )}
               </label>
 
               {error && (
-                <p role="alert" className="text-sm text-rose-300">
+                <p role="alert" className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">
                   {error}
                 </p>
               )}
@@ -169,13 +173,13 @@ export function AuthModal() {
                     : "建立帳戶"}
               </Button>
 
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-[#8a7f75]">
                 {mode === "login" ? (
                   <>
                     還沒有帳戶？
                     <button
                       type="button"
-                      className="ml-1 text-cyan-400 hover:underline"
+                      className="ml-1 text-[#935941] font-semibold hover:underline"
                       onClick={() => {
                         setMode("register");
                         setError("");
@@ -189,7 +193,7 @@ export function AuthModal() {
                     已有帳戶？
                     <button
                       type="button"
-                      className="ml-1 text-cyan-400 hover:underline"
+                      className="ml-1 text-[#935941] font-semibold hover:underline"
                       onClick={() => {
                         setMode("login");
                         setError("");

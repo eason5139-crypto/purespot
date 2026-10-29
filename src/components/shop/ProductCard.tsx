@@ -87,27 +87,27 @@ export function ProductCard({ product }: { product: Product }) {
         <button type="button" aria-label={isFavorite ? `取消收藏${product.name}` : `收藏${product.name}`} aria-pressed={isFavorite} onClick={() => { toggleFavorite(product.id); toast.success(isFavorite ? "已移除收藏" : "已加入收藏"); }} className={`absolute bottom-3 left-3 flex size-11 items-center justify-center rounded-full border bg-[#fffaf4]/95 shadow-sm transition-transform hover:scale-105 ${isFavorite ? "border-[#ab6c51] text-[#a65a3f]" : "border-[#dfd0c0] text-[#705f51]"}`}><Heart size={19} fill={isFavorite ? "currentColor" : "none"} /></button>
       </div>
       <div className="p-5">
-        <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+        <div className="mb-2 flex items-center justify-between text-xs text-[#7d7165]">
           <span>
             {packageSize(product.bagGrams)} · {product.category}
           </span>
-          {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-cyan-400">
+          {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-[#935941]">
             <FlaskConical size={12} />
             {product.batches.length ? "批次履歷" : "配方資料"}
           </span>}
         </div>
         <Link
           href={`/products/${product.slug}`}
-          className="editorial-title text-xl font-semibold tracking-tight text-[#302b26] hover:text-[#955a42]"
+          className="editorial-title text-xl font-semibold tracking-tight text-[#302b26] hover:text-[#935941]"
         >
           {product.name}
         </Link>
-        <p className="mt-1 text-sm text-slate-400">{product.subtitle}</p>
+        <p className="mt-1 text-sm text-[#70665d]">{product.subtitle}</p>
         <div className="my-4 flex items-baseline gap-2">
-          <strong className="font-mono text-2xl font-medium">
+          <strong className="font-mono text-2xl font-medium text-[#302b26]">
             {money(product.priceNt)}
           </strong>
-          {product.autoshipEligible && <span className="text-xs text-cyan-300">
+          {product.autoshipEligible && <span className="text-xs font-semibold text-[#935941]">
             循環價 {money(Math.round(product.priceNt * 0.9))}
           </span>}
         </div>

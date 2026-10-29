@@ -42,7 +42,6 @@ export function PetWeightTrendChart({
   const chartRef = useRef<IChartApi | null>(null);
   const [hoveredWeight, setHoveredWeight] = useState<number | null>(null);
 
-  // 若外部未傳入完整歷史，依據現有體重生成可信的追蹤序列
   const chartData: WeightDataPoint[] =
     records && records.length >= 2
       ? records
@@ -98,15 +97,15 @@ export function PetWeightTrendChart({
       width: node.clientWidth,
       height: 260,
       layout: {
-        background: { type: ColorType.Solid, color: "#111827" },
-        textColor: "#94a3b8",
+        background: { type: ColorType.Solid, color: "transparent" },
+        textColor: "#8a7f75",
         fontFamily: '"Noto Sans TC", system-ui, sans-serif',
         fontSize: 12,
         attributionLogo: false,
       },
       grid: {
         vertLines: { visible: false },
-        horzLines: { color: "#ffffff0a" },
+        horzLines: { color: "#ede4da" },
       },
       rightPriceScale: {
         borderVisible: false,
@@ -125,8 +124,8 @@ export function PetWeightTrendChart({
         dateFormat: "yyyy/MM/dd",
       },
       crosshair: {
-        horzLine: { color: "#06b6d4", labelBackgroundColor: "#1e293b" },
-        vertLine: { color: "#64748b", labelBackgroundColor: "#1e293b" },
+        horzLine: { color: "#935941", labelBackgroundColor: "#302b26" },
+        vertLine: { color: "#935941", labelBackgroundColor: "#302b26" },
       },
       handleScroll: {
         mouseWheel: false,
@@ -144,9 +143,9 @@ export function PetWeightTrendChart({
     chartRef.current = chart;
 
     const series = chart.addSeries(AreaSeries, {
-      topColor: "rgba(34, 211, 238, 0.45)",
-      bottomColor: "rgba(34, 211, 238, 0.02)",
-      lineColor: "#22d3ee",
+      topColor: "rgba(147, 89, 65, 0.3)",
+      bottomColor: "rgba(147, 89, 65, 0.02)",
+      lineColor: "#935941",
       lineWidth: 2,
       pointMarkersVisible: true,
       pointMarkersRadius: 4,
@@ -164,7 +163,7 @@ export function PetWeightTrendChart({
     // 目標基準線
     series.createPriceLine({
       price: targetWeight,
-      color: "#10b981cc",
+      color: "#5b7b63",
       lineWidth: 1,
       lineStyle: LineStyle.Dashed,
       axisLabelVisible: true,
@@ -214,12 +213,12 @@ export function PetWeightTrendChart({
     <div className="panel p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-[#935941]/10 text-[#935941]">
             <Scale size={20} />
           </span>
           <div>
-            <h3 className="text-base font-semibold text-white">體重趨勢動態</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-base font-semibold text-[#302b26]">體重趨勢動態</h3>
+            <p className="text-xs text-[#8a7f75]">
               {petName} 的歷史監測與體態走勢
             </p>
           </div>
@@ -227,8 +226,8 @@ export function PetWeightTrendChart({
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-xs text-slate-400">檢視數值</p>
-            <p className="font-mono text-lg font-medium text-cyan-300">
+            <p className="text-xs text-[#8a7f75]">檢視數值</p>
+            <p className="font-mono text-lg font-medium text-[#935941]">
               {hoveredWeight !== null
                 ? `${hoveredWeight.toFixed(1)} kg`
                 : `${currentWeightKg} kg`}
@@ -237,8 +236,8 @@ export function PetWeightTrendChart({
           <span
             className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
               diff <= 0
-                ? "bg-emerald-400/10 text-emerald-300"
-                : "bg-amber-400/10 text-amber-300"
+                ? "bg-[#eef0e8] text-[#425847] border border-[#68856b]/30"
+                : "bg-[#fdf6ea] text-[#8a5a14] border border-[#e2a84c]/30"
             }`}
           >
             <TrendingUp size={12} className={diff <= 0 ? "rotate-180" : ""} />
@@ -252,7 +251,7 @@ export function PetWeightTrendChart({
         className="mt-5 min-h-[260px] w-full overflow-hidden rounded-lg"
       />
 
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+      <div className="mt-3 flex items-center justify-between text-xs text-[#8a7f75]">
         <span className="flex items-center gap-1.5">
           <Info size={13} />
           虛線為目前健康目標數值（{targetWeight} kg）
