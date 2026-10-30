@@ -67,7 +67,7 @@ export function MediaUploadField({
               type="button"
               disabled={busy}
               onClick={() => inputRef.current?.click()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#935941] px-4 text-sm font-semibold text-white hover:bg-[#794632] shadow-sm disabled:opacity-50 transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#5B93C5] px-4 text-sm font-semibold text-white hover:bg-[#376F9F] shadow-sm disabled:opacity-50 transition-colors"
             >
               {busy ? <LoaderCircle size={16} className="animate-spin" /> : <ImagePlus size={16} />}
               {busy ? "處理中" : "上傳圖片"}
@@ -98,7 +98,7 @@ export function MediaUploadField({
       {libraryOpen && (
         <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-[#e8ded3] bg-white p-3 shadow-md sm:grid-cols-4">
           {library.map((url) => (
-            <button key={url} type="button" onClick={() => { onChange(url); setLibraryOpen(false); }} className="overflow-hidden rounded-lg border border-[#e8ded3] text-left hover:border-[#935941] transition-colors" aria-label={`選擇圖片 ${url}`}>
+            <button key={url} type="button" onClick={() => { onChange(url); setLibraryOpen(false); }} className="overflow-hidden rounded-lg border border-[#e8ded3] text-left hover:border-[#5B93C5] transition-colors" aria-label={`選擇圖片 ${url}`}>
               <span className="relative block aspect-square bg-[#ebe5da]"><Image src={url} alt="" fill sizes="120px" className="object-contain p-1" /></span>
               <span className="block truncate p-1 text-[10px] text-[#675e53]">{url.split("/").at(-1)}</span>
             </button>

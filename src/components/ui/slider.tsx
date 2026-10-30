@@ -16,9 +16,9 @@ export const Slider = React.forwardRef<
     {...props}
   >
     <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-[#e6dcce]">
-      <SliderPrimitive.Range className="absolute h-full bg-[#935941]" />
+      <SliderPrimitive.Range className="absolute h-full bg-[#5B93C5]" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block size-5 cursor-grab rounded-full border-[3px] border-white bg-[#935941] shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#935941]" />
+    <SliderPrimitive.Thumb className="block size-5 cursor-grab rounded-full border-[3px] border-white bg-[#5B93C5] shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#5B93C5]" />
   </SliderPrimitive.Root>
 ));
 Slider.displayName = "滑桿";

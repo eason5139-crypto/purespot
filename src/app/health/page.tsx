@@ -80,7 +80,7 @@ export default function HealthPage() {
     <main id="main-content" className="page-shell py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="eyebrow flex items-center gap-1.5 text-[#935941]">
+          <span className="eyebrow flex items-center gap-1.5 text-[#5B93C5]">
             <HeartPulse size={14} />
             健康指標分析
           </span>
@@ -104,7 +104,7 @@ export default function HealthPage() {
           className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Icon size={28} className="text-[#935941]" />
+            <Icon size={28} className="text-[#5B93C5]" />
             <span className="rounded-md bg-[#f5ede3] px-2.5 py-0.5 text-xs text-[#675e53] font-medium">
               {pet.type === "CAT" ? "貓咪" : "狗狗"}
             </span>
@@ -125,8 +125,8 @@ export default function HealthPage() {
           className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Scale size={28} className="text-[#935941]" />
-            <span className="rounded-md bg-[#eef0e8] border border-[#68856b]/30 px-2 py-0.5 text-xs text-[#425847] font-medium">
+            <Scale size={28} className="text-[#5B93C5]" />
+            <span className="rounded-md bg-[#e8f1f8] border border-[#78a6c9]/30 px-2 py-0.5 text-xs text-[#315F86] font-medium">
               最新紀錄
             </span>
           </div>
@@ -176,13 +176,13 @@ export default function HealthPage() {
           className="panel p-6 bg-white"
         >
           <div className="flex items-center justify-between">
-            <Flame size={28} className="text-[#425847]" />
-            <span className="rounded-md bg-[#eef0e8] border border-[#68856b]/30 px-2 py-0.5 text-xs text-[#425847] font-medium">
+            <Flame size={28} className="text-[#315F86]" />
+            <span className="rounded-md bg-[#e8f1f8] border border-[#78a6c9]/30 px-2 py-0.5 text-xs text-[#315F86] font-medium">
               代謝基準 (DER)
             </span>
           </div>
           <p className="mt-4 text-xs text-[#8a7f75]">每日建議攝取</p>
-          <p className="mt-1 font-mono text-3xl font-semibold text-[#425847]">
+          <p className="mt-1 font-mono text-3xl font-semibold text-[#315F86]">
             {nutrition ? Math.round(nutrition.der) : "—"}
             <span className="ml-1.5 text-sm font-normal text-[#8a7f75]">kcal</span>
           </p>
@@ -215,7 +215,7 @@ export default function HealthPage() {
           className="panel p-7 bg-white"
         >
           <div className="flex items-center gap-2">
-            <Activity size={20} className="text-[#935941]" />
+            <Activity size={20} className="text-[#5B93C5]" />
             <h2 className="text-lg font-semibold text-[#302b26]">專屬配糧與代謝分析</h2>
           </div>
           <p className="mt-2 text-sm text-[#675e53]">
@@ -230,7 +230,7 @@ export default function HealthPage() {
                   以目前適配商品 {matchedProduct.name} 計算
                 </p>
               </div>
-              <span className="font-mono text-2xl font-bold text-[#935941]">
+              <span className="font-mono text-2xl font-bold text-[#5B93C5]">
                 {nutrition ? Math.round(nutrition.dailyGrams) : "—"}{" "}
                 <span className="text-sm font-normal text-[#8a7f75]">克 / 天</span>
               </span>
@@ -256,7 +256,7 @@ export default function HealthPage() {
                   預留緩衝天數，避免斷糧
                 </p>
               </div>
-              <span className="font-mono text-2xl font-bold text-[#425847]">
+              <span className="font-mono text-2xl font-bold text-[#315F86]">
                 每 {nutrition?.recommendedIntervalDays ?? 28}{" "}
                 <span className="text-sm font-normal text-[#8a7f75]">天一配送</span>
               </span>
@@ -279,7 +279,7 @@ export default function HealthPage() {
           className="panel p-7 bg-white"
         >
           <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-[#425847]" />
+            <ShieldCheck size={20} className="text-[#315F86]" />
             <h2 className="text-lg font-semibold text-[#302b26]">飲食偏好與過敏原過濾</h2>
           </div>
           <p className="mt-2 text-sm text-[#675e53]">
@@ -308,7 +308,7 @@ export default function HealthPage() {
 
           <div className="rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-[#302b26]">
-              <Sparkles size={16} className="text-[#935941]" />
+              <Sparkles size={16} className="text-[#5B93C5]" />
               目前最適配商品
             </div>
             <p className="mt-2 text-sm font-semibold text-[#302b26]">

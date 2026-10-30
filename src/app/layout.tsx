@@ -31,7 +31,7 @@ export default async function RootLayout({
       <body className="bg-[#f8f5ef] text-[#302b26]">
         <a
           href="#main-content"
-          className="fixed -top-20 left-4 z-[100] rounded-lg bg-[#935941] px-4 py-3 text-white shadow-md focus:top-4"
+          className="fixed -top-20 left-4 z-[100] rounded-lg bg-[#5B93C5] px-4 py-3 text-white shadow-md focus:top-4"
         >
           跳至主要內容
         </a>

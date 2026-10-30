@@ -112,13 +112,13 @@ const productSeries = [
 ];
 
 const iconColor: Record<string, string> = {
-  cyan: "text-[#935941] bg-[#935941]/10",
-  emerald: "text-[#425847] bg-[#425847]/10",
+  cyan: "text-[#5B93C5] bg-[#5B93C5]/10",
+  emerald: "text-[#315F86] bg-[#315F86]/10",
   violet: "text-[#7a6452] bg-[#7a6452]/10",
   green: "text-[#5b7b63] bg-[#5b7b63]/10",
   amber: "text-[#a36341] bg-[#a36341]/10",
   blue: "text-[#586c75] bg-[#586c75]/10",
-  rose: "text-[#935941] bg-[#935941]/10",
+  rose: "text-[#5B93C5] bg-[#5B93C5]/10",
 };
 
 export function BrandHomePage() {
@@ -129,7 +129,7 @@ export function BrandHomePage() {
       {/* ── Hero Section ── */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         {/* Background gradients */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,#93594112,transparent_32%),radial-gradient(circle_at_82%_76%,#e8ded380,transparent_28%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,#5B93C512,transparent_32%),radial-gradient(circle_at_82%_76%,#e8ded380,transparent_28%)]" />
 
         <div className="relative page-shell py-20">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -139,13 +139,13 @@ export function BrandHomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#d9cfc3] bg-[#fbf8f3] px-4 py-1.5 text-xs font-semibold text-[#935941] mb-6">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#d9cfc3] bg-[#fbf8f3] px-4 py-1.5 text-xs font-semibold text-[#5B93C5] mb-6">
                   <Sparkles size={12} />
                   台灣唯一 7C 透明成分寵物主食品牌
                 </span>
                 <h1 className="text-5xl font-bold leading-tight tracking-tight text-[#302b26] lg:text-6xl xl:text-7xl">
                   懂牠，<br />
-                  <span className="text-[#935941]">
+                  <span className="text-[#5B93C5]">
                     從每一口開始
                   </span>
                 </h1>
@@ -161,7 +161,7 @@ export function BrandHomePage() {
                 transition={{ duration: 0.6, delay: 0.15 }}
                 className="mt-10 flex flex-wrap gap-4"
               >
-                <Button asChild size="lg" className="gap-2 text-base px-6 bg-[#935941] text-white hover:bg-[#794632]">
+                <Button asChild size="lg" className="gap-2 text-base px-6 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
                   <Link href="/shop">
                     立即選購主食
                     <ArrowRight size={18} />
@@ -185,11 +185,11 @@ export function BrandHomePage() {
                 className="mt-10 flex items-center gap-6 text-sm text-[#7e7266]"
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-[#425847]" />
+                  <span className="size-2 rounded-full bg-[#315F86]" />
                   SGS 第三方檢驗
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="size-2 rounded-full bg-[#935941]" />
+                  <span className="size-2 rounded-full bg-[#5B93C5]" />
                   台灣在地溯源
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -221,9 +221,9 @@ export function BrandHomePage() {
                       <div>
                         <p className="text-xs text-[#8a7f75]">AI 今日推薦</p>
                         <p className="mt-0.5 font-semibold text-[#302b26]">深海鮭魚主食凍乾</p>
-                        <p className="text-xs font-semibold text-[#935941]">每日建議：32g · NT$29/日</p>
+                        <p className="text-xs font-semibold text-[#5B93C5]">每日建議：32g · NT$29/日</p>
                       </div>
-                      <Button size="sm" asChild className="bg-[#935941] text-white hover:bg-[#794632]">
+                      <Button size="sm" asChild className="bg-[#5B93C5] text-white hover:bg-[#376F9F]">
                         <Link href="/shop">選購</Link>
                       </Button>
                     </div>
@@ -292,11 +292,11 @@ export function BrandHomePage() {
               className="panel p-6 border-[#e8ded3] bg-[#fbf8f3] flex flex-col justify-between"
             >
               <div>
-                <span className="text-xs text-[#935941] uppercase tracking-widest font-semibold">查看完整報告</span>
+                <span className="text-xs text-[#5B93C5] uppercase tracking-widest font-semibold">查看完整報告</span>
                 <h3 className="mt-3 text-lg font-bold text-[#302b26]">7C 成分<br />透明度報告</h3>
                 <p className="mt-2 text-xs text-[#675e53] leading-6">含產地地圖、第三方檢驗結果與完整成分對照表。</p>
               </div>
-              <Button asChild className="mt-6 w-full gap-1.5 bg-[#935941] text-white hover:bg-[#794632]">
+              <Button asChild className="mt-6 w-full gap-1.5 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
                 <Link href="/transparency">
                   查看報告
                   <ChevronRight size={14} />
@@ -332,7 +332,7 @@ export function BrandHomePage() {
                   <span className="text-4xl">{series.emoji}</span>
                   <h3 className="mt-4 text-2xl font-bold text-[#302b26]">{series.label}</h3>
                   <p className="mt-2 text-[#675e53] text-sm">{series.desc}</p>
-                  <Button asChild className="mt-6 gap-2 bg-[#935941] text-white hover:bg-[#794632]">
+                  <Button asChild className="mt-6 gap-2 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
                     <Link href={`/shop?type=${series.type}`}>
                       瀏覽系列
                       <ArrowRight size={16} />
@@ -361,7 +361,7 @@ export function BrandHomePage() {
               輸入毛孩資料，讓 AI 推薦最適合的主食，計算每日份量，一鍵加入定期配計畫。
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button asChild size="lg" className="gap-2 text-base px-8 bg-[#935941] text-white hover:bg-[#794632]">
+              <Button asChild size="lg" className="gap-2 text-base px-8 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
                 <Link href="/shop">
                   立即選購
                   <ArrowRight size={18} />

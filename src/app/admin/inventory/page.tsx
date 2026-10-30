@@ -53,7 +53,7 @@ const TYPE_LABEL: Record<AdjustType, string> = {
 
 const TYPE_COLOR: Record<AdjustType, string> = {
   restock: "#5b7b63",
-  adjustment: "#935941",
+  adjustment: "#5B93C5",
   deduction: "#c0392b",
 };
 
@@ -146,8 +146,8 @@ function AdjustDialog({
                   onClick={() => setAdjustType(t)}
                   className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
                     adjustType === t
-                      ? "border-[#935941] bg-[#935941]/10 text-[#935941]"
-                      : "border-[#e8ded3] text-[#675e53] hover:border-[#935941]/40"
+                      ? "border-[#5B93C5] bg-[#5B93C5]/10 text-[#5B93C5]"
+                      : "border-[#e8ded3] text-[#675e53] hover:border-[#5B93C5]/40"
                   }`}
                 >
                   {TYPE_LABEL[t]}
@@ -171,7 +171,7 @@ function AdjustDialog({
                 min={1}
                 value={qty}
                 onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                className="flex-1 text-center font-mono text-lg font-bold text-[#302b26] border border-[#e8ded3] rounded-xl py-2 outline-none focus:border-[#935941]"
+                className="flex-1 text-center font-mono text-lg font-bold text-[#302b26] border border-[#e8ded3] rounded-xl py-2 outline-none focus:border-[#5B93C5]"
               />
               <button
                 onClick={() => setQty((v) => v + 1)}
@@ -187,7 +187,7 @@ function AdjustDialog({
             <span className="text-sm text-[#675e53]">調整後庫存</span>
             <span
               className="font-mono font-bold text-xl"
-              style={{ color: newStock <= CRITICAL_THRESHOLD ? "#c0392b" : newStock <= LOW_STOCK_THRESHOLD ? "#8a5a14" : "#425847" }}
+              style={{ color: newStock <= CRITICAL_THRESHOLD ? "#c0392b" : newStock <= LOW_STOCK_THRESHOLD ? "#8a5a14" : "#315F86" }}
             >
               {newStock < 0 ? "⚠ 不足" : `${newStock} 件`}
             </span>
@@ -201,7 +201,7 @@ function AdjustDialog({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="例：10 月定期補貨、盤點校正..."
-              className="w-full border border-[#e8ded3] rounded-xl px-4 py-2 text-sm text-[#302b26] outline-none focus:border-[#935941] placeholder:text-[#c5b8ab]"
+              className="w-full border border-[#e8ded3] rounded-xl px-4 py-2 text-sm text-[#302b26] outline-none focus:border-[#5B93C5] placeholder:text-[#c5b8ab]"
             />
           </div>
 
@@ -217,7 +217,7 @@ function AdjustDialog({
             取消
           </Button>
           <Button
-            className="flex-1 bg-[#935941] hover:bg-[#794632] text-white border-0"
+            className="flex-1 bg-[#5B93C5] hover:bg-[#376F9F] text-white border-0"
             onClick={handleSubmit}
             disabled={submitting || newStock < 0}
           >
@@ -271,7 +271,7 @@ export default function AdminInventoryPage() {
       {/* 頁首 */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow text-[#935941]">管理端</span>
+          <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">庫存管理</h1>
           <p className="mt-1 text-sm text-[#675e53]">
             即時庫存水位監控、入庫補貨與調整，所有異動皆記錄於操作日誌。
@@ -313,10 +313,10 @@ export default function AdminInventoryPage() {
           <p className="text-xs text-[#8a5a14] font-medium">庫存偏低（≤ {LOW_STOCK_THRESHOLD} 件）</p>
           <p className="mt-1 text-3xl font-mono font-bold text-[#8a5a14]">{lowCount}</p>
         </div>
-        <div className="panel p-5 bg-white border border-[#68856b]/30 shadow-sm">
-          <CheckCircle2 size={20} className="text-[#425847] mb-3" />
-          <p className="text-xs text-[#425847] font-medium">庫存充足</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-[#425847]">{okCount}</p>
+        <div className="panel p-5 bg-white border border-[#78a6c9]/30 shadow-sm">
+          <CheckCircle2 size={20} className="text-[#315F86] mb-3" />
+          <p className="text-xs text-[#315F86] font-medium">庫存充足</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#315F86]">{okCount}</p>
         </div>
       </div>
 
@@ -404,7 +404,7 @@ export default function AdminInventoryPage() {
             {loading ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-[#8a7f75]">
-                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#935941] border-t-transparent mb-2" />
+                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent mb-2" />
                   同步庫存數據中...
                 </td>
               </tr>
@@ -442,7 +442,7 @@ export default function AdminInventoryPage() {
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           p.type === "CAT"
-                            ? "bg-[#935941]/10 text-[#935941]"
+                            ? "bg-[#5B93C5]/10 text-[#5B93C5]"
                             : "bg-[#fdf6ea] text-[#8a5a14] border border-[#e2a84c]/20"
                         }`}
                       >
@@ -456,7 +456,7 @@ export default function AdminInventoryPage() {
                             ? "text-rose-600"
                             : isLow
                               ? "text-[#8a5a14]"
-                              : "text-[#425847]"
+                              : "text-[#315F86]"
                         }
                       >
                         {p.stock}
@@ -470,19 +470,19 @@ export default function AdminInventoryPage() {
                             ? "border-rose-200 bg-rose-50 text-rose-700"
                             : isLow
                               ? "border-[#e2a84c]/30 bg-[#fdf6ea] text-[#8a5a14]"
-                              : "border-[#68856b]/30 bg-[#eef0e8] text-[#425847]"
+                              : "border-[#78a6c9]/30 bg-[#e8f1f8] text-[#315F86]"
                         }`}
                       >
                         {isCritical ? "即將缺貨" : isLow ? "庫存偏低" : "供應充足"}
                       </span>
                     </td>
-                    <td className="p-4 text-right font-mono font-semibold text-[#935941]">
+                    <td className="p-4 text-right font-mono font-semibold text-[#5B93C5]">
                       {money(p.priceNt)}
                     </td>
                     <td className="p-4 text-center">
                       <button
                         onClick={() => setAdjustTarget(p)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f8f5ef] text-[#935941] border border-[#e8ded3] hover:bg-[#935941]/10 hover:border-[#935941]/40 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#f8f5ef] text-[#5B93C5] border border-[#e8ded3] hover:bg-[#5B93C5]/10 hover:border-[#5B93C5]/40 transition-colors"
                       >
                         <Plus size={12} />
                         調整庫存

@@ -91,14 +91,14 @@ export function ProductCard({ product }: { product: Product }) {
           <span>
             {packageSize(product.bagGrams)} · {product.category}
           </span>
-          {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-[#935941]">
+          {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-[#5B93C5]">
             <FlaskConical size={12} />
             {product.batches.length ? "批次履歷" : "配方資料"}
           </span>}
         </div>
         <Link
           href={`/products/${product.slug}`}
-          className="editorial-title text-xl font-semibold tracking-tight text-[#302b26] hover:text-[#935941]"
+          className="editorial-title text-xl font-semibold tracking-tight text-[#302b26] hover:text-[#5B93C5]"
         >
           {product.name}
         </Link>
@@ -107,7 +107,7 @@ export function ProductCard({ product }: { product: Product }) {
           <strong className="font-mono text-2xl font-medium text-[#302b26]">
             {money(product.priceNt)}
           </strong>
-          {product.autoshipEligible && <span className="text-xs font-semibold text-[#935941]">
+          {product.autoshipEligible && <span className="text-xs font-semibold text-[#5B93C5]">
             循環價 {money(Math.round(product.priceNt * 0.9))}
           </span>}
         </div>

@@ -118,7 +118,7 @@ export default function AdminMembersPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow text-[#935941]">管理端</span>
+          <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">會員管理</h1>
           <p className="mt-1 text-sm text-[#675e53]">真實 Neon 資料庫會員清單，支援即時新增、查詢與刪除會員。</p>
         </div>
@@ -137,12 +137,12 @@ export default function AdminMembersPage() {
       {/* 概覽統計 */}
       <div className="grid gap-4 sm:grid-cols-3 mb-8">
         <div className="panel p-5 bg-white">
-          <Users size={20} className="text-[#935941] mb-3" />
+          <Users size={20} className="text-[#5B93C5] mb-3" />
           <p className="text-xs text-[#8a7f75]">真實註冊會員數</p>
           <p className="mt-1 text-3xl font-mono font-bold text-[#302b26]">{activeCount}</p>
         </div>
         <div className="panel p-5 bg-white">
-          <ShoppingBag size={20} className="text-[#425847] mb-3" />
+          <ShoppingBag size={20} className="text-[#315F86] mb-3" />
           <p className="text-xs text-[#8a7f75]">會員下單總數</p>
           <p className="mt-1 text-3xl font-mono font-bold text-[#302b26]">
             {members.reduce((s, m) => s + m.ordersCount, 0)}
@@ -151,7 +151,7 @@ export default function AdminMembersPage() {
         <div className="panel p-5 bg-white">
           <Shield size={20} className="text-[#8a5a14] mb-3" />
           <p className="text-xs text-[#8a7f75]">會員累計總消費</p>
-          <p className="mt-1 text-3xl font-mono font-bold text-[#935941]">{money(totalRevenue)}</p>
+          <p className="mt-1 text-3xl font-mono font-bold text-[#5B93C5]">{money(totalRevenue)}</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function AdminMembersPage() {
             {loading ? (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-[#8a7f75]">
-                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#935941] border-t-transparent mb-2" />
+                  <div className="mx-auto size-6 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent mb-2" />
                   載入真實會員名單中...
                 </td>
               </tr>
@@ -201,7 +201,7 @@ export default function AdminMembersPage() {
                 <tr key={m.id} className="hover:bg-[#fbf8f4] transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <div className="size-9 rounded-full bg-[#935941]/10 text-[#935941] font-bold flex items-center justify-center text-sm border border-[#935941]/20">
+                      <div className="size-9 rounded-full bg-[#5B93C5]/10 text-[#5B93C5] font-bold flex items-center justify-center text-sm border border-[#5B93C5]/20">
                         {m.name.charAt(0)}
                       </div>
                       <div>
@@ -222,7 +222,7 @@ export default function AdminMembersPage() {
                   <td className="p-4 text-center font-mono text-[#675e53]">
                     {m.ordersCount}
                   </td>
-                  <td className="p-4 text-right font-mono font-medium text-[#935941]">
+                  <td className="p-4 text-right font-mono font-medium text-[#5B93C5]">
                     {money(m.totalSpentNt)}
                   </td>
                   <td className="p-4 text-right">
@@ -259,7 +259,7 @@ export default function AdminMembersPage() {
                 ✕
               </button>
 
-              <div className="flex items-center gap-2 mb-4 text-[#935941]">
+              <div className="flex items-center gap-2 mb-4 text-[#5B93C5]">
                 <Users size={20} />
                 <h3 className="text-lg font-bold text-[#302b26]">公司端手動建立新會員</h3>
               </div>

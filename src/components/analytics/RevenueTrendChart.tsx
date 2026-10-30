@@ -67,8 +67,8 @@ export function RevenueTrendChart({ data }: Props) {
         dateFormat: "yyyy/MM/dd",
       },
       crosshair: {
-        horzLine: { color: "#935941", labelBackgroundColor: "#302b26" },
-        vertLine: { color: "#935941", labelBackgroundColor: "#302b26" },
+        horzLine: { color: "#5B93C5", labelBackgroundColor: "#302b26" },
+        vertLine: { color: "#5B93C5", labelBackgroundColor: "#302b26" },
       },
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: false, pinch: false, axisPressedMouseMove: false },
@@ -77,9 +77,9 @@ export function RevenueTrendChart({ data }: Props) {
     chartRef.current = chart;
 
     const series = chart.addSeries(AreaSeries, {
-      topColor: "rgba(147, 89, 65, 0.3)",
-      bottomColor: "rgba(147, 89, 65, 0.01)",
-      lineColor: "#935941",
+      topColor: "rgba(72, 127, 174, 0.3)",
+      bottomColor: "rgba(72, 127, 174, 0.01)",
+      lineColor: "#5B93C5",
       lineWidth: 2,
       pointMarkersVisible: true,
       pointMarkersRadius: 4,
@@ -134,7 +134,7 @@ export function RevenueTrendChart({ data }: Props) {
     <div className="rounded-2xl border border-[#e8ded3] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#935941]">
+          <span className="flex items-center gap-2 text-xs font-semibold tracking-wider text-[#5B93C5]">
             <TrendingUp size={14} />
             營業額成長動態（30日趨勢）
           </span>
@@ -146,7 +146,7 @@ export function RevenueTrendChart({ data }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-[#e8ded3] bg-[#fbf8f3] px-3 py-1 text-xs text-[#675e53]">
-          <DollarSign size={13} className="text-[#935941]" />
+          <DollarSign size={13} className="text-[#5B93C5]" />
           <span>每日自動結算統計</span>
         </div>
       </div>

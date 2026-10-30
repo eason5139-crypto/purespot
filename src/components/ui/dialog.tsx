@@ -53,7 +53,7 @@ export const DialogContent = React.forwardRef<
         }}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#d9cfc3] bg-white text-[#5e544a] hover:bg-[#f3ede3] hover:text-[#302b26] focus-visible:ring-2 focus-visible:ring-[#935941]">
+        <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#d9cfc3] bg-white text-[#5e544a] hover:bg-[#f3ede3] hover:text-[#302b26] focus-visible:ring-2 focus-visible:ring-[#5B93C5]">
           <X size={18} />
           <span className="sr-only">關閉視窗</span>
         </DialogPrimitive.Close>

@@ -31,7 +31,7 @@ export default function AutoshipPage() {
           <h1 className="mt-3 text-3xl font-semibold text-[#302b26]">我的循環補貨</h1>
           <p className="mt-3 text-[#675e53]">照著牠的步調，安排下一份美味。</p>
         </div>
-        <span className="rounded-full border border-[#935941]/20 bg-[#935941]/10 px-3 py-1.5 text-xs text-[#935941] font-medium">
+        <span className="rounded-full border border-[#5B93C5]/20 bg-[#5B93C5]/10 px-3 py-1.5 text-xs text-[#5B93C5] font-medium">
           示範計畫 · 不會扣款或出貨
         </span>
       </div>
@@ -45,13 +45,13 @@ export default function AutoshipPage() {
             return (
               <section key={plan.id} className="panel p-6 bg-white">
                 <div className="mb-5 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-[#935941]">
+                  <span className="text-sm font-semibold text-[#5B93C5]">
                     給{pet?.name ?? "已移除的毛孩"}
                   </span>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
                       plan.status === "ACTIVE"
-                        ? "bg-[#eef0e8] text-[#425847] border border-[#68856b]/30"
+                        ? "bg-[#e8f1f8] text-[#315F86] border border-[#78a6c9]/30"
                         : "bg-[#f5ede3] text-[#8a7f75]"
                     }`}
                   >
@@ -73,7 +73,7 @@ export default function AutoshipPage() {
                     <p className="mt-1 text-sm text-[#8a7f75]">
                       每 {plan.intervalDays} 天 · {plan.quantity} 包
                     </p>
-                    <p className="mt-2 font-mono text-base font-semibold text-[#935941]">
+                    <p className="mt-2 font-mono text-base font-semibold text-[#5B93C5]">
                       {money(Math.round(p.priceNt * 0.9) * plan.quantity)}
                       <span className="ml-2 text-xs font-normal text-[#8a7f75]">
                         每期商品金額
@@ -136,7 +136,7 @@ export default function AutoshipPage() {
         </div>
       ) : (
         <section className="panel mt-8 px-6 py-16 text-center bg-white">
-          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
+          <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#5B93C5]/10 text-[#5B93C5]">
             <Repeat2 size={30} />
           </span>
           <h2 className="mt-5 text-xl font-semibold text-[#302b26]">從一份剛剛好的配糧計畫開始</h2>
@@ -152,7 +152,7 @@ export default function AutoshipPage() {
       {orders.length > 0 && (
         <section className="mt-10">
           <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[#302b26]">
-            <Package size={20} className="text-[#935941]" />
+            <Package size={20} className="text-[#5B93C5]" />
             最近的示範訂單
           </h2>
           <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
@@ -167,7 +167,7 @@ export default function AutoshipPage() {
                     {dateLabel(order.createdAt)} · 僅限本裝置
                   </p>
                 </div>
-                <span className="font-semibold text-[#935941]">
+                <span className="font-semibold text-[#5B93C5]">
                   {order.items.reduce((n, i) => n + i.quantity, 0)} 件 ·{" "}
                   {money(order.totalNt)}
                 </span>

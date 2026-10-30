@@ -51,7 +51,7 @@ const STATUS_CONFIG: Record<
   },
   PAID: {
     label: "已付款",
-    color: "text-[#5b7b63] bg-[#eef0e8] border-[#68856b]/30",
+    color: "text-[#5b7b63] bg-[#e8f1f8] border-[#78a6c9]/30",
     icon: CheckCircle2,
   },
   PROCESSING: {
@@ -61,12 +61,12 @@ const STATUS_CONFIG: Record<
   },
   DISPATCHED: {
     label: "已出貨",
-    color: "text-[#935941] bg-[#935941]/10 border-[#935941]/30",
+    color: "text-[#5B93C5] bg-[#5B93C5]/10 border-[#5B93C5]/30",
     icon: Truck,
   },
   COMPLETED: {
     label: "已完成",
-    color: "text-[#425847] bg-[#eef0e8] border-[#68856b]/30",
+    color: "text-[#315F86] bg-[#e8f1f8] border-[#78a6c9]/30",
     icon: CheckCircle2,
   },
   CANCELLED: {
@@ -175,7 +175,7 @@ export default function AdminOrdersPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow text-[#935941]">管理端</span>
+          <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">訂單管理</h1>
           <p className="mt-1 text-sm text-[#675e53]">
             查看、篩選並更新所有消費者訂單的配送狀態，取消訂單時自動返還庫存。
@@ -235,7 +235,7 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <div className="py-20 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
@@ -290,7 +290,7 @@ export default function AdminOrdersPage() {
                           {cfg.label}
                         </span>
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-[#935941]">
+                      <td className="p-4 text-right font-mono font-semibold text-[#5B93C5]">
                         {money(order.totalNt)}
                       </td>
                       <td className="p-4 text-right">

@@ -56,12 +56,12 @@ export function Navbar({ announcement }: { announcement: string }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#e8ded3] bg-white/95 backdrop-blur-xl">
-      <div className="flex h-8 items-center justify-center gap-2 border-b border-[#e8ded3] bg-[#f5ebe0] px-3 text-xs tracking-wide text-[#935941]">
+      <div className="flex h-8 items-center justify-center gap-2 border-b border-[#e8ded3] bg-[#f5ebe0] px-3 text-xs tracking-wide text-[#5B93C5]">
         <Repeat2 size={13} />
         <span>{announcement}</span>
         <Link
           href="/autoship"
-          className="hidden underline decoration-[#935941]/40 underline-offset-4 sm:inline hover:text-[#794632]"
+          className="hidden underline decoration-[#5B93C5]/40 underline-offset-4 sm:inline hover:text-[#376F9F]"
         >
           循環補貨享 9 折 · 滿 $699 免運
         </Link>
@@ -92,15 +92,15 @@ export function Navbar({ announcement }: { announcement: string }) {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex h-full items-center text-sm font-medium transition-colors hover:text-[#935941] ${
-                  active ? "text-[#935941]" : "text-[#5e544a]"
+                className={`relative flex h-full items-center text-sm font-medium transition-colors hover:text-[#5B93C5] ${
+                  active ? "text-[#5B93C5]" : "text-[#5e544a]"
                 }`}
               >
                 {link.label}
                 {active && (
                   <motion.span
                     layoutId="nav-indicator"
-                    className="absolute inset-x-0 bottom-0 h-0.5 bg-[#935941]"
+                    className="absolute inset-x-0 bottom-0 h-0.5 bg-[#5B93C5]"
                   />
                 )}
               </Link>
@@ -115,7 +115,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                 className="gap-2 px-2 sm:px-3 !border-[#d9cfc3] !bg-[#fcfaf7] !text-[#302b26] hover:!bg-[#f4eee6]"
                 aria-label="切換毛孩"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
+                <span className="flex size-7 items-center justify-center rounded-full bg-[#5B93C5]/10 text-[#5B93C5]">
                   <PetIcon size={16} />
                 </span>
                 <span className="hidden sm:inline text-[#8a7f75]">正在為</span>
@@ -144,7 +144,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                     </span>
                   </span>
                   {p.id === pet.id && (
-                    <Check size={16} className="text-[#935941]" />
+                    <Check size={16} className="text-[#5B93C5]" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -159,7 +159,7 @@ export function Navbar({ announcement }: { announcement: string }) {
           <Button
             variant="ghost"
             size="icon"
-            className="relative !text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
+            className="relative !text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#5B93C5]"
             aria-label={`購物車，${count} 件商品`}
             onClick={() => setCartOpen(true)}
           >
@@ -169,7 +169,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                 key={count}
                 initial={{ scale: 0.6 }}
                 animate={{ scale: 1 }}
-                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-[#935941] px-1 text-xs font-semibold leading-5 text-white"
+                className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-[#5B93C5] px-1 text-xs font-semibold leading-5 text-white"
               >
                 {count}
               </motion.span>
@@ -183,7 +183,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                   variant="ghost"
                   size="icon"
                   aria-label="會員選單"
-                  className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
+                  className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#5B93C5]"
                 >
                   <User className="!size-5" />
                 </Button>
@@ -212,7 +212,7 @@ export function Navbar({ announcement }: { announcement: string }) {
               size="icon"
               aria-label="會員登入"
               onClick={() => setAuthOpen(true)}
-              className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
+              className="!text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#5B93C5]"
             >
               <LogIn className="!size-5" />
             </Button>

@@ -86,7 +86,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <main id="main-content" className="page-shell py-20 text-center">
-        <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
+        <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
       </main>
     );
   }
@@ -94,7 +94,7 @@ export default function AccountPage() {
   if (!user) {
     return (
       <main id="main-content" className="page-shell py-20 text-center">
-        <span className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
+        <span className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#5B93C5]/10 text-[#5B93C5]">
           <User size={38} />
         </span>
         <h1 className="mt-6 text-3xl font-semibold text-[#302b26]">登入後，看見更多</h1>
@@ -127,7 +127,7 @@ export default function AccountPage() {
         </div>
         <Button
           variant="ghost"
-          className="text-[#675e53] hover:text-[#935941] hover:bg-[#f3ede3]"
+          className="text-[#675e53] hover:text-[#5B93C5] hover:bg-[#f3ede3]"
           onClick={() => void logout()}
         >
           登出
@@ -142,7 +142,7 @@ export default function AccountPage() {
           transition={{ delay: 0.05 }}
           className="panel p-6 bg-white"
         >
-          <Package size={24} className="text-[#935941]" />
+          <Package size={24} className="text-[#5B93C5]" />
           <p className="mt-4 text-sm text-[#8a7f75]">
             {cloudOrders.length > 0 ? "雲端同步訂單" : "本裝置示範訂單"}
           </p>
@@ -162,7 +162,7 @@ export default function AccountPage() {
           transition={{ delay: 0.1 }}
           className="panel p-6 bg-white"
         >
-          <Repeat2 size={24} className="text-[#425847]" />
+          <Repeat2 size={24} className="text-[#315F86]" />
           <p className="mt-4 text-sm text-[#8a7f75]">進行中的補貨計畫</p>
           <p className="mt-1 font-mono text-4xl text-[#302b26] font-semibold">{activePlans.length}</p>
           <Button asChild variant="secondary" className="mt-4 w-full">
@@ -189,7 +189,7 @@ export default function AccountPage() {
       <section className="mt-10">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-[#302b26]">
-            <PawPrint size={20} className="text-[#935941]" />
+            <PawPrint size={20} className="text-[#5B93C5]" />
             我的毛孩檔案
           </h2>
           <Button variant="ghost" size="sm" onClick={() => editPet(true)}>
@@ -206,13 +206,13 @@ export default function AccountPage() {
                 key={p.id}
                 className={`panel p-5 transition-all bg-white ${
                   isCurrent
-                    ? "border-[#935941] bg-[#fdfbf9] ring-1 ring-[#935941]"
+                    ? "border-[#5B93C5] bg-[#fdfbf9] ring-1 ring-[#5B93C5]"
                     : "hover:border-[#d9cfc3]"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-[#935941]/10 text-[#935941]">
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-[#5B93C5]/10 text-[#5B93C5]">
                       <PetIcon size={22} />
                     </span>
                     <div>
@@ -223,7 +223,7 @@ export default function AccountPage() {
                     </div>
                   </div>
                   {isCurrent && (
-                    <span className="flex items-center gap-1 rounded-full bg-[#eef0e8] border border-[#68856b]/30 px-2.5 py-0.5 text-xs text-[#425847] font-medium">
+                    <span className="flex items-center gap-1 rounded-full bg-[#e8f1f8] border border-[#78a6c9]/30 px-2.5 py-0.5 text-xs text-[#315F86] font-medium">
                       <CheckCircle2 size={12} />
                       目前檢視中
                     </span>
@@ -238,7 +238,7 @@ export default function AccountPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-[#935941] hover:text-[#794632]"
+                      className="h-7 text-xs text-[#5B93C5] hover:text-[#376F9F]"
                       onClick={() => setActivePet(p.id)}
                     >
                       切換為當前毛孩
@@ -261,7 +261,7 @@ export default function AccountPage() {
       {/* 雲端 / 示範訂單列表 */}
       <section className="mt-10">
         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[#302b26]">
-          <Clock3 size={20} className="text-[#935941]" />
+          <Clock3 size={20} className="text-[#5B93C5]" />
           {cloudOrders.length > 0 ? "最近的雲端訂單" : "最近的示範訂單"}
         </h2>
 
@@ -278,7 +278,7 @@ export default function AccountPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-mono text-xs font-semibold text-[#302b26]">{order.id}</p>
-                    <span className="rounded bg-[#eef0e8] border border-[#68856b]/30 px-2 py-0.5 text-xs text-[#425847]">
+                    <span className="rounded bg-[#e8f1f8] border border-[#78a6c9]/30 px-2 py-0.5 text-xs text-[#315F86]">
                       {order.status}
                     </span>
                   </div>
@@ -287,7 +287,7 @@ export default function AccountPage() {
                     {order.items.map((it) => it.productName).join("、")}
                   </p>
                 </div>
-                <span className="font-mono text-base font-semibold text-[#935941]">
+                <span className="font-mono text-base font-semibold text-[#5B93C5]">
                   {money(order.totalNt)}
                 </span>
               </motion.div>
@@ -314,7 +314,7 @@ export default function AccountPage() {
                     {dateLabel(order.createdAt)} · {order.items.length} 項商品
                   </p>
                 </div>
-                <span className="font-mono font-semibold text-[#935941]">
+                <span className="font-mono font-semibold text-[#5B93C5]">
                   {money(order.totalNt)}
                 </span>
               </motion.div>

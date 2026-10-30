@@ -134,11 +134,11 @@ export default function AdminContentPage() {
     <div className="mx-auto max-w-6xl">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="eyebrow text-[#935941]">內容管理</span>
+          <span className="eyebrow text-[#5B93C5]">內容管理</span>
           <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">網站內容編輯</h1>
           <p className="mt-2 text-sm text-[#675e53]">按頁面區塊修改文字與照片，儲存後立即用官網預覽。</p>
         </div>
-        <Link href="/" target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#935941] hover:bg-[#ede5da]">
+        <Link href="/" target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#5B93C5] hover:bg-[#ede5da]">
           <ExternalLink size={16} /> 開啟官網
         </Link>
       </div>
@@ -153,7 +153,7 @@ export default function AdminContentPage() {
               aria-current={active === item.id ? "page" : undefined}
               className={`whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-medium transition-all lg:w-full ${
                 active === item.id
-                  ? "bg-[#935941] text-white shadow-sm font-semibold"
+                  ? "bg-[#5B93C5] text-white shadow-sm font-semibold"
                   : "text-[#675e53] hover:bg-[#f5ede3] hover:text-[#302b26]"
               }`}
             >
@@ -202,7 +202,7 @@ export default function AdminContentPage() {
             </div>
           )}
           {error && <p role="alert" className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>}
-          {message && <p role="status" className="mb-4 flex items-center gap-2 rounded-xl bg-[#eef0e8] border border-[#68856b]/30 p-3 text-sm text-[#425847] font-medium"><CheckCircle2 size={16} />{message}</p>}
+          {message && <p role="status" className="mb-4 flex items-center gap-2 rounded-xl bg-[#e8f1f8] border border-[#78a6c9]/30 p-3 text-sm text-[#315F86] font-medium"><CheckCircle2 size={16} />{message}</p>}
           <div className="flex justify-end border-t border-[#e8ded3] pt-5">
             <Button type="submit" disabled={loading || saving} className="gap-2"><Save size={16} />{saving ? "儲存中…" : "儲存網站內容"}</Button>
           </div>

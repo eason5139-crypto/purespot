@@ -124,8 +124,8 @@ export function PetWeightTrendChart({
         dateFormat: "yyyy/MM/dd",
       },
       crosshair: {
-        horzLine: { color: "#935941", labelBackgroundColor: "#302b26" },
-        vertLine: { color: "#935941", labelBackgroundColor: "#302b26" },
+        horzLine: { color: "#5B93C5", labelBackgroundColor: "#302b26" },
+        vertLine: { color: "#5B93C5", labelBackgroundColor: "#302b26" },
       },
       handleScroll: {
         mouseWheel: false,
@@ -143,9 +143,9 @@ export function PetWeightTrendChart({
     chartRef.current = chart;
 
     const series = chart.addSeries(AreaSeries, {
-      topColor: "rgba(147, 89, 65, 0.3)",
-      bottomColor: "rgba(147, 89, 65, 0.02)",
-      lineColor: "#935941",
+      topColor: "rgba(72, 127, 174, 0.3)",
+      bottomColor: "rgba(72, 127, 174, 0.02)",
+      lineColor: "#5B93C5",
       lineWidth: 2,
       pointMarkersVisible: true,
       pointMarkersRadius: 4,
@@ -213,7 +213,7 @@ export function PetWeightTrendChart({
     <div className="panel p-5 sm:p-7">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-[#935941]/10 text-[#935941]">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-[#5B93C5]/10 text-[#5B93C5]">
             <Scale size={20} />
           </span>
           <div>
@@ -227,7 +227,7 @@ export function PetWeightTrendChart({
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-xs text-[#8a7f75]">檢視數值</p>
-            <p className="font-mono text-lg font-medium text-[#935941]">
+            <p className="font-mono text-lg font-medium text-[#5B93C5]">
               {hoveredWeight !== null
                 ? `${hoveredWeight.toFixed(1)} kg`
                 : `${currentWeightKg} kg`}
@@ -236,7 +236,7 @@ export function PetWeightTrendChart({
           <span
             className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
               diff <= 0
-                ? "bg-[#eef0e8] text-[#425847] border border-[#68856b]/30"
+                ? "bg-[#e8f1f8] text-[#315F86] border border-[#78a6c9]/30"
                 : "bg-[#fdf6ea] text-[#8a5a14] border border-[#e2a84c]/30"
             }`}
           >

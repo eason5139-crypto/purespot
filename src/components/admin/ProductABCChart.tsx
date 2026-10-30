@@ -4,7 +4,7 @@ import { Package } from "lucide-react";
 import type { ABCProductData } from "@/lib/adminTypes";
 
 // 大地色系 ABC 配色
-const ABC_COLOR = { A: "#935941", B: "#5b7b63", C: "#8a7f75" } as const;
+const ABC_COLOR = { A: "#5B93C5", B: "#5b7b63", C: "#8a7f75" } as const;
 
 interface ABCProduct {
   productId: string;
@@ -213,8 +213,8 @@ export function ProductABCChart({ rawData }: Props) {
                 const zy = PAD.top + (2 - yi) * (PLOT_H / 3);
                 const zoneColors = [
                   ["#e8ded308", "#e8ded308", "#5b7b6308"],
-                  ["#e8ded308", "#93594108", "#93594110"],
-                  ["#5b7b6308", "#93594110", "#93594118"],
+                  ["#e8ded308", "#5B93C508", "#5B93C510"],
+                  ["#5b7b6308", "#5B93C510", "#5B93C518"],
                 ];
                 return (
                   <g key={`zone-${xi}-${yi}`}>
@@ -516,7 +516,7 @@ export function ProductABCChart({ rawData }: Props) {
                             p.healthScore > 70
                               ? "#5b7b63"
                               : p.healthScore > 40
-                                ? "#935941"
+                                ? "#5B93C5"
                                 : "#c98e3b",
                         }}
                       />

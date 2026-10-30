@@ -110,7 +110,7 @@ export function NutritionCalculatorModal() {
     >
       <DialogContent>
         <div className="mb-5 flex items-center gap-3">
-          <span className="rounded-xl bg-[#935941]/10 p-3 text-[#935941]">
+          <span className="rounded-xl bg-[#5B93C5]/10 p-3 text-[#5B93C5]">
             <Calculator />
           </span>
           <div>
@@ -140,7 +140,7 @@ export function NutritionCalculatorModal() {
               100 克
             </p>
           </div>
-          <span className="font-mono text-[#935941] font-semibold">
+          <span className="font-mono text-[#5B93C5] font-semibold">
             {money(Math.round(product.priceNt * 0.9))}
             <span className="block text-right text-xs font-normal text-[#8a7f75]">
               循環價 / 包
@@ -154,7 +154,7 @@ export function NutritionCalculatorModal() {
               <label id="weight-label" className="text-sm text-[#5e544a] font-medium">
                 目前體重
               </label>
-              <span className="font-mono text-3xl font-bold text-[#935941]">
+              <span className="font-mono text-3xl font-bold text-[#5B93C5]">
                 {decimal(pet.weightKg)}
                 <span className="ml-1 text-sm font-normal text-[#8a7f75]">公斤</span>
               </span>
@@ -204,7 +204,7 @@ export function NutritionCalculatorModal() {
             <label className="mt-4 flex items-center gap-2 text-sm text-[#302b26]">
               <input
                 type="checkbox"
-                className="size-4 accent-[#935941]"
+                className="size-4 accent-[#5B93C5]"
                 checked={pet.isNeutered}
                 onChange={(e) =>
                   updatePet(pet.id, { isNeutered: e.target.checked })
@@ -214,7 +214,7 @@ export function NutritionCalculatorModal() {
             </label>
 
             <div className="mt-5 rounded-xl border border-[#e8ded3] bg-[#f7f2ea] p-3 text-xs leading-6 text-[#675e53]">
-              <Info size={14} className="mb-1 text-[#935941]" />
+              <Info size={14} className="mb-1 text-[#5B93C5]" />
               靜止熱量 = 70 × 體重⁰·⁷⁵
               <br />
               每日需求 = 靜止熱量 × {result?.factor ?? "—"}
@@ -225,12 +225,12 @@ export function NutritionCalculatorModal() {
 
           <div className="space-y-3">
             <div className="rounded-2xl border border-[#e8ded3] bg-[#fbf8f4] p-5">
-              <p className="text-sm font-semibold text-[#935941]">每日建議餵食</p>
+              <p className="text-sm font-semibold text-[#5B93C5]">每日建議餵食</p>
               <motion.p
                 key={Math.round(result?.dailyGrams ?? 0)}
                 initial={{ opacity: 0.6, y: 3 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 font-mono text-5xl font-bold text-[#935941]"
+                className="mt-2 font-mono text-5xl font-bold text-[#5B93C5]"
                 data-testid="daily-grams"
               >
                 {result ? decimal(result.dailyGrams, 0) : "—"}
@@ -257,7 +257,7 @@ export function NutritionCalculatorModal() {
               <div className="rounded-xl border border-[#e8ded3] bg-white p-4 shadow-sm">
                 <CalendarDays size={16} className="mb-2 text-[#8a7f75]" />
                 <p className="text-xs text-[#8a7f75]">日均花費</p>
-                <p className="mt-1 text-xl font-bold font-mono text-[#425847]">
+                <p className="mt-1 text-xl font-bold font-mono text-[#315F86]">
                   {result ? money(result.autoshipDailyCostNt) : "—"}
                 </p>
                 <p className="mt-1 text-xs text-[#8a7f75]">
@@ -277,7 +277,7 @@ export function NutritionCalculatorModal() {
         <div className="mt-6 border-t border-[#e8ded3] pt-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[#302b26]">適合你的補貨節奏</h3>
-            <span className="text-xs font-medium text-[#425847]">預留 3 天緩衝</span>
+            <span className="text-xs font-medium text-[#315F86]">預留 3 天緩衝</span>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {DELIVERY_INTERVALS.map((days) => (
@@ -294,7 +294,7 @@ export function NutritionCalculatorModal() {
           <p className="mt-3 text-sm text-[#675e53]">
             每 {interval} 天配送{" "}
             <strong className="text-[#302b26]">{bags} 包</strong>，每期商品金額{" "}
-            <strong className="text-[#935941]">
+            <strong className="text-[#5B93C5]">
               {money(Math.round(product.priceNt * 0.9) * bags)}
             </strong>
             。
@@ -307,7 +307,7 @@ export function NutritionCalculatorModal() {
           </p>
           <div
             className={`my-4 flex items-center gap-2 text-sm font-medium ${
-              fit.safe ? "text-[#425847]" : "text-[#8a5a14]"
+              fit.safe ? "text-[#315F86]" : "text-[#8a5a14]"
             }`}
           >
             {fit.safe ? <ShieldCheck size={16} /> : <TriangleAlert size={16} />}

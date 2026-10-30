@@ -63,7 +63,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             background: "#ffffff",
             border: "1px solid #e8ded3",
             color: "#302b26",
-            boxShadow: "0 10px 30px -10px rgba(147, 89, 65, 0.15)",
+            boxShadow: "0 10px 30px -10px rgba(72, 127, 174, 0.15)",
           },
         }}
       />

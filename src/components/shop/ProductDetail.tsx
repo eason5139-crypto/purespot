@@ -83,14 +83,14 @@ export function ProductDetail({ product }: { product: Product }) {
               <p className="mt-2 text-xs tracking-wide text-[#8a7f75]">展示商品與價格，以結帳頁顯示的配送方式為準</p>
             </div>
 
-            <div className={`mt-6 flex items-start gap-3 border-l-[3px] px-4 py-3 text-sm leading-6 ${fit.safe ? "border-[#68856b] bg-[#eef0e8] text-[#425847]" : "border-[#ac705c] bg-[#f4e9df] text-[#734b3b]"}`} role="status">
+            <div className={`mt-6 flex items-start gap-3 border-l-[3px] px-4 py-3 text-sm leading-6 ${fit.safe ? "border-[#78a6c9] bg-[#e8f1f8] text-[#315F86]" : "border-[#ac705c] bg-[#f4e9df] text-[#734b3b]"}`} role="status">
               <ShieldCheck className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
               <span>{fit.label}</span>
             </div>
             {!fit.sameSpecies && <button type="button" onClick={() => openPetEditor(true)} className="mt-3 text-sm font-medium text-[#795340] underline underline-offset-4">新增{petLabels[product.type]}檔案，或從頂部切換毛孩</button>}
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              <button type="button" disabled={!available} onClick={addOnce} className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 bg-[#935941] px-5 text-sm font-semibold text-white hover:bg-[#794632] disabled:cursor-not-allowed disabled:opacity-45"><ShoppingBag size={17} />單次加入購物車</button>
+              <button type="button" disabled={!available} onClick={addOnce} className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F] disabled:cursor-not-allowed disabled:opacity-45"><ShoppingBag size={17} />單次加入購物車</button>
               {canCalculate && <button type="button" disabled={!fit.safe} onClick={() => openCalculator(product.id)} className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 border border-[#9e8d7c] px-5 text-sm font-semibold text-[#4e443a] hover:bg-[#ebe3d8] disabled:cursor-not-allowed disabled:opacity-45"><Calculator size={17} />試算每日份量</button>}
               {!canCalculate && <Link href="/shop" className="editorial-action inline-flex min-h-14 items-center justify-center gap-2 border border-[#9e8d7c] px-5 text-sm font-semibold text-[#4e443a] hover:bg-[#ebe3d8]">繼續逛逛選物 <ArrowRight size={17} /></Link>}
             </div>

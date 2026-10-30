@@ -218,7 +218,7 @@ export default function AdminProductsPage() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="eyebrow text-[#935941]">商品與庫存</span>
+          <span className="eyebrow text-[#5B93C5]">商品與庫存</span>
           <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">商品管理</h1>
           <p className="mt-2 text-sm text-[#675e53]">共 {products.length} 款商品 · {availableCategories.length} 個分類。可編輯照片、文案、營養資訊與上架狀態。</p>
         </div>
@@ -229,7 +229,7 @@ export default function AdminProductsPage() {
       </div>
 
       {error && <p role="alert" className="mb-5 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>}
-      {message && <p role="status" className="mb-5 rounded-xl bg-[#eef0e8] border border-[#68856b]/30 p-3 text-sm text-[#425847]">{message}</p>}
+      {message && <p role="status" className="mb-5 rounded-xl bg-[#e8f1f8] border border-[#78a6c9]/30 p-3 text-sm text-[#315F86]">{message}</p>}
 
       {editing ? (
         <form onSubmit={save} className="rounded-2xl border border-[#e8ded3] bg-white p-5 sm:p-8 shadow-sm">
@@ -250,7 +250,7 @@ export default function AdminProductsPage() {
                 onClick={() => setTab(item.id)}
                 className={`min-h-11 shrink-0 rounded-xl px-4 text-sm font-medium transition-all ${
                   tab === item.id
-                    ? "bg-[#935941] text-white shadow-sm font-semibold"
+                    ? "bg-[#5B93C5] text-white shadow-sm font-semibold"
                     : "border border-[#d9cfc3] bg-[#fbf8f4] text-[#675e53] hover:bg-[#ede5da]"
                 }`}
               >
@@ -307,7 +307,7 @@ export default function AdminProductsPage() {
                 <TextField label="主要成分（使用頓號分隔）" value={form.ingredients.join("、")} onChange={(value) => update("ingredients", value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean))} />
                 <TextField label="過敏原（使用頓號分隔，可留空）" value={form.allergens.join("、")} onChange={(value) => update("allergens", value.split(/[、,，]/).map((s) => s.trim()).filter(Boolean))} />
                 </>}
-                <fieldset><legend className="mb-2 text-sm font-medium text-[#302b26]">適用生命階段</legend><div className="flex flex-wrap gap-4">{(["JUNIOR", "ADULT", "SENIOR"] as const).map((stage) => <label key={stage} className="flex items-center gap-2 text-sm text-[#675e53]"><input type="checkbox" className="size-4 accent-[#935941]" checked={form.lifeStages.includes(stage)} onChange={(event) => update("lifeStages", event.target.checked ? [...form.lifeStages, stage] : form.lifeStages.filter((value) => value !== stage))} />{stage === "JUNIOR" ? "幼年" : stage === "ADULT" ? "成年" : "熟齡"}</label>)}</div></fieldset>
+                <fieldset><legend className="mb-2 text-sm font-medium text-[#302b26]">適用生命階段</legend><div className="flex flex-wrap gap-4">{(["JUNIOR", "ADULT", "SENIOR"] as const).map((stage) => <label key={stage} className="flex items-center gap-2 text-sm text-[#675e53]"><input type="checkbox" className="size-4 accent-[#5B93C5]" checked={form.lifeStages.includes(stage)} onChange={(event) => update("lifeStages", event.target.checked ? [...form.lifeStages, stage] : form.lifeStages.filter((value) => value !== stage))} />{stage === "JUNIOR" ? "幼年" : stage === "ADULT" ? "成年" : "熟齡"}</label>)}</div></fieldset>
               </div>
             )}
             {tab === "commerce" && (
@@ -317,8 +317,8 @@ export default function AdminProductsPage() {
                   <TextField label="庫存（包）" type="number" value={form.stock} onChange={(value) => update("stock", Number(value))} />
                   <TextField label="包裝重量（g）" type="number" value={form.bagGrams} onChange={(value) => update("bagGrams", Number(value))} />
                 </div>
-                {form.kind === "FOOD" && (form.type === "CAT" || form.type === "DOG") && <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#935941]" checked={form.autoshipEligible} onChange={(event) => update("autoshipEligible", event.target.checked)} />提供循環補貨</label>}
-                <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#935941]" checked={form.isPublished} onChange={(event) => update("isPublished", event.target.checked)} />在官網上架並可供選購</label>
+                {form.kind === "FOOD" && (form.type === "CAT" || form.type === "DOG") && <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#5B93C5]" checked={form.autoshipEligible} onChange={(event) => update("autoshipEligible", event.target.checked)} />提供循環補貨</label>}
+                <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#5B93C5]" checked={form.isPublished} onChange={(event) => update("isPublished", event.target.checked)} />在官網上架並可供選購</label>
                 <p className="text-sm text-[#8a7f75]">先保存為草稿，確認圖片與規格後再上架。下架商品保留資料，可隨時重新發布。</p>
               </div>
             )}
@@ -343,7 +343,7 @@ export default function AdminProductsPage() {
                   onClick={() => setFilter(value)}
                   className={`min-h-11 rounded-xl px-4 text-sm font-medium transition-all ${
                     filter === value
-                      ? "bg-[#935941] text-white shadow-sm font-semibold"
+                      ? "bg-[#5B93C5] text-white shadow-sm font-semibold"
                       : "border border-[#d9cfc3] bg-white text-[#675e53] hover:bg-[#ede5da]"
                   }`}
                 >
@@ -366,12 +366,12 @@ export default function AdminProductsPage() {
           ) : (
             <div className="grid gap-3">
               {filtered.map((product) => (
-                <article key={product.id} className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#e8ded3] bg-white p-4 shadow-sm hover:border-[#935941]/40 transition-all">
+                <article key={product.id} className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#e8ded3] bg-white p-4 shadow-sm hover:border-[#5B93C5]/40 transition-all">
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-[#ebe5da]"><Image src={product.image} alt={product.name} fill sizes="80px" className="object-contain p-1" /></div>
                   <div className="min-w-[190px] flex-1">
-                    <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-[#302b26]">{product.name}</h2><span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${product.isPublished ? "bg-[#eef0e8] text-[#425847] border border-[#68856b]/30" : "bg-[#f5ede3] text-[#8a7f75]"}`}>{product.isPublished ? "上架中" : "草稿／下架"}</span></div>
+                    <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-[#302b26]">{product.name}</h2><span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${product.isPublished ? "bg-[#e8f1f8] text-[#315F86] border border-[#78a6c9]/30" : "bg-[#f5ede3] text-[#8a7f75]"}`}>{product.isPublished ? "上架中" : "草稿／下架"}</span></div>
                     <p className="mt-1 text-sm text-[#675e53]">{petLabels[product.type]} · {product.kind === "SUPPLIES" ? "用品" : "食物"} · {product.category} · {product.bagGrams}g</p>
-                    <p className="mt-1 text-sm font-semibold text-[#935941]">{money(product.priceNt)} · 庫存 {product.stock}</p>
+                    <p className="mt-1 text-sm font-semibold text-[#5B93C5]">{money(product.priceNt)} · 庫存 {product.stock}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {product.isPublished && <Link href={`/products/${product.slug}`} target="_blank" className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-[#d9cfc3] bg-white px-3 text-sm text-[#675e53] hover:bg-[#ede5da]"><ExternalLink size={14} />預覽</Link>}

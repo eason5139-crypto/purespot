@@ -114,7 +114,7 @@ export function UgcFeedModal() {
                 {post.text}
               </DialogDescription>
               <div className="mt-5 flex items-center gap-3 border-t border-[#e8ded3] pt-5">
-                <span className="flex size-10 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
+                <span className="flex size-10 items-center justify-center rounded-full bg-[#5B93C5]/10 text-[#5B93C5]">
                   <Heart size={18} />
                 </span>
                 <div>
@@ -131,7 +131,7 @@ export function UgcFeedModal() {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col justify-center p-6 sm:p-8 bg-white"
           >
-            <span className="eyebrow mb-5 text-[#935941]">讓喜歡，成為日常</span>
+            <span className="eyebrow mb-5 text-[#5B93C5]">讓喜歡，成為日常</span>
             <h3 className="text-xl font-semibold text-[#302b26]">帶走毛孩同款</h3>
             <div className="relative mx-auto my-5 aspect-square w-full max-w-64 overflow-hidden rounded-2xl bg-[#ebe5da]">
               <Image
@@ -146,11 +146,11 @@ export function UgcFeedModal() {
             <p className="mt-2 text-sm text-[#8a7f75]">
               {product.bagGrams / 1000} 公斤 · {product.subtitle}
             </p>
-            <p className="my-5 font-mono text-3xl font-bold text-[#935941]">{money(product.priceNt)}</p>
+            <p className="my-5 font-mono text-3xl font-bold text-[#5B93C5]">{money(product.priceNt)}</p>
             <div
               className={`mb-5 flex items-center gap-2 rounded-xl border p-3 text-sm ${
                 fit.safe
-                  ? "border-[#68856b]/30 bg-[#eef0e8] text-[#425847]"
+                  ? "border-[#78a6c9]/30 bg-[#e8f1f8] text-[#315F86]"
                   : "border-[#e2a84c]/30 bg-[#fdf6ea] text-[#8a5a14]"
               }`}
             >

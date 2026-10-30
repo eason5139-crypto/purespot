@@ -104,7 +104,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         </button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[1fr_330px]">
-        <section className="hero-panel relative min-h-[425px] overflow-hidden bg-[#303a31] text-[#fffaf2]">
+        <section className="hero-panel relative min-h-[425px] overflow-hidden bg-[#203a4f] text-[#fffaf2]">
           <Image
             src={content.shopImage}
             alt="貓與兔兔在家中探索食物和用品的生活場景"
@@ -127,7 +127,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               {content.shopDescription}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button type="button" className="editorial-action min-h-11 bg-[#935941] px-5 text-sm font-semibold text-white hover:bg-[#794632]"
+              <button type="button" className="editorial-action min-h-11 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F]"
                 onClick={() =>
                   document
                     .getElementById("products")
@@ -205,9 +205,9 @@ export function Storefront({ content }: { content: SiteContent }) {
               <Button onClick={() => edit(true)}>檢查毛孩資料</Button>
             </div>
           )}
-        </section> : <section className="relative flex flex-col justify-between border border-[#c4d0bf] bg-[#e7eee4] p-7">
+        </section> : <section className="relative flex flex-col justify-between border border-[#bcd5e9] bg-[#eaf3fa] p-7">
           <div><p className="text-xs font-semibold tracking-[.18em] text-[#59715c]">A LITTLE LIFE, FULL OF JOY</p><h2 className="editorial-title mt-5 text-3xl leading-tight text-[#334737]">{pet.name}的日常，<br />從喜歡的事開始。</h2><p className="mt-5 text-sm leading-7 text-[#5c705e]">食物、玩具與舒適的小空間，為{petLabels[pet.type]}慢慢挑。食量資訊請以實品標示及專業建議為準。</p></div>
-          <button type="button" className="editorial-action mt-8 min-h-11 bg-[#935941] px-5 text-sm font-semibold text-white hover:bg-[#794632]" onClick={() => { setSpecies(pet.type); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }}>看{pet.name}的選物 <ArrowUpRight size={15} className="ml-1 inline" /></button>
+          <button type="button" className="editorial-action mt-8 min-h-11 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F]" onClick={() => { setSpecies(pet.type); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }}>看{pet.name}的選物 <ArrowUpRight size={15} className="ml-1 inline" /></button>
         </section>}
       </div>
       <div className="my-9 grid grid-cols-1 divide-y divide-[#d9cbbd] border-y border-[#d9cbbd] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
@@ -249,13 +249,13 @@ export function Storefront({ content }: { content: SiteContent }) {
             <p className="editorial-kicker">THE COLLECTION / 依喜好慢慢挑</p>
             <h2 id="category-heading" className="editorial-title mt-4 max-w-md text-4xl leading-[1.2] sm:text-5xl">把每一天，<br /><em className="font-normal text-[#a35f44]">過成牠喜歡的樣子。</em></h2>
             <p className="mt-5 max-w-md text-sm leading-7 text-[#71675c]">從一餐飯到一件玩具，{catalogCategories.length} 個主題裡，慢慢找到適合你們的日常。</p>
-            <div className="relative mt-8 hidden aspect-[4/5] max-w-[480px] overflow-hidden bg-[#d5c8b7] lg:block"><Image src="/images/editorial/small-friends-v2.png" alt="倉鼠與兔兔在家中的生活片刻" fill sizes="40vw" className="object-cover transition-transform duration-700 hover:scale-[1.03]" /><span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#202c27]/75 to-transparent px-6 pb-5 pt-20 text-xs tracking-[.18em] text-white">SMALL MOMENTS, BIG LOVE</span></div>
+            <div className="relative mt-8 hidden aspect-[4/5] max-w-[480px] overflow-hidden bg-[#d5c8b7] lg:block"><Image src="/images/editorial/small-friends-v2.png" alt="倉鼠與兔兔在家中的生活片刻" fill sizes="40vw" className="object-cover transition-transform duration-700 hover:scale-[1.03]" /><span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#203a4f]/75 to-transparent px-6 pb-5 pt-20 text-xs tracking-[.18em] text-white">SMALL MOMENTS, BIG LOVE</span></div>
           </div>
           <div>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap gap-2" role="group" aria-label="食物或用品">
                 {([ ["all", "全部"], ["FOOD", "食物"], ["SUPPLIES", "用品"] ] as const).map(([value, label]) => (
-                  <button key={value} type="button" aria-pressed={kind === value} onClick={() => { setKind(value); setProductCategory("all"); setVisibleCount(8); }} className={`min-h-11 rounded-full border px-5 text-sm transition-all ${kind === value ? "border-[#3e4c3c] bg-[#3e4c3c] text-white" : "border-[#cbb9a7] text-[#655244] hover:border-[#7a8a70]"}`}>{label}</button>
+                  <button key={value} type="button" aria-pressed={kind === value} onClick={() => { setKind(value); setProductCategory("all"); setVisibleCount(8); }} className={`min-h-11 rounded-full border px-5 text-sm transition-all ${kind === value ? "border-[#315F86] bg-[#315F86] text-white" : "border-[#cbb9a7] text-[#655244] hover:border-[#78a6c9]"}`}>{label}</button>
                 ))}
               </div>
               <button type="button" onClick={() => { setProductCategory("all"); setKind("all"); setSpecies("all"); setVisibleCount(8); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[#8c5a43] underline underline-offset-4 hover:text-[#6f3f2d]">看全部 {products.length} 款 <ArrowUpRight size={16} /></button>
@@ -313,7 +313,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               <button
                 key={tab.id}
                 aria-pressed={species === tab.id}
-                className={`rounded-lg px-4 py-2 text-sm transition-colors ${species === tab.id ? "bg-[#f7e4d5] text-[#9a5036] ring-1 ring-[#e8af8e]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
+                className={`rounded-lg px-4 py-2 text-sm transition-colors ${species === tab.id ? "bg-[#e8f1f8] text-[#315F86] ring-1 ring-[#8db7da]" : "text-[#806c60] hover:bg-[#f7eee6]"}`}
                 onClick={() => { setSpecies(tab.id as typeof species); setVisibleCount(8); }}
               >
                 {tab.label}
@@ -321,7 +321,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" aria-pressed={favoritesOnly} onClick={() => { setFavoritesOnly((value) => !value); setVisibleCount(8); }} className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${favoritesOnly ? "border-[#a96043] bg-[#f9e5d9] text-[#934d34]" : "border-[#d6c7b8] text-[#76685d] hover:bg-[#fffaf4]"}`}><Heart size={15} fill={favoritesOnly ? "currentColor" : "none"} />我的收藏 {favorites.length}</button>
+            <button type="button" aria-pressed={favoritesOnly} onClick={() => { setFavoritesOnly((value) => !value); setVisibleCount(8); }} className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors ${favoritesOnly ? "border-[#5B93C5] bg-[#e8f1f8] text-[#315F86]" : "border-[#d6c7b8] text-[#76685d] hover:bg-[#fffaf4]"}`}><Heart size={15} fill={favoritesOnly ? "currentColor" : "none"} />我的收藏 {favorites.length}</button>
             <label className="flex items-center gap-2 text-xs text-[#806c60]">價格
               <select aria-label="價格範圍" value={priceCeiling ?? "all"} onChange={(event) => { setPriceCeiling(event.target.value === "all" ? null : Number(event.target.value)); setVisibleCount(8); }} className="min-h-10 rounded-lg border border-[#d6c7b8] bg-white px-2 text-sm text-[#3b2b24]"><option value="all">不限</option><option value="300">$300 以下</option><option value="500">$500 以下</option><option value="1000">$1,000 以下</option><option value="1500">$1,500 以下</option></select>
             </label>
@@ -388,7 +388,7 @@ export function Storefront({ content }: { content: SiteContent }) {
           </div>
           <Link
             href="/community"
-            className="text-sm font-medium text-[#74675b] hover:text-[#935941]"
+            className="text-sm font-medium text-[#74675b] hover:text-[#5B93C5]"
           >
             逛逛毛孩日常
           </Link>
@@ -398,7 +398,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             <button
               key={post.id}
               onClick={() => openUgc(post.id)}
-              className="group flex min-h-40 overflow-hidden rounded-2xl border border-[#ead9c9] bg-white text-left transition-colors hover:border-[#935941]"
+              className="group flex min-h-40 overflow-hidden rounded-2xl border border-[#ead9c9] bg-white text-left transition-colors hover:border-[#5B93C5]"
             >
               <div className="relative w-[40%] shrink-0">
                 <Image
@@ -410,14 +410,14 @@ export function Storefront({ content }: { content: SiteContent }) {
                 />
               </div>
               <div className="p-5">
-                <span className="text-xs font-semibold text-[#935941]">
+                <span className="text-xs font-semibold text-[#5B93C5]">
                   照片開箱 · 示範內容
                 </span>
                 <h3 className="mb-3 mt-2 text-lg font-medium">{post.title}</h3>
                 <p className="text-xs text-[#7d7165]">
                   {post.breed} · {post.age} · {post.weight}
                 </p>
-                <p className="mt-4 text-sm font-medium text-[#935941]">查看日常與同款商品</p>
+                <p className="mt-4 text-sm font-medium text-[#5B93C5]">查看日常與同款商品</p>
               </div>
             </button>
           ))}

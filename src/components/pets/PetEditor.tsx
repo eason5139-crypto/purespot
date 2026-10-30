@@ -146,7 +146,7 @@ export function PetEditor() {
           <label className="flex items-center gap-3 text-sm text-[#302b26]">
             <input
               type="checkbox"
-              className="size-4 accent-[#935941]"
+              className="size-4 accent-[#5B93C5]"
               checked={draft.isNeutered}
               onChange={(e) =>
                 setDraft((d) => ({ ...d, isNeutered: e.target.checked }))
@@ -174,7 +174,7 @@ export function PetEditor() {
                   }
                   className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
                     draft.allergies.includes(a)
-                      ? "border-[#935941] bg-[#935941]/10 text-[#935941] font-semibold"
+                      ? "border-[#5B93C5] bg-[#5B93C5]/10 text-[#5B93C5] font-semibold"
                       : "border-[#d9cfc3] bg-white text-[#675e53] hover:bg-[#f3ede3]"
                   }`}
                 >

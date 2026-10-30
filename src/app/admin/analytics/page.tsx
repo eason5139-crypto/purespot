@@ -70,7 +70,7 @@ function BarRow({
 }
 
 // 配色輪換（大地色系）
-const PALETTE = ["#935941", "#5b7b63", "#c98e3b", "#8a7f75", "#a8654c", "#425847"];
+const PALETTE = ["#5B93C5", "#5b7b63", "#c98e3b", "#8a7f75", "#a8654c", "#315F86"];
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -125,7 +125,7 @@ export default function AdminAnalyticsPage() {
       {/* 頁首 */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <span className="eyebrow text-[#935941]">管理端</span>
+          <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">營業分析與財務動態</h1>
           <p className="mt-1 text-sm text-[#675e53]">
             真實數據驅動——品類貢獻、付款比例、回購週期與商品 ABC 結構全覽。
@@ -139,7 +139,7 @@ export default function AdminAnalyticsPage() {
                 onClick={() => setTimeRange(r)}
                 className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
                   timeRange === r
-                    ? "bg-[#935941] text-white font-semibold shadow-sm"
+                    ? "bg-[#5B93C5] text-white font-semibold shadow-sm"
                     : "text-[#675e53] hover:text-[#302b26]"
                 }`}
               >
@@ -181,7 +181,7 @@ export default function AdminAnalyticsPage() {
 
       {loading ? (
         <div className="py-20 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
           <p className="mt-4 text-sm text-[#8a7f75]">正在統計財務與商品結構數據...</p>
         </div>
       ) : activeTab === "overview" ? (
@@ -194,7 +194,7 @@ export default function AdminAnalyticsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="panel relative overflow-hidden p-6 bg-white border border-[#e8ded3] shadow-sm"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#935941]">
+                <div className="flex items-center justify-between text-xs font-semibold text-[#5B93C5]">
                   <span>累計總營業額</span>
                   <DollarSign size={16} />
                 </div>
@@ -216,9 +216,9 @@ export default function AdminAnalyticsPage() {
               >
                 <div className="flex items-center justify-between text-xs font-semibold text-[#675e53]">
                   <span>平均客單價 (AOV)</span>
-                  <TrendingUp size={16} className="text-[#935941]" />
+                  <TrendingUp size={16} className="text-[#5B93C5]" />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#935941]">
+                <p className="mt-2 text-3xl font-bold font-mono text-[#5B93C5]">
                   {money(m.averageOrderValueNt)}
                 </p>
                 <p className="mt-2 text-xs text-[#8a7f75]">
@@ -230,13 +230,13 @@ export default function AdminAnalyticsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="panel p-6 bg-white border border-[#68856b]/30 shadow-sm"
+                className="panel p-6 bg-white border border-[#78a6c9]/30 shadow-sm"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#425847]">
+                <div className="flex items-center justify-between text-xs font-semibold text-[#315F86]">
                   <span>定期配 (Autoship) 佔比</span>
                   <Repeat2 size={16} />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#425847]">
+                <p className="mt-2 text-3xl font-bold font-mono text-[#315F86]">
                   {m.autoshipRatio}%
                 </p>
                 <p className="mt-2 text-xs text-[#8a7f75]">定期訂閱制營收佔比</p>
@@ -279,7 +279,7 @@ export default function AdminAnalyticsPage() {
           {data?.repeatDetail && data.repeatDetail.totalBuyers > 0 && (
             <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <Users size={16} className="text-[#935941]" />
+                <Users size={16} className="text-[#5B93C5]" />
                 <h3 className="text-base font-semibold text-[#302b26]">回購率詳細指標</h3>
                 <span className="text-xs text-[#8a7f75]">— 依真實訂單統計</span>
               </div>
@@ -293,7 +293,7 @@ export default function AdminAnalyticsPage() {
                   {
                     label: "回購會員數",
                     value: `${data.repeatDetail.repeatBuyers.toLocaleString()} 人`,
-                    color: "#935941",
+                    color: "#5B93C5",
                   },
                   {
                     label: "平均回購次數",
@@ -331,7 +331,7 @@ export default function AdminAnalyticsPage() {
             {/* 品類銷售貢獻 */}
             <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <BarChart2 size={16} className="text-[#935941]" />
+                <BarChart2 size={16} className="text-[#5B93C5]" />
                 <h3 className="text-base font-semibold text-[#302b26]">品類銷售貢獻</h3>
               </div>
               {data?.categoryBreakdown && data.categoryBreakdown.length > 0 ? (
@@ -384,7 +384,7 @@ export default function AdminAnalyticsPage() {
           {data?.petTypeBreakdown && data.petTypeBreakdown.length > 0 && (
             <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
               <div className="flex items-center gap-2 mb-4">
-                <PawPrint size={16} className="text-[#935941]" />
+                <PawPrint size={16} className="text-[#5B93C5]" />
                 <h3 className="text-base font-semibold text-[#302b26]">寵物類型銷售分佈</h3>
                 <span className="text-xs text-[#8a7f75]">— 依訂單品項歸屬統計</span>
               </div>

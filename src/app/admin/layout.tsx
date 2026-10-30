@@ -4,7 +4,7 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { getAdminSession } from "@/server/adminAuth";
 
 export const metadata: Metadata = {
-  title: { default: "PURESPOT 後台管理", template: "%s｜PURESPOT Admin" },
+  title: { default: "公司後台", template: "%s｜PURESPOT 公司後台" },
   robots: { index: false, follow: false },
 };
 

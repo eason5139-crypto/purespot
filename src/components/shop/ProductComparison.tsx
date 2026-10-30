@@ -30,7 +30,7 @@ export function ProductComparison({ products }: { products: Product[] }) {
       <Scale size={20} className="shrink-0 text-[#a35f44]" />
       <span className="min-w-0 flex-1 text-sm font-medium text-[#43372e]">已選 {selected.length} / 3 款商品</span>
       <button type="button" onClick={clear} className="min-h-10 px-2 text-xs text-[#846f5e] hover:text-[#9b563b]">清空</button>
-      <button type="button" onClick={() => setOpen(true)} className="min-h-10 bg-[#935941] px-4 text-sm font-semibold text-white hover:bg-[#794632]">並排比較</button>
+      <button type="button" onClick={() => setOpen(true)} className="min-h-10 bg-[#5B93C5] px-4 text-sm font-semibold text-white hover:bg-[#376F9F]">並排比較</button>
     </div>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="!max-w-5xl !border-[#d8c9b8] !bg-[#f8f4ed] !text-[#302b26]">

@@ -63,7 +63,7 @@ export function AuthModal() {
               }}
               className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
                 mode === m
-                  ? "bg-[#935941] text-white shadow-sm"
+                  ? "bg-[#5B93C5] text-white shadow-sm"
                   : "text-[#675e53] hover:text-[#302b26]"
               }`}
             >
@@ -179,7 +179,7 @@ export function AuthModal() {
                     還沒有帳戶？
                     <button
                       type="button"
-                      className="ml-1 text-[#935941] font-semibold hover:underline"
+                      className="ml-1 text-[#5B93C5] font-semibold hover:underline"
                       onClick={() => {
                         setMode("register");
                         setError("");
@@ -193,7 +193,7 @@ export function AuthModal() {
                     已有帳戶？
                     <button
                       type="button"
-                      className="ml-1 text-[#935941] font-semibold hover:underline"
+                      className="ml-1 text-[#5B93C5] font-semibold hover:underline"
                       onClick={() => {
                         setMode("login");
                         setError("");
