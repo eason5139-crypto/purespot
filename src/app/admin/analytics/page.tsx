@@ -77,10 +77,12 @@ export default function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "90D">("30D");
   const [activeTab, setActiveTab] = useState<"overview" | "abc">("overview");
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      setFetchError("");
       const res = await fetch("/api/admin/analytics");
       if (res.ok) {
         const json = await res.json();
@@ -99,9 +101,9 @@ export default function AdminAnalyticsPage() {
             avgDaysBetweenOrders: 0,
           },
         });
-      }
+      } else throw new Error("分析資料暫時無法載入");
     } catch {
-      // 容錯
+      setFetchError("分析資料暫時無法載入，請重新整理");
     } finally {
       setLoading(false);
     }
@@ -128,7 +130,7 @@ export default function AdminAnalyticsPage() {
           <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">營業分析與財務動態</h1>
           <p className="mt-1 text-sm text-[#675e53]">
-            真實數據驅動——品類貢獻、付款比例、回購週期與商品 ABC 結構全覽。
+            營收只統計已收款訂單；體驗訂單另列，不混入財務數據。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -158,6 +160,12 @@ export default function AdminAnalyticsPage() {
           </Button>
         </div>
       </div>
+      {fetchError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{fetchError}</p>}
+
+      {m && <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">體驗訂單數</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{m.experienceOrdersCount}</p></div>
+        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">體驗訂單總額 · 非營收</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{money(m.experienceOrderValueNt)}</p></div>
+      </div>}
 
       {/* 頁籤切換 */}
       <div className="flex gap-1 mb-6 bg-[#f8f5ef] rounded-xl p-1 w-fit border border-[#e8ded3]">

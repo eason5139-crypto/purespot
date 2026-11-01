@@ -38,6 +38,8 @@ interface Order {
   items: OrderItem[];
   customerName?: string;
   customerEmail?: string;
+  isExperience?: boolean;
+  paymentMethod?: string | null;
 }
 
 const STATUS_CONFIG: Record<
@@ -79,20 +81,21 @@ const STATUS_CONFIG: Record<
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
+    setFetchError("");
     try {
       const res = await fetch("/api/admin/orders");
-      if (res.ok) {
-        const data = (await res.json()) as { orders?: Order[] };
-        setOrders(data.orders || []);
-      }
+      if (!res.ok) throw new Error("訂單暫時無法載入，請重新整理");
+      const data = (await res.json()) as { orders?: Order[] };
+      setOrders(data.orders || []);
     } catch {
-      // 保持空陣列
+      setFetchError("訂單暫時無法載入，請重新整理");
     } finally {
       setLoading(false);
     }
@@ -178,7 +181,7 @@ export default function AdminOrdersPage() {
           <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">訂單管理</h1>
           <p className="mt-1 text-sm text-[#675e53]">
-            查看、篩選並更新所有消費者訂單的配送狀態，取消訂單時自動返還庫存。
+            查看、篩選並更新訂單狀態。體驗訂單不扣款、不扣庫存，也不計入營收。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -203,6 +206,7 @@ export default function AdminOrdersPage() {
           </Button>
         </div>
       </div>
+      {fetchError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{fetchError}</p>}
 
       {/* 篩選列 */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -275,6 +279,7 @@ export default function AdminOrdersPage() {
                         <p className="font-medium text-[#302b26]">
                           {order.customerName ?? "訪客"}
                         </p>
+                        {order.isExperience && <span className="mt-1 inline-block rounded bg-[#eaf3fa] px-2 py-0.5 text-[10px] font-semibold text-[#315F86]">體驗訂單</span>}
                         <p className="text-xs text-[#8a7f75]">
                           {order.customerEmail ?? "-"}
                         </p>
@@ -287,7 +292,7 @@ export default function AdminOrdersPage() {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}
                         >
                           <StatusIcon size={11} />
-                          {cfg.label}
+                          {order.isExperience && order.status === "PENDING_PAYMENT" ? "待確認" : cfg.label}
                         </span>
                       </td>
                       <td className="p-4 text-right font-mono font-semibold text-[#5B93C5]">
@@ -308,6 +313,7 @@ export default function AdminOrdersPage() {
                         >
                           <div className="p-5 space-y-4">
                             <div>
+                              <p className="mb-3 text-xs text-[#675e53]">付款方式：{order.paymentMethod === "credit" ? "信用卡" : order.paymentMethod === "linepay" ? "LINE Pay" : order.paymentMethod === "transfer" ? "ATM" : order.paymentMethod === "cvs" ? "超商" : "未指定"}</p>
                               <p className="text-xs font-semibold text-[#8a7f75] mb-2">
                                 訂購品項
                               </p>
@@ -338,7 +344,7 @@ export default function AdminOrdersPage() {
                                     "COMPLETED",
                                     "CANCELLED",
                                   ] as OrderStatus[]
-                                ).map((s) => (
+                                ).filter((s) => !(order.isExperience && s === "PAID")).map((s) => (
                                   <Button
                                     key={s}
                                     size="sm"

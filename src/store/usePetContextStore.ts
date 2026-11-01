@@ -12,6 +12,8 @@ interface PetContextState {
   updatePet: (id: string, patch: Partial<Omit<ActivePet, "id">>) => void;
   addPet: (pet: ActivePet) => void;
   removePet: (id: string) => void;
+  mergeCloudPets: (pets: ActivePet[]) => void;
+  resetPets: () => void;
 }
 const persistedSchema = z.object({
   allPets: z.array(petSchema).min(1).max(20),
@@ -51,6 +53,23 @@ export const usePetContextStore = create<PetContextState>()(
             activePetId: s.activePetId === id ? allPets[0]!.id : s.activePetId,
           };
         }),
+      mergeCloudPets: (cloudPets) => set((state) => {
+        const merged = [...state.allPets];
+        for (const cloud of cloudPets) {
+          const index = merged.findIndex((local) =>
+            local.cloudId === cloud.cloudId || local.id === cloud.id ||
+            (local.name === cloud.name && local.type === cloud.type && local.breed === cloud.breed),
+          );
+          if (index >= 0) {
+            const previous = merged[index]!;
+            merged[index] = { ...cloud, id: previous.id, avatarUrl: previous.avatarUrl ?? cloud.avatarUrl };
+          } else if (merged.length < 20) {
+            merged.push(cloud);
+          }
+        }
+        return { allPets: merged };
+      }),
+      resetPets: () => set({ allPets: initialPets, activePetId: initialPets[0]!.id }),
     }),
     {
       name: "purespot-pet-context",

@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { savePetToCloud } from "@/lib/petCloudSync";
 import { petSchema, petLabels, type ActivePet } from "@/lib/types";
 
 const allergens = ["雞肉", "牛肉", "魚類", "大豆", "乳製品", "小麥"];
@@ -23,6 +25,9 @@ export function PetEditor() {
   const close = useUiStore((s) => s.setPetEditorOpen);
   const update = usePetContextStore((s) => s.updatePet);
   const add = usePetContextStore((s) => s.addPet);
+  const pets = usePetContextStore((s) => s.allPets);
+  const setActivePet = usePetContextStore((s) => s.setActivePet);
+  const user = useAuthStore((s) => s.user);
 
   function save(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +39,7 @@ export function PetEditor() {
     try {
       if (isNew) add(parsed.data);
       else update(pet.id, parsed.data);
+      if (user) void savePetToCloud(parsed.data).catch(() => toast.error("毛孩資料已保存在此裝置，雲端同步稍後再試"));
       toast.success("毛孩資料已儲存，選物與配糧同步更新");
       close(false);
     } catch (err) {
@@ -51,6 +57,20 @@ export function PetEditor() {
           每一個細節，都讓我們更懂牠的需要。
         </DialogDescription>
         <form onSubmit={save} className="mt-6 space-y-5">
+          <label className="field-label">
+            選擇已儲存的毛孩
+            <select className="input" value={isNew ? "new" : pet.id} onChange={(event) => {
+              const selected = pets.find((item) => item.id === event.target.value);
+              if (!selected) return;
+              setActivePet(selected.id);
+              setDraft(selected);
+              setIsNew(false);
+              setError("");
+            }}>
+              {isNew && <option value="new">新增毛孩</option>}
+              {pets.map((item) => <option key={item.id} value={item.id}>{item.name} · {petLabels[item.type]}</option>)}
+            </select>
+          </label>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(["CAT", "DOG", "HAMSTER", "RABBIT"] as const).map((type) => (
               <Button

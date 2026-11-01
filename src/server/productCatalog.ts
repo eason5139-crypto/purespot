@@ -6,7 +6,7 @@ import type { Product } from "@/lib/types";
 
 const productInclude = {
   category: true,
-  variants: true,
+  variants: { orderBy: { sku: "asc" as const } },
   batches: { orderBy: { testedAt: "asc" as const } },
 } satisfies Prisma.ProductInclude;
 

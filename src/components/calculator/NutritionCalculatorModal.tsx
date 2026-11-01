@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import {
@@ -23,6 +23,9 @@ import { Slider } from "@/components/ui/slider";
 import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
+import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
+import { useAuthStore } from "@/store/useAuthStore";
+import { savePetToCloud } from "@/lib/petCloudSync";
 import {
   calculatePetNutrition,
   DELIVERY_INTERVALS,
@@ -40,10 +43,17 @@ export function NutritionCalculatorModal() {
   const openCart = useUiStore((s) => s.setCartOpen);
   const updatePet = usePetContextStore((s) => s.updatePet);
   const add = useCartStore((s) => s.addItem);
+  const user = useAuthStore((s) => s.user);
+  const [draftPet, setDraftPet] = useState(pet);
   const product = getProduct(productId ?? "");
   const [manualInterval, setManualInterval] = useState<IntervalDays | null>(
     null,
   );
+
+  useEffect(() => {
+    setDraftPet(pet);
+    setManualInterval(null);
+  }, [pet]);
 
   const calculation = useMemo(() => {
     if (!product) return { result: null, error: "找不到商品" };
@@ -51,12 +61,12 @@ export function NutritionCalculatorModal() {
       return {
         result: calculatePetNutrition(
           {
-            petType: pet.type,
-            weightKg: pet.weightKg,
-            ageMonths: pet.ageMonths,
-            isNeutered: pet.isNeutered,
-            activityLevel: pet.activityLevel,
-            isWeightLossGoal: pet.goal === "WEIGHT_LOSS",
+            petType: draftPet.type,
+            weightKg: draftPet.weightKg,
+            ageMonths: draftPet.ageMonths,
+            isNeutered: draftPet.isNeutered,
+            activityLevel: draftPet.activityLevel,
+            isWeightLossGoal: draftPet.goal === "WEIGHT_LOSS",
             foodKcalPer100g: product.kcalPer100g,
           },
           product.bagGrams,
@@ -70,7 +80,7 @@ export function NutritionCalculatorModal() {
         error: e instanceof Error ? e.message : "無法計算",
       };
     }
-  }, [pet, product]);
+  }, [draftPet, product]);
 
   if (!product) return null;
   const { result, error } = calculation;
@@ -123,6 +133,8 @@ export function NutritionCalculatorModal() {
           </div>
         </div>
 
+        <SavedPetPicker className="mb-5" />
+
         <div className="mb-6 flex items-center gap-4 rounded-2xl border border-[#e8ded3] bg-white p-3 shadow-sm">
           <div className="relative size-16 overflow-hidden rounded-xl bg-[#ebe5da] shrink-0">
             <Image
@@ -155,7 +167,7 @@ export function NutritionCalculatorModal() {
                 目前體重
               </label>
               <span className="font-mono text-3xl font-bold text-[#5B93C5]">
-                {decimal(pet.weightKg)}
+                {decimal(draftPet.weightKg)}
                 <span className="ml-1 text-sm font-normal text-[#8a7f75]">公斤</span>
               </span>
             </div>
@@ -164,13 +176,13 @@ export function NutritionCalculatorModal() {
               aria-label="毛孩體重"
               className="my-4"
               min={0.5}
-              max={pet.type === "CAT" ? Math.max(15, pet.weightKg) : 90}
+              max={draftPet.type === "CAT" ? Math.max(15, draftPet.weightKg) : 90}
               step={0.1}
-              value={[pet.weightKg]}
+              value={[draftPet.weightKg]}
               onValueChange={(values) => {
                 const weightKg = values[0];
                 if (weightKg !== undefined) {
-                  updatePet(pet.id, { weightKg });
+                  setDraftPet((current) => ({ ...current, weightKg }));
                   setManualInterval(null);
                 }
               }}
@@ -178,7 +190,7 @@ export function NutritionCalculatorModal() {
             <div className="flex justify-between text-xs text-[#8a7f75]">
               <span>0.5 公斤</span>
               <span>
-                {pet.type === "CAT" ? Math.max(15, pet.weightKg) : 90} 公斤
+                {draftPet.type === "CAT" ? Math.max(15, draftPet.weightKg) : 90} 公斤
               </span>
             </div>
 
@@ -186,11 +198,9 @@ export function NutritionCalculatorModal() {
               目前狀態
               <select
                 className="input"
-                value={pet.activityLevel}
+                value={draftPet.activityLevel}
                 onChange={(e) => {
-                  updatePet(pet.id, {
-                    activityLevel: e.target.value as typeof pet.activityLevel,
-                  });
+                  setDraftPet((current) => ({ ...current, activityLevel: e.target.value as typeof current.activityLevel }));
                   setManualInterval(null);
                 }}
               >
@@ -205,13 +215,26 @@ export function NutritionCalculatorModal() {
               <input
                 type="checkbox"
                 className="size-4 accent-[#5B93C5]"
-                checked={pet.isNeutered}
+                checked={draftPet.isNeutered}
                 onChange={(e) =>
-                  updatePet(pet.id, { isNeutered: e.target.checked })
+                  setDraftPet((current) => ({ ...current, isNeutered: e.target.checked }))
                 }
               />
               已結紮
             </label>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button type="button" size="sm" variant="secondary" onClick={() => {
+                updatePet(pet.id, {
+                  weightKg: draftPet.weightKg,
+                  activityLevel: draftPet.activityLevel,
+                  isNeutered: draftPet.isNeutered,
+                });
+                if (user) void savePetToCloud({ ...pet, weightKg: draftPet.weightKg, activityLevel: draftPet.activityLevel, isNeutered: draftPet.isNeutered }).catch(() => toast.error("資料已保存在此裝置，雲端同步稍後再試"));
+                toast.success(`${pet.name}的資料已儲存`);
+              }}>儲存到毛孩檔案</Button>
+              <span className="text-xs text-[#8a7f75]">調整數值只影響本次試算</span>
+            </div>
 
             <div className="mt-5 rounded-xl border border-[#e8ded3] bg-[#f7f2ea] p-3 text-xs leading-6 text-[#675e53]">
               <Info size={14} className="mb-1 text-[#5B93C5]" />

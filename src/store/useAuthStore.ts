@@ -1,5 +1,7 @@
 "use client";
 import { create } from "zustand";
+import { usePetContextStore } from "./usePetContextStore";
+import { useCartStore } from "./useCartStore";
 
 export interface AuthUser {
   id: string;
@@ -74,6 +76,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await fetch("/api/auth", { method: "DELETE" });
+    usePetContextStore.getState().resetPets();
+    useCartStore.getState().clear();
     set({ user: null });
   },
 }));

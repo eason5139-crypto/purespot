@@ -27,6 +27,7 @@ import { petLabels, supportsFoodCalculator, type PetType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "./ProductCard";
 import { ProductComparison } from "./ProductComparison";
+import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
 import type { SiteContent } from "@/lib/siteContent";
 export function Storefront({ content }: { content: SiteContent }) {
   const products = useCatalogStore((s) => s.products);
@@ -149,6 +150,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         </section>
         {supportsFoodCalculator(pet.type) ? <section className="relative flex flex-col justify-between border border-[#d9cbbd] bg-[#f1ebe2] p-6">
           <div>
+            <SavedPetPicker className="mb-6" />
             <div className="flex items-center justify-between">
               <span className="editorial-kicker">今日營養提案</span>
               <Calculator size={19} className="text-[#9c6048]" />
@@ -206,6 +208,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             </div>
           )}
         </section> : <section className="relative flex flex-col justify-between border border-[#bcd5e9] bg-[#eaf3fa] p-7">
+          <SavedPetPicker className="mb-6" />
           <div><p className="text-xs font-semibold tracking-[.18em] text-[#59715c]">A LITTLE LIFE, FULL OF JOY</p><h2 className="editorial-title mt-5 text-3xl leading-tight text-[#334737]">{pet.name}的日常，<br />從喜歡的事開始。</h2><p className="mt-5 text-sm leading-7 text-[#5c705e]">食物、玩具與舒適的小空間，為{petLabels[pet.type]}慢慢挑。食量資訊請以實品標示及專業建議為準。</p></div>
           <button type="button" className="editorial-action mt-8 min-h-11 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F]" onClick={() => { setSpecies(pet.type); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }}>看{pet.name}的選物 <ArrowUpRight size={15} className="ml-1 inline" /></button>
         </section>}

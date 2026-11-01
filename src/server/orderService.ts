@@ -31,6 +31,7 @@ export const orderInputSchema = z
 export async function createOrderDraft(
   userId: string,
   input: z.infer<typeof orderInputSchema>,
+  options?: { paymentReference?: string },
 ) {
   const requestHash = createHash("sha256")
     .update(
@@ -120,6 +121,7 @@ export async function createOrderDraft(
           shippingNt,
           totalNt: subtotalNt + shippingNt,
           shippingAddress: input.shippingAddress,
+          paymentReference: options?.paymentReference,
           expiresAt: new Date(Date.now() + 30 * 60_000),
           items: { create: lines },
         },

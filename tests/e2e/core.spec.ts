@@ -52,49 +52,36 @@ test("首頁、毛孩切換與重新整理後的資料保留", async ({ page }) 
   await expect(page.locator("body")).not.toContainText("戰情室");
   expect(errors).toEqual([]);
 });
-test("配糧即時換算、循環加車、示範結帳與計畫順延", async ({ page }) => {
+test("份量可直接選已儲存毛孩，試算不會覆寫檔案", async ({ page }) => {
   await page.goto("/shop");
+  const picker = page.getByRole("combobox", { name: "選擇已儲存的毛孩" }).first();
+  await picker.selectOption("pet-mango");
+  await expect(page.getByRole("heading", { name: "芒果的剛剛好份量" })).toBeVisible();
+  await picker.selectOption("pet-mochi");
   await page.getByRole("button", { name: "調整我的配糧計畫" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
+  await dialog.getByRole("combobox", { name: "選擇已儲存的毛孩" }).selectOption("pet-mango");
+  await expect(dialog.getByRole("heading", { name: "芒果的專屬配糧計畫" })).toBeVisible();
+  await dialog.getByRole("combobox", { name: "選擇已儲存的毛孩" }).selectOption("pet-mochi");
   const original = await page.getByTestId("daily-grams").textContent();
   const slider = dialog.getByRole("slider");
   await slider.focus();
   for (let i = 0; i < 10; i++) await page.keyboard.press("ArrowRight");
   await expect(page.getByTestId("daily-grams")).not.toHaveText(original!);
-  await dialog
-    .getByRole("button", { name: /依此週期設定自動循環補貨/ })
-    .click();
-  await expect(page.getByRole("heading", { name: /購物袋/ })).toBeVisible();
-  await page.getByRole("checkbox").check();
-  await page
-    .getByRole("button", { name: "或以本機示範訂單快速結算 (免填地址)" })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "示範訂單已建立" }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "查看我的循環補貨" }).click();
-  await expect(
-    page.getByRole("heading", { name: "我的循環補貨", exact: true }),
-  ).toBeVisible();
-  const before = await page.evaluate(
-    () =>
-      JSON.parse(localStorage.getItem("purespot-demo-autoship")!).state.plans[0]
-        .nextDeliveryDate as string,
-  );
-  await page.getByRole("button", { name: "順延 7 天" }).click();
-  const after = await page.evaluate(
-    () =>
-      JSON.parse(localStorage.getItem("purespot-demo-autoship")!).state.plans[0]
-        .nextDeliveryDate as string,
-  );
-  expect(new Date(after).getTime() - new Date(before).getTime()).toBe(
-    7 * 86400000,
-  );
-  await page.getByRole("button", { name: "暫停計畫" }).click();
-  await expect(page.getByRole("button", { name: "順延 7 天" })).toBeDisabled();
   await page.reload();
-  await expect(page.getByRole("button", { name: "恢復計畫" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "麻糬的剛剛好份量" })).toBeVisible();
+  await expect(page.getByText("4.5 公斤 · 成齡 · 已結紮")).toBeVisible();
+  await page.getByRole("button", { name: "調整我的配糧計畫" }).click();
+  const reopened = page.getByRole("dialog");
+  await reopened.getByRole("button", { name: /依此週期設定自動循環補貨/ }).click();
+  await expect(page.getByRole("heading", { name: /購物袋/ })).toBeVisible();
+});
+
+test("健康頁可直接切換已儲存毛孩", async ({ page }) => {
+  await page.goto("/health");
+  await page.getByRole("combobox", { name: "選擇已儲存的毛孩" }).selectOption("pet-mango");
+  await expect(page.getByRole("heading", { name: "芒果的健康儀表板" })).toBeVisible();
 });
 test("社群收藏、日記與留言在重新整理後保留", async ({ page }) => {
   await page.goto("/community");
@@ -113,21 +100,24 @@ test("社群收藏、日記與留言在重新整理後保留", async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
-test("結帳付款方式只完成模擬，不建立正式訂單", async ({ page }) => {
+test("結帳付款方式有互動呈現，登入前不建立訂單", async ({ page }) => {
   await page.goto("/shop");
   await page.getByRole("button", { name: "將鮭魚低敏成貓糧加入購物車" }).click();
   await page.goto("/checkout");
-  await expect(page.getByRole("heading", { name: "結帳體驗" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "結帳", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "前往填寫收件資訊" }).click();
-  await page.getByRole("button", { name: "填入示範資料" }).click();
+  await page.getByRole("button", { name: "填入測試資料" }).click();
   await page.getByRole("button", { name: "確認收件資訊，選擇付款方式" }).click();
-  await page.getByRole("button", { name: /ATM 轉帳模擬/ }).click();
-  await expect(page.getByText("以上不是公司收款帳戶，請勿匯款。")).toBeVisible();
+  await page.getByRole("button", { name: /LINE Pay/ }).first().click();
+  await expect(page.getByText("LINE Pay 確認")).toBeVisible();
+  await page.getByRole("button", { name: /信用卡/ }).first().click();
+  await expect(page.getByText("信用卡確認")).toBeVisible();
+  await page.getByRole("button", { name: /ATM 轉帳/ }).click();
+  await expect(page.getByText("此帳號不能匯款，請勿使用真實銀行 App 操作。")).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.getByRole("button", { name: "完成付款流程模擬" }).click();
-  await expect(page.getByRole("heading", { name: "付款流程模擬完成" })).toBeVisible();
-  await expect(page.getByText("這是示範結果。沒有扣款、轉帳、建立正式訂單或安排出貨。")).toBeVisible();
+  await page.getByRole("button", { name: "登入後建立訂單" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
 });
 test("TradingView 指標切換與離開重掛載無錯誤", async ({ page }) => {
   const errors: string[] = [];

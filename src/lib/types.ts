@@ -11,6 +11,7 @@ export const petSchema = z.object({
   allergies: z.array(z.string().max(30)).max(20),
   goal: z.enum(["MAINTAIN", "WEIGHT_LOSS"]),
   avatarUrl: z.string().max(500).optional(),
+  cloudId: z.uuid().optional(),
 });
 export type ActivePet = z.infer<typeof petSchema>;
 export type PetType = ActivePet["type"];

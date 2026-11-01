@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const userId = await requireUser();
     const input = await readBody(
       request,
-      petSchema.omit({ id: true, avatarUrl: true }),
+      petSchema.omit({ id: true, avatarUrl: true, cloudId: true }),
     );
     const birthday = new Date();
     birthday.setUTCMonth(birthday.getUTCMonth() - input.ageMonths);
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   }
 }
 const updateSchema = petSchema
-  .omit({ avatarUrl: true })
+  .omit({ avatarUrl: true, cloudId: true })
   .extend({ updatedAt: z.iso.datetime() });
 export async function PATCH(request: Request) {
   try {

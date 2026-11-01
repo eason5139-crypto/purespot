@@ -11,6 +11,7 @@ import type {
 } from "@/lib/adminTypes";
 import { requireAdminSession } from "@/server/adminAuth";
 import { apiError } from "@/server/http";
+import { isExperienceOrder } from "@/server/experienceOrder";
 
 export const runtime = "nodejs";
 
@@ -21,6 +22,10 @@ const PET_LABELS: Record<string, string> = {
   RABBIT: "兔兔",
 };
 
+const taipeiDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+});
+
 export async function GET() {
   try {
     await requireAdminSession();
@@ -29,9 +34,10 @@ export async function GET() {
   }
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const [year, month, day] = taipeiDate.format(now).split("-").map(Number);
+  const startOfToday = new Date(Date.UTC(year!, month! - 1, day!) - 8 * 3_600_000);
   const startOfWeek = new Date(startOfToday.getTime() - 7 * 86_400_000);
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfMonth = new Date(Date.UTC(year!, month! - 1, 1) - 8 * 3_600_000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
@@ -43,6 +49,7 @@ export async function GET() {
         totalNt: true,
         createdAt: true,
         status: true,
+        paymentReference: true,
         userId: true,
         items: {
           select: {
@@ -75,9 +82,10 @@ export async function GET() {
       const emptyHistory: SalesHistoryPoint[] = [];
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 86_400_000);
-        emptyHistory.push({ date: d.toISOString().slice(0, 10), revenueNt: 0, ordersCount: 0 });
+        emptyHistory.push({ date: taipeiDate.format(d), revenueNt: 0, ordersCount: 0 });
       }
       const emptyMetrics: RevenueMetric = {
+        experienceOrdersCount: 0, experienceOrderValueNt: 0, pendingOrdersCount: 0,
         todayRevenueNt: 0, weekRevenueNt: 0, monthRevenueNt: 0, totalRevenueNt: 0,
         todayOrdersCount: 0, weekOrdersCount: 0, monthOrdersCount: 0, totalOrdersCount: 0,
         averageOrderValueNt: 0, repeatPurchaseRate: 0, autoshipRatio: 0,
@@ -104,7 +112,7 @@ export async function GET() {
     const dateMap = new Map<string, { revenue: number; count: number }>();
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now.getTime() - i * 86_400_000);
-      dateMap.set(d.toISOString().slice(0, 10), { revenue: 0, count: 0 });
+      dateMap.set(taipeiDate.format(d), { revenue: 0, count: 0 });
     }
 
     // 付款方式（Order 沒有 paymentMethod 欄位，用 paymentReference 前綴推算）
@@ -122,9 +130,15 @@ export async function GET() {
     // 回購率計算
     const userOrderMap = new Map<string, { dates: Date[]; totalAmount: number }>();
 
-    for (const o of allOrders) {
+    const experienceOrders = allOrders.filter((order) => isExperienceOrder(order.paymentReference));
+    const experienceOrdersCount = experienceOrders.length;
+    const experienceOrderValueNt = experienceOrders.reduce((sum, order) => sum + order.totalNt, 0);
+    const pendingOrdersCount = allOrders.filter((order) => !isExperienceOrder(order.paymentReference) && order.status === "PENDING_PAYMENT").length;
+    const paidOrders = allOrders.filter((order) => !isExperienceOrder(order.paymentReference) && ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status));
+
+    for (const o of paidOrders) {
       const oTime = new Date(o.createdAt).getTime();
-      const dateKey = new Date(o.createdAt).toISOString().slice(0, 10);
+      const dateKey = taipeiDate.format(new Date(o.createdAt));
       const oDate = new Date(o.createdAt);
       totalRev += o.totalNt;
 
@@ -265,6 +279,9 @@ export async function GET() {
     }));
 
     const metrics: RevenueMetric = {
+      experienceOrdersCount,
+      experienceOrderValueNt,
+      pendingOrdersCount,
       todayRevenueNt: todayRev,
       weekRevenueNt: weekRev,
       monthRevenueNt: monthRev,
@@ -272,8 +289,8 @@ export async function GET() {
       todayOrdersCount: todayCount,
       weekOrdersCount: weekCount,
       monthOrdersCount: monthCount,
-      totalOrdersCount: allOrders.length,
-      averageOrderValueNt: allOrders.length > 0 ? Math.round(totalRev / allOrders.length) : 0,
+      totalOrdersCount: paidOrders.length,
+      averageOrderValueNt: paidOrders.length > 0 ? Math.round(totalRev / paidOrders.length) : 0,
       repeatPurchaseRate: repeatDetail.rate,
       autoshipRatio: totalRev > 0 ? Math.round((autoshipRev / totalRev) * 1000) / 10 : 0,
     };

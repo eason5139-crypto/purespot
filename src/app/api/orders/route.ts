@@ -4,6 +4,7 @@ import { requireUser } from "@/server/auth";
 import { apiError, readBody, verifyOrigin } from "@/server/http";
 import { createOrderDraft, orderInputSchema } from "@/server/orderService";
 import { rateLimit } from "@/server/rateLimit";
+import { isExperienceOrder } from "@/server/experienceOrder";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,9 @@ export async function POST(request: Request) {
     const userId = await requireUser();
     await rateLimit(`order:${userId}`, 30, 60);
     const input = await readBody(request, orderInputSchema);
-    const order = await createOrderDraft(userId, input);
+    const order = await createOrderDraft(userId, input, {
+      paymentReference: `EXPERIENCE:legacy:${input.idempotencyKey}`,
+    });
     return NextResponse.json(
       {
         order,
@@ -34,7 +37,14 @@ export async function GET() {
       include: { items: true },
     });
     return NextResponse.json(
-      { orders },
+      { orders: orders.map((order) => ({
+        id: order.id,
+        status: order.status,
+        totalNt: order.totalNt,
+        createdAt: order.createdAt,
+        isExperience: isExperienceOrder(order.paymentReference),
+        items: order.items,
+      })) },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (e) {

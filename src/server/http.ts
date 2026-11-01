@@ -85,6 +85,7 @@ export function apiError(error: unknown) {
       { error: "資料已存在或正在處理，請重新整理確認" },
       { status: 409 },
     );
+  if (process.env.NODE_ENV !== "production") console.error("API request failed", error);
   return NextResponse.json(
     { error: "服務暫時無法使用，請稍後再試" },
     { status: 503 },

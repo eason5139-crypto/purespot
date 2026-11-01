@@ -26,6 +26,7 @@ interface CloudOrder {
   status: string;
   totalNt: number;
   createdAt: string;
+  isExperience?: boolean;
   items: {
     id: string;
     productName: string;
@@ -51,6 +52,7 @@ export default function AccountPage() {
 
   const [cloudOrders, setCloudOrders] = useState<CloudOrder[]>([]);
   const [fetchingCloud, setFetchingCloud] = useState(false);
+  const [cloudError, setCloudError] = useState("");
 
   useEffect(() => {
     void fetchUser();
@@ -65,6 +67,7 @@ export default function AccountPage() {
 
     async function loadCloudOrders() {
       setFetchingCloud(true);
+      setCloudError("");
       try {
         const res = await fetch("/api/orders", { cache: "no-store" });
         if (res.ok) {
@@ -72,9 +75,9 @@ export default function AccountPage() {
           if (Array.isArray(data.orders)) {
             setCloudOrders(data.orders);
           }
-        }
+        } else throw new Error("訂單無法載入");
       } catch {
-        // 優雅降級使用本機展示資料
+        setCloudError("訂單暫時無法同步，請稍後重新整理。");
       } finally {
         setFetchingCloud(false);
       }
@@ -144,15 +147,15 @@ export default function AccountPage() {
         >
           <Package size={24} className="text-[#5B93C5]" />
           <p className="mt-4 text-sm text-[#8a7f75]">
-            {cloudOrders.length > 0 ? "雲端同步訂單" : "本裝置示範訂單"}
+            {cloudOrders.length > 0 ? "會員訂單" : "本裝置舊紀錄"}
           </p>
           <p className="mt-1 font-mono text-4xl text-[#302b26] font-semibold">
             {fetchingCloud ? "…" : totalOrdersCount}
           </p>
           <p className="mt-3 text-xs text-[#8a7f75]">
             {cloudOrders.length > 0
-              ? "已自後端資料庫同步最新紀錄"
-              : "正式訂單需連線 PostgreSQL 儲存"}
+              ? "已與公司後台同步"
+              : "在結帳頁建立訂單後會顯示於此"}
           </p>
         </motion.section>
 
@@ -258,11 +261,13 @@ export default function AccountPage() {
         </div>
       </section>
 
+      {cloudError && <p role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{cloudError}</p>}
+
       {/* 雲端 / 示範訂單列表 */}
       <section className="mt-10">
         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[#302b26]">
           <Clock3 size={20} className="text-[#5B93C5]" />
-          {cloudOrders.length > 0 ? "最近的雲端訂單" : "最近的示範訂單"}
+          {cloudOrders.length > 0 ? "最近訂單" : "本裝置舊紀錄"}
         </h2>
 
         {cloudOrders.length > 0 ? (
@@ -279,7 +284,7 @@ export default function AccountPage() {
                   <div className="flex items-center gap-2">
                     <p className="font-mono text-xs font-semibold text-[#302b26]">{order.id}</p>
                     <span className="rounded bg-[#e8f1f8] border border-[#78a6c9]/30 px-2 py-0.5 text-xs text-[#315F86]">
-                      {order.status}
+                      {order.isExperience && order.status === "PENDING_PAYMENT" ? "待確認" : order.status === "PENDING_PAYMENT" ? "待付款" : order.status === "CANCELLED" ? "已取消" : order.status === "PROCESSING" ? "處理中" : order.status === "DISPATCHED" ? "已出貨" : order.status === "COMPLETED" ? "已完成" : "已付款"}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[#8a7f75]">
@@ -307,7 +312,7 @@ export default function AccountPage() {
                   <div className="flex items-center gap-2">
                     <p className="font-mono text-xs text-[#675e53]">{order.id}</p>
                     <span className="rounded bg-[#fdf6ea] border border-[#e2a84c]/30 px-1.5 py-0.5 text-[10px] text-[#8a5a14]">
-                      本機示範
+                      舊紀錄
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[#8a7f75]">
@@ -330,7 +335,7 @@ export default function AccountPage() {
       <div className="mt-10 rounded-2xl border border-[#e8ded3] bg-[#f7f2ea] p-5 text-sm leading-7 text-[#675e53]">
         <p>
           帳戶與資料安全：登入憑證採用 HTTP-only Cookie 與 scrypt 雜湊儲存。
-          正式連線 PostgreSQL 時，伺服端將提供端對端訂單同步、週期扣款授權與自動健康記錄。
+          會員訂單與已選用的毛孩資料會同步到後台；付款與定期扣款尚未啟用。
         </p>
       </div>
     </main>

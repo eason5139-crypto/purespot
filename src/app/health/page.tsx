@@ -20,6 +20,7 @@ import { matchProduct } from "@/lib/matching";
 import { calculatePetNutrition } from "@/lib/nutritionCalculator";
 import { Button } from "@/components/ui/button";
 import { PetWeightTrendChart } from "@/components/analytics/PetWeightTrendChart";
+import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
 import { petLabels, supportsFoodCalculator } from "@/lib/types";
 
 export default function HealthPage() {
@@ -30,6 +31,7 @@ export default function HealthPage() {
 
   if (!supportsFoodCalculator(pet.type)) return (
     <main id="main-content" className="page-shell py-16">
+      <SavedPetPicker className="mb-8 max-w-sm" />
       <span className="eyebrow">毛孩生活檔案</span>
       <h1 className="mt-3 text-3xl font-semibold text-[#302b26]">{pet.name}的日常</h1>
       <p className="mt-5 max-w-xl leading-8 text-[#675e53]">
@@ -78,6 +80,7 @@ export default function HealthPage() {
 
   return (
     <main id="main-content" className="page-shell py-10">
+      <SavedPetPicker className="mb-7 max-w-sm" />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="eyebrow flex items-center gap-1.5 text-[#5B93C5]">

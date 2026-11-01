@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { apiError, readBody, verifyOrigin } from "@/server/http";
+import { ApiError, apiError, readBody, verifyOrigin } from "@/server/http";
 import { requireAdminSession } from "@/server/adminAuth";
 import { z } from "zod";
+import { isExperienceOrder } from "@/server/experienceOrder";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,8 @@ export async function GET() {
       customerName: o.user?.name || "顧客",
       customerEmail: o.user?.email || "未提供",
       customerPhone: o.user?.phone || "未提供",
+      isExperience: isExperienceOrder(o.paymentReference),
+      paymentMethod: isExperienceOrder(o.paymentReference) ? o.paymentReference?.split(":")[1] : null,
       shippingAddress: o.shippingAddress,
       items: o.items.map((i) => ({
         id: i.id,
@@ -64,42 +67,12 @@ export async function PATCH(request: Request) {
     verifyOrigin(request);
     const { orderId, status } = await readBody(request, updateOrderStatusSchema);
 
-    const updated = await db.$transaction(async (tx) => {
-      const current = await tx.order.findUnique({
-        where: { id: orderId },
-        include: { items: true },
-      });
-      if (!current) throw new Error("找不到該訂單");
-
-      // 若從非取消狀態轉為取消，將品項庫存返還
-      if (current.status !== "CANCELLED" && status === "CANCELLED") {
-        for (const item of current.items) {
-          if (item.variantId) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
-              data: { stock: { increment: item.quantity } },
-            });
-          }
-        }
-      }
-      // 若從取消狀態恢復，重新扣除庫存
-      if (current.status === "CANCELLED" && status !== "CANCELLED") {
-        for (const item of current.items) {
-          if (item.variantId) {
-            await tx.productVariant.update({
-              where: { id: item.variantId },
-              data: { stock: { decrement: item.quantity } },
-            });
-          }
-        }
-      }
-
-      return tx.order.update({
-        where: { id: orderId },
-        data: { status },
-        include: { items: true },
-      });
-    });
+    const current = await db.order.findUnique({ where: { id: orderId } });
+    if (!current) throw new ApiError(404, "找不到該訂單");
+    if (isExperienceOrder(current.paymentReference) && status === "PAID")
+      throw new ApiError(400, "體驗流程沒有實際收款，不能標記為已付款");
+    // 草稿建立時未扣庫存，狀態變更也不得憑空增減庫存。
+    const updated = await db.order.update({ where: { id: orderId }, data: { status } });
 
     return NextResponse.json({ success: true, order: updated });
   } catch (error) {

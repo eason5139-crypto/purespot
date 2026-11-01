@@ -1,7 +1,6 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
@@ -33,7 +32,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/useCartStore";
 import { usePetContextStore } from "@/store/usePetContextStore";
-import { useAutoshipStore } from "@/store/useAutoshipStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { DEMO_MODE, getProduct } from "@/lib/catalog";
@@ -46,9 +44,8 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.removeItem);
-  const clear = useCartStore((s) => s.clear);
   const pets = usePetContextStore((s) => s.allPets);
-  const confirmOrder = useAutoshipStore((s) => s.confirmDemoOrder);
+  const activePetId = usePetContextStore((s) => s.activePetId);
   const close = useUiStore((s) => s.setCartOpen);
 
   // 家庭共管購物車狀態
@@ -56,23 +53,20 @@ export function CartDrawer() {
   const setCartMode = useFamilyStore((s) => s.setCartMode);
   const familyMembers = useFamilyStore((s) => s.members);
   const sharedItems = useFamilyStore((s) => s.sharedItems);
+  const addSharedItem = useFamilyStore((s) => s.addSharedItem);
   const removeShared = useFamilyStore((s) => s.removeSharedItem);
   const updateSharedQty = useFamilyStore((s) => s.updateQuantity);
   const inviteCode = useFamilyStore((s) => s.inviteCode);
   const groupName = useFamilyStore((s) => s.groupName);
 
-  const [orderId, setOrderId] = useState("");
-  const [accepted, setAccepted] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSplitModal, setShowSplitModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [splitSent, setSplitSent] = useState(false);
-  const lock = useRef(false);
 
   const totals = cartTotals(items);
-  const familySubtotal = sharedItems.reduce((acc, i) => acc + i.priceNt * i.quantity, 0);
-  const familyShipping = familySubtotal >= 699 ? 0 : 100;
+  const familySubtotal = sharedItems.reduce((acc, i) => acc + (getProduct(i.productId)?.priceNt ?? i.priceNt) * i.quantity, 0);
+  const familyShipping = familySubtotal >= 999 ? 0 : 80;
   const familyTotal = familySubtotal + familyShipping;
 
   const invalid = items.some((i) => {
@@ -97,15 +91,15 @@ export function CartDrawer() {
   }
 
   const handleCopyInvite = () => {
-    navigator.clipboard.writeText(`【PURESPOT 家庭毛孩共管】邀請你加入「${groupName}」！\n邀請碼：${inviteCode}\n點擊連結加入共同照顧毛孩：https://purespot.tw/join?code=${inviteCode}`);
+    navigator.clipboard.writeText(`【PURESPOT 家庭清單】${groupName}\n邀請碼：${inviteCode}\n目前清單只保存在此裝置。`);
     setCopied(true);
-    toast.success("已複製邀請碼與邀請連結至剪貼簿！");
+    toast.success("已複製家庭清單資訊");
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSendLinePaySplit = () => {
     setSplitSent(true);
-    toast.success("已透過 LINE Pay 向家庭成員發送自動分帳請求！");
+    toast.success("拆帳金額已整理，尚未送出請款。");
     setTimeout(() => {
       setShowSplitModal(false);
       setSplitSent(false);
@@ -117,20 +111,25 @@ export function CartDrawer() {
     router.push(`/checkout?mode=${mode}`);
   };
 
-  async function checkoutDemo() {
-    if (lock.current || invalid || !accepted || !items.length) return;
-    lock.current = true;
-    setBusy(true);
-    try {
-      const id = confirmOrder(items, totals.totalNt);
-      clear();
-      setOrderId(id);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "無法建立訂單");
-    } finally {
-      setBusy(false);
-      lock.current = false;
+  function addPersonalItemsToFamily() {
+    let added = 0;
+    for (const item of items) {
+      const product = getProduct(item.productId);
+      if (!product || sharedItems.some((shared) => shared.productId === item.productId && shared.petId === item.petId)) continue;
+      addSharedItem({
+        productId: item.productId,
+        petId: item.petId || activePetId,
+        name: product.name,
+        image: product.image,
+        priceNt: product.priceNt,
+        quantity: item.quantity,
+        addedBy: "我",
+        memberAvatar: "🧑",
+        note: "",
+      });
+      added++;
     }
+    toast.info(added ? `已將 ${added} 項商品加入家庭清單` : "家庭清單已有這些商品");
   }
 
   return (
@@ -163,7 +162,7 @@ export function CartDrawer() {
               }`}
             >
               <Users size={12} />
-              家庭共管 ({sharedItems.reduce((n, i) => n + i.quantity, 0)})
+              家庭清單 ({sharedItems.reduce((n, i) => n + i.quantity, 0)})
             </button>
           </div>
         </DialogTitle>
@@ -171,34 +170,14 @@ export function CartDrawer() {
           查看並調整購物車內的商品、配送方式或家庭協同購物清單。
         </DialogDescription>
 
-        {/* 訂單完成回饋畫面 */}
-        {orderId ? (
-          <div className="py-12 text-center">
-            <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#e8f1f8] text-[#315F86]">
-              <CheckCircle2 size={32} />
-            </div>
-            <h3 className="mt-4 text-xl font-semibold text-[#302b26]">示範訂單已建立</h3>
-            <p className="mt-2 font-mono text-sm font-semibold text-[#5B93C5]">{orderId}</p>
-            <p className="mt-4 text-xs text-[#675e53] leading-relaxed max-w-xs mx-auto">
-              系統已將這筆訂單記至本機。若您有選定定期補貨，會在指定天數模擬下一次循環。
-            </p>
-            <div className="mt-6 grid gap-2">
-              <Button asChild className="w-full" onClick={() => close(false)}>
-                <Link href="/autoship">查看我的循環補貨</Link>
-              </Button>
-              <Button variant="secondary" className="w-full" onClick={() => close(false)}>
-                完成並返回探索
-              </Button>
-            </div>
-          </div>
-        ) : cartMode === "FAMILY" ? (
+        {cartMode === "FAMILY" ? (
           <>
             {/* 家庭群組資訊列與成員頭像 */}
             <div className="mt-4 rounded-xl border border-[#e8ded3] bg-[#fcfaf7] p-3.5">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-[10px] uppercase font-semibold text-[#5B93C5] tracking-wider">
-                    FAMILY SHARED CART · 家庭共管
+                  FAMILY LIST · 家庭清單
                   </span>
                   <p className="text-sm font-semibold text-[#302b26]">{groupName}</p>
                 </div>
@@ -227,7 +206,7 @@ export function CartDrawer() {
                     </div>
                   ))}
                 </div>
-                <span className="text-[11px] text-[#5B93C5] font-medium ml-1">即時同步中</span>
+                <span className="text-[11px] text-[#5B93C5] font-medium ml-1">保存在此裝置</span>
               </div>
             </div>
 
@@ -235,19 +214,19 @@ export function CartDrawer() {
             <div className="my-3 rounded-lg border border-[#e8ded3] bg-[#f7f2ea] p-2.5 text-xs text-[#675e53] flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Truck size={14} className="text-[#5B93C5]" />
-                家庭整單滿 $699 免運
+                家庭整單滿 $999 免運
               </span>
               <span className="font-mono text-[#5B93C5] font-semibold">
-                {familySubtotal >= 699 ? "已達免運門檻" : `還差 $${699 - familySubtotal} 免運`}
+                {familySubtotal >= 999 ? "已達免運門檻" : `還差 $${999 - familySubtotal} 免運`}
               </span>
             </div>
 
             {/* 協同清單 */}
             {sharedItems.length === 0 ? (
-              <div className="py-16 text-center text-sm text-[#8a7f75]">
+              <div className="py-12 text-center text-sm text-[#8a7f75]">
                 <Users size={36} className="mx-auto mb-2 opacity-40 text-[#5B93C5]" />
                 家庭協同購物車目前是空的。
-                <p className="mt-1 text-xs text-[#8a7f75]">任何家庭成員皆可加購好物並備註原因！</p>
+                <p className="mt-1 text-xs text-[#8a7f75]">先在商城選商品，再加入這份清單。</p>
               </div>
             ) : (
               <div className="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
@@ -277,8 +256,8 @@ export function CartDrawer() {
 
                     <div className="flex items-center justify-between pt-1">
                       <div>
-                        <p className="text-sm font-medium text-[#302b26]">{item.name}</p>
-                        <p className="text-xs font-mono text-[#8a7f75]">{money(item.priceNt)} / 份</p>
+                        <p className="text-sm font-medium text-[#302b26]">{getProduct(item.productId)?.name ?? item.name}</p>
+                        <p className="text-xs font-mono text-[#8a7f75]">{money(getProduct(item.productId)?.priceNt ?? item.priceNt)} / 份</p>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -299,7 +278,7 @@ export function CartDrawer() {
                           </button>
                         </div>
                         <span className="font-mono text-sm font-semibold text-[#302b26]">
-                          {money(item.priceNt * item.quantity)}
+                          {money((getProduct(item.productId)?.priceNt ?? item.priceNt) * item.quantity)}
                         </span>
                       </div>
                     </div>
@@ -307,6 +286,8 @@ export function CartDrawer() {
                 ))}
               </div>
             )}
+
+            {items.length > 0 && <Button variant="secondary" className="mt-4 w-full" onClick={addPersonalItemsToFamily}>將個人購物袋加入家庭清單</Button>}
 
             {/* 家庭金額結算 */}
             <div className="mt-4 border-t border-[#e8ded3] pt-3 space-y-2 text-xs text-[#675e53]">
@@ -331,13 +312,13 @@ export function CartDrawer() {
                 onClick={() => setShowSplitModal(true)}
               >
                 <Sparkles size={13} className="text-[#5B93C5]" />
-                LINE Pay 拆帳
+                拆帳預覽
               </Button>
               <Button
                 className="gap-1 text-xs"
                 onClick={() => handleGoToCheckout("family")}
               >
-                主購人合併結帳
+                家庭清單結帳
                 <ArrowRight size={13} />
               </Button>
             </div>
@@ -470,28 +451,9 @@ export function CartDrawer() {
                   onClick={() => handleGoToCheckout("personal")}
                   disabled={invalid}
                 >
-                  前往正式結帳頁面
+                  前往結帳
                   <ArrowRight size={15} />
                 </Button>
-
-                <div className="space-y-2 pt-2 text-center">
-                  <label className="flex cursor-pointer items-start gap-2 rounded-xl bg-[#f7f2ea] p-3 text-left text-xs leading-5 text-[#675e53]">
-                    <input
-                      type="checkbox"
-                      checked={accepted}
-                      onChange={(event) => setAccepted(event.target.checked)}
-                      className="mt-0.5 size-4 accent-[#5B93C5]"
-                    />
-                    <span>我了解這是本機示範訂單，不會扣款、出貨或寄送通知。</span>
-                  </label>
-                  <button
-                    onClick={() => void checkoutDemo()}
-                    disabled={!accepted || invalid || busy}
-                    className="text-[11px] text-[#8a7f75] hover:text-[#302b26] underline underline-offset-2"
-                  >
-                    或以本機示範訂單快速結算 (免填地址)
-                  </button>
-                </div>
               </div>
             </>
           )
