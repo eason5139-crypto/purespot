@@ -220,6 +220,7 @@ export function PetEditor() {
                   name: "",
                   allergies: [],
                   avatarUrl: undefined,
+                  cloudId: undefined,
                 });
               }}
             >

@@ -213,6 +213,7 @@ export function Storefront({ content }: { content: SiteContent }) {
           <button type="button" className="editorial-action mt-8 min-h-11 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F]" onClick={() => { setSpecies(pet.type); document.getElementById("products")?.scrollIntoView({ behavior: "smooth" }); }}>看{pet.name}的選物 <ArrowUpRight size={15} className="ml-1 inline" /></button>
         </section>}
       </div>
+      <Link href="/care" className="group mt-7 flex flex-wrap items-center justify-between gap-4 border border-[#bcd5e9] bg-[#eaf3fa] px-6 py-5 text-[#284a63] transition-colors hover:bg-[#deebf4]"><span><strong className="editorial-title text-xl">想替{pet.name}安排得更剛好？</strong><span className="mt-1 block text-xs text-[#587084]">選物、補貨與換糧，三個照顧工具一起幫忙。</span></span><span className="inline-flex items-center gap-2 text-sm font-semibold">打開照顧工具 <ArrowUpRight size={17} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" /></span></Link>
       <div className="my-9 grid grid-cols-1 divide-y divide-[#d9cbbd] border-y border-[#d9cbbd] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {[
           {

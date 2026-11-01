@@ -2,6 +2,7 @@ import type { ActivePet } from "./types";
 import { petSchema } from "./types";
 import { usePetContextStore } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
+import { useCareStore } from "@/store/useCareStore";
 
 type CloudPet = {
   id: string;
@@ -65,6 +66,7 @@ export async function syncSavedPets(userId: string) {
   if (previousUserId && previousUserId !== userId) {
     usePetContextStore.getState().resetPets();
     useCartStore.getState().clear();
+    useCareStore.getState().resetCare();
   }
   const cloud = await loadCloudPets();
   const local = usePetContextStore.getState().allPets;

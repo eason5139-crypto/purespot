@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useCatalogStore } from "@/store/useCatalogStore";
 import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { syncSavedPets } from "@/lib/petCloudSync";
+import { useCareStore } from "@/store/useCareStore";
 export function Providers({ children }: { children: React.ReactNode }) {
   const [storageError, setStorageError] = useState(false);
   const [catalogError, setCatalogError] = useState(false);
@@ -31,6 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           useCartStore.persist.rehydrate(),
           useAutoshipStore.persist.rehydrate(),
           useFavoritesStore.persist.rehydrate(),
+          useCareStore.persist.rehydrate(),
         ]);
         localStorage.setItem("purespot-storage-check", "1");
         localStorage.removeItem("purespot-storage-check");
@@ -38,6 +40,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         void useAuthStore.getState().fetchUser();
       } catch {
         if (mounted) setStorageError(true);
+    } finally {
+      useCareStore.getState().setHydrated();
       }
     }
     void hydrate();

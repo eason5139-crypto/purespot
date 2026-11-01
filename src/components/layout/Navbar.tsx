@@ -35,7 +35,7 @@ const links = [
   { href: "/shop", label: "精品商城" },
   { href: "/transparency", label: "7C 透明度" },
   { href: "/community", label: "毛孩日常" },
-  { href: "/health", label: "健康儀表板" },
+  { href: "/care", label: "照顧工具" },
   { href: "/account", label: "我的帳戶" },
 ];
 
@@ -235,6 +235,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                   <Link href={link.href}>{link.label}</Link>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuItem asChild><Link href="/health">健康儀表板</Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
