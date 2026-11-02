@@ -37,6 +37,15 @@ enum PlanStatus {
   PAUSED
   CANCELLED
 }
+enum CommunityPostStatus {
+  PENDING
+  PUBLISHED
+  HIDDEN
+}
+enum CommunityCommentStatus {
+  PUBLISHED
+  HIDDEN
+}
 model User {
   id String @id @default(uuid())
   email String @unique
@@ -47,6 +56,11 @@ model User {
   orders Order[]
   autoships AutoshipPlan[]
   reviews Review[]
+  communityPosts CommunityPost[]
+  communityComments CommunityComment[]
+  communityLikes CommunityLike[]
+  communityBookmarks CommunityBookmark[]
+  communityReports CommunityReport[]
   sessions Session[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,11 +93,73 @@ model Pet {
   avatarUrl String?
   isDefault Boolean @default(false)
   orderItems OrderItem[]
+  communityPosts CommunityPost[]
   autoshipItems AutoshipItem[]
   weightRecords WeightRecord[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([userId])
+}
+model CommunityPost {
+  id String @id @default(uuid())
+  authorId String
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  petId String?
+  pet Pet? @relation(fields: [petId], references: [id], onDelete: SetNull)
+  petName String
+  petType PetType
+  lifeStage String
+  title String
+  body String
+  imageUrl String?
+  status CommunityPostStatus @default(PENDING)
+  comments CommunityComment[]
+  likes CommunityLike[]
+  bookmarks CommunityBookmark[]
+  reports CommunityReport[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, createdAt])
+  @@index([petType, lifeStage, status])
+  @@index([authorId, createdAt])
+}
+model CommunityComment {
+  id String @id @default(uuid())
+  postId String
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body String
+  status CommunityCommentStatus @default(PUBLISHED)
+  createdAt DateTime @default(now())
+  @@index([postId, status, createdAt])
+}
+model CommunityLike {
+  postId String
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([postId, userId])
+  @@index([userId])
+}
+model CommunityBookmark {
+  postId String
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([postId, userId])
+  @@index([userId])
+}
+model CommunityReport {
+  id String @id @default(uuid())
+  postId String
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason String
+  createdAt DateTime @default(now())
+  @@unique([postId, reporterId])
+  @@index([postId, createdAt])
 }
 model WeightRecord {
   id String @id @default(uuid())

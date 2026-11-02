@@ -18,6 +18,7 @@ export function MediaUploadField({
   const [error, setError] = useState("");
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [library, setLibrary] = useState<string[]>([]);
+  const [libraryQuery, setLibraryQuery] = useState("");
 
   async function toggleLibrary() {
     if (libraryOpen) { setLibraryOpen(false); return; }
@@ -78,10 +79,10 @@ export function MediaUploadField({
               onClick={() => void toggleLibrary()}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#4e443a] hover:bg-[#ede5da] disabled:opacity-50 transition-colors"
             >
-              <Images size={16} />從媒體庫選擇
+              <Images size={16} />挑選已上傳或內建圖片
             </button>
           </div>
-          <p className="mt-2 truncate text-xs text-[#8a7f75]">{value || "尚未選擇圖片"}</p>
+          <p className="mt-2 truncate text-xs text-[#8a7f75]">{value ? `目前選用：${value.split("/").at(-1)}` : "尚未選擇圖片"}</p>
           <p className="text-xs text-[#8a7f75]">PNG、JPG 或 WebP，最多 4 MB</p>
         </div>
       </div>
@@ -96,13 +97,16 @@ export function MediaUploadField({
         }}
       />
       {libraryOpen && (
-        <div className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-[#e8ded3] bg-white p-3 shadow-md sm:grid-cols-4">
-          {library.map((url) => (
+        <div className="mt-3 rounded-xl border border-[#e8ded3] bg-white p-3 shadow-md">
+          <label className="mb-3 block text-xs font-semibold text-[#675e53]">搜尋圖片名稱<input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="例如：首頁、貓咪、商品" className="input mt-1" /></label>
+          <div className="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-4">
+          {library.filter((url) => url.toLowerCase().includes(libraryQuery.trim().toLowerCase())).map((url) => (
             <button key={url} type="button" onClick={() => { onChange(url); setLibraryOpen(false); }} className="overflow-hidden rounded-lg border border-[#e8ded3] text-left hover:border-[#5B93C5] transition-colors" aria-label={`選擇圖片 ${url}`}>
               <span className="relative block aspect-square bg-[#ebe5da]"><Image src={url} alt="" fill sizes="120px" className="object-contain p-1" /></span>
               <span className="block truncate p-1 text-[10px] text-[#675e53]">{url.split("/").at(-1)}</span>
             </button>
           ))}
+          </div>
         </div>
       )}
       {error && <p role="alert" className="mt-2 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">{error}</p>}

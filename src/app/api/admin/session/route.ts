@@ -13,8 +13,8 @@ export const runtime = "nodejs";
 
 const loginSchema = z
   .object({
-    email: z.string().email().max(254),
-    password: z.string().min(12).max(128),
+    username: z.string().trim().min(1).max(64),
+    password: z.string().min(4).max(128),
   })
   .strict();
 
@@ -22,9 +22,9 @@ export async function POST(request: Request) {
   try {
     verifyOrigin(request);
     const input = await readBody(request, loginSchema);
-    await rateLimit(`admin-login:${input.email.toLowerCase()}`, 6, 900);
-    const admin = await authenticateAdmin(input.email, input.password);
-    await createAdminSession(admin.email);
+    await rateLimit(`admin-login:${input.username.toLowerCase()}`, 6, 900);
+    const admin = await authenticateAdmin(input.username, input.password);
+    await createAdminSession(admin.username);
     return NextResponse.json({ admin, message: "登入成功" });
   } catch (error) {
     return apiError(error);

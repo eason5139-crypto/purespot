@@ -83,22 +83,25 @@ test("健康頁可直接切換已儲存毛孩", async ({ page }) => {
   await page.getByRole("combobox", { name: "選擇已儲存的毛孩" }).selectOption("pet-mango");
   await expect(page.getByRole("heading", { name: "芒果的健康儀表板" })).toBeVisible();
 });
-test("社群收藏、日記與留言在重新整理後保留", async ({ page }) => {
+test("社群公開日記可閱讀，會員操作會要求登入", async ({ page, request }) => {
+  await page.route("**/api/community/posts?*", async (route) => route.fulfill({
+    contentType: "application/json",
+    body: JSON.stringify({ posts: [{
+      id: "9f9397e1-4321-4c15-8b17-ea7c6e35fdc1",
+      title: "今天的散步", body: "一起走了一段舒服的路。", imageUrl: null,
+      petName: "芒果", petType: "DOG", lifeStage: "ADULT", status: "PUBLISHED",
+      createdAt: new Date().toISOString(), mine: false, liked: false, saved: false,
+      likesCount: 3, comments: [],
+    }], nextCursor: null }),
+  }));
   await page.goto("/community");
-  await page.getByRole("button", { name: "收藏這篇日記" }).first().click();
-  await page.getByRole("button", { name: "已收藏" }).click();
-  await expect(page.locator("article")).toHaveCount(1);
-  await page.getByRole("button", { name: "寫一篇日記" }).click();
-  const composer = page.getByRole("dialog", { name: "寫一篇日記" });
-  await composer.getByRole("textbox", { name: "標題" }).fill("今天的散步");
-  await composer.getByRole("textbox", { name: "內容" }).fill("一起走了一段舒服的路。");
-  await composer.getByRole("button", { name: "儲存日記" }).click();
-  await page.reload();
+  await expect(page.getByRole("heading", { name: "同頻毛孩交流圈" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "今天的散步" })).toBeVisible();
-  await page.getByRole("button", { name: "刪除今天的散步" }).click();
-  await expect(page.getByRole("heading", { name: "今天的散步" })).toHaveCount(0);
+  await page.getByRole("button", { name: "收藏這篇日記" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect((await request.get("/api/admin/community")).status()).toBe(401);
 });
 test("結帳付款方式有互動呈現，登入前不建立訂單", async ({ page }) => {
   await page.goto("/shop");

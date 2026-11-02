@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, ExternalLink, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaUploadField } from "@/components/admin/MediaUploadField";
+import { ContentDevicePreview } from "@/components/admin/ContentDevicePreview";
 import { defaultSiteContent, type SiteContent } from "@/lib/siteContent";
 
 type ContentKey = keyof SiteContent;
@@ -131,19 +132,19 @@ export default function AdminContentPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-[1700px]">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="eyebrow text-[#5B93C5]">內容管理</span>
           <h1 className="mt-2 text-3xl font-semibold text-[#302b26]">網站內容編輯</h1>
-          <p className="mt-2 text-sm text-[#675e53]">按頁面區塊修改文字與照片，儲存後立即用官網預覽。</p>
+          <p className="mt-2 text-sm text-[#675e53]">修改文字或照片時，右側會立即顯示手機、平板或電腦上的實際首頁。</p>
         </div>
         <Link href="/" target="_blank" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#d9cfc3] bg-white px-4 text-sm font-semibold text-[#5B93C5] hover:bg-[#ede5da]">
           <ExternalLink size={16} /> 開啟官網
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[180px_minmax(360px,1fr)_minmax(360px,500px)]">
         <nav aria-label="內容分類" className="flex gap-2 overflow-x-auto rounded-2xl border border-[#e8ded3] bg-white p-3 shadow-sm lg:block lg:space-y-1">
           {sections.map((item) => (
             <button
@@ -207,6 +208,7 @@ export default function AdminContentPage() {
             <Button type="submit" disabled={loading || saving} className="gap-2"><Save size={16} />{saving ? "儲存中…" : "儲存網站內容"}</Button>
           </div>
         </form>
+        {!loading && <ContentDevicePreview content={content} section={active} />}
       </div>
     </div>
   );

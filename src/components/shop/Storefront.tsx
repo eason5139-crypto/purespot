@@ -29,7 +29,9 @@ import { ProductCard } from "./ProductCard";
 import { ProductComparison } from "./ProductComparison";
 import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
 import type { SiteContent } from "@/lib/siteContent";
+import { useSiteContentPreview } from "@/lib/useSiteContentPreview";
 export function Storefront({ content }: { content: SiteContent }) {
+  const displayContent = useSiteContentPreview(content);
   const products = useCatalogStore((s) => s.products);
   const favorites = useFavoritesStore((s) => s.ids);
   const pet = useActivePet();
@@ -107,7 +109,7 @@ export function Storefront({ content }: { content: SiteContent }) {
       <div className="grid gap-5 lg:grid-cols-[1fr_330px]">
         <section className="hero-panel relative min-h-[425px] overflow-hidden bg-[#203a4f] text-[#fffaf2]">
           <Image
-            src={content.shopImage}
+            src={displayContent.shopImage}
             alt="貓與兔兔在家中探索食物和用品的生活場景"
             fill
             priority
@@ -117,15 +119,15 @@ export function Storefront({ content }: { content: SiteContent }) {
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(27,43,36,.95)_0%,rgba(27,43,36,.78)_38%,rgba(27,43,36,.08)_100%)]" />
           <div className="relative z-10 flex h-full max-w-[590px] flex-col justify-center p-8 sm:p-11">
             <div className="mb-5 text-xs font-semibold tracking-[.2em] text-[#e9c5a5]">
-              {content.shopBadge}
+              {displayContent.shopBadge}
             </div>
             <h1 className="editorial-title text-[clamp(2.5rem,4.5vw,4.8rem)] leading-[1.12] tracking-[-.06em]">
               為{pet.name}的每一天，
               <br />
-              <span className="text-[#e9b08c]">{content.shopTitleAccent}</span>
+              <span className="text-[#e9b08c]">{displayContent.shopTitleAccent}</span>
             </h1>
             <p className="mt-5 max-w-[360px] text-sm leading-7 text-[#f5eade]">
-              {content.shopDescription}
+              {displayContent.shopDescription}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <button type="button" className="editorial-action min-h-11 bg-[#5B93C5] px-5 text-sm font-semibold text-white hover:bg-[#376F9F]"

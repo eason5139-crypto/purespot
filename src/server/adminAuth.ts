@@ -13,8 +13,8 @@ const scrypt = promisify(scryptCallback);
 const ADMIN_COOKIE = "purespot-admin-session";
 const SESSION_AGE_SECONDS = 8 * 60 * 60;
 
-function adminEmail() {
-  return process.env.ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+function adminUsername() {
+  return process.env.ADMIN_USERNAME?.trim() ?? "";
 }
 
 function adminPasswordHash() {
@@ -30,7 +30,7 @@ function signingKey() {
 }
 
 function assertAdminConfigured() {
-  if (!adminEmail() || !adminPasswordHash()) {
+  if (!adminUsername() || !adminPasswordHash()) {
     throw new ApiError(503, "後台管理員帳號尚未設定");
   }
   signingKey();
@@ -44,27 +44,26 @@ async function verifyAdminPassword(password: string) {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-export async function authenticateAdmin(email: string, password: string) {
+export async function authenticateAdmin(username: string, password: string) {
   assertAdminConfigured();
-  const expectedEmail = adminEmail();
-  const suppliedEmail = email.trim().toLowerCase();
-  const suppliedBuffer = Buffer.from(suppliedEmail);
-  const expectedBuffer = Buffer.from(expectedEmail);
-  const emailMatches =
+  const expectedUsername = adminUsername();
+  const suppliedBuffer = Buffer.from(username.trim().toLowerCase());
+  const expectedBuffer = Buffer.from(expectedUsername.toLowerCase());
+  const usernameMatches =
     suppliedBuffer.length === expectedBuffer.length &&
     timingSafeEqual(suppliedBuffer, expectedBuffer);
 
-  if (!emailMatches || !(await verifyAdminPassword(password))) {
+  if (!usernameMatches || !(await verifyAdminPassword(password))) {
     throw new ApiError(401, "帳號或密碼不正確");
   }
 
-  return { email: expectedEmail };
+  return { username: expectedUsername };
 }
 
-export async function createAdminSession(email: string) {
-  const token = await new SignJWT({ role: "admin", email })
+export async function createAdminSession(username: string) {
+  const token = await new SignJWT({ role: "admin", username })
     .setProtectedHeader({ alg: "HS256" })
-    .setSubject(email)
+    .setSubject(username)
     .setIssuer("purespot-admin")
     .setAudience("purespot-backoffice")
     .setIssuedAt()
@@ -90,8 +89,8 @@ export async function getAdminSession() {
       issuer: "purespot-admin",
       audience: "purespot-backoffice",
     });
-    if (payload.role !== "admin" || payload.sub !== adminEmail()) return null;
-    return { email: payload.sub };
+    if (payload.role !== "admin" || payload.sub !== adminUsername()) return null;
+    return { username: payload.sub };
   } catch {
     return null;
   }

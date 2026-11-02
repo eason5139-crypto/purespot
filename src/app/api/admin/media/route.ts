@@ -9,7 +9,6 @@ import { apiError, verifyOrigin, ApiError } from "@/server/http";
 export const runtime = "nodejs";
 const mediaDirectory = join(process.cwd(), "public", "uploads");
 const bundledDirectory = join(process.cwd(), "public", "images");
-const packagedDirectory = join(bundledDirectory, "products");
 const maximumBytes = 4 * 1024 * 1024;
 
 function usesBlob() {
@@ -22,6 +21,16 @@ function extensionFor(bytes: Uint8Array) {
   if (String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
       String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") return "webp";
   return null;
+}
+
+async function bundledImages(directory: string, prefix = ""): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const groups = await Promise.all(entries.map(async (entry) => {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) return bundledImages(join(directory, entry.name), relative);
+    return /\.(png|jpg|jpeg|webp|svg)$/i.test(entry.name) ? [`/images/${relative}`] : [];
+  }));
+  return groups.flat();
 }
 
 export async function GET() {
@@ -39,15 +48,11 @@ export async function GET() {
             .reverse()
             .map((name) => `/uploads/${name}`);
         })());
-    const bundled = (await readdir(bundledDirectory))
-      .filter((name) => /\.(png|jpg|jpeg|webp)$/i.test(name));
-    const packaged = (await readdir(packagedDirectory))
-      .filter((name) => /^[a-z0-9-]+\.svg$/.test(name));
+    const bundled = await bundledImages(bundledDirectory);
     return NextResponse.json({
       images: [
         ...uploaded,
-        ...bundled.map((name) => `/images/${name}`),
-        ...packaged.map((name) => `/images/products/${name}`),
+        ...bundled,
       ],
     });
   } catch (error) {

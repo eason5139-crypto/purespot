@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, Boxes, ExternalLink, FilePenLine, Images, LayoutDashboard,
-  LogOut, Menu, Package, ShoppingCart, Users, X,
+  LogOut, Menu, MessageCircle, Package, ShoppingCart, Users, X,
 } from "lucide-react";
 
 const groups = [
@@ -24,9 +24,12 @@ const groups = [
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
     { href: "/admin/members", label: "會員管理", icon: Users },
   ] },
+  { title: "社群", links: [
+    { href: "/admin/community", label: "內容審核", icon: MessageCircle },
+  ] },
 ];
 
-export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
+export function AdminSidebar({ adminUsername }: { adminUsername: string }) {
   const path = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -91,7 +94,7 @@ export function AdminSidebar({ adminEmail }: { adminEmail: string }) {
         </div>
         <nav aria-label="後台導覽" className="flex-1 px-3 py-6">{navigation}</nav>
         <div className="border-t border-[#e8ded3] px-3 py-4 bg-[#fcfaf7]">
-          <p className="truncate px-3 pb-2 text-xs text-[#8a7f75]">{adminEmail}</p>
+          <p className="truncate px-3 pb-2 text-xs text-[#8a7f75]">{adminUsername}</p>
           <Link href="/" target="_blank" className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm text-[#5e544a] hover:bg-[#f5ede3] hover:text-[#302b26]"><ExternalLink size={16} />開啟官網</Link>
           <button type="button" onClick={() => void logout()} className="flex min-h-10 w-full items-center gap-2 rounded-xl px-3 text-sm text-[#5e544a] hover:bg-[#f5ede3] hover:text-rose-600"><LogOut size={16} />安全登出</button>
         </div>
