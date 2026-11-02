@@ -40,8 +40,8 @@ export default function AdminPage() {
           ["本月營收", metrics ? money(metrics.monthRevenueNt) : "—"],
           ["今日訂單", metrics ? String(metrics.todayOrdersCount) : "—"],
           ["平均客單價", metrics ? money(metrics.averageOrderValueNt) : "—"],
-          ["體驗訂單", metrics ? String(metrics.experienceOrdersCount) : "—"],
-          ["體驗訂單總額", metrics ? money(metrics.experienceOrderValueNt) : "—"],
+          ["累計營收", metrics ? money(metrics.totalRevenueNt) : "—"],
+          ["累計訂單", metrics ? String(metrics.totalOrdersCount) : "—"],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl border border-[#e8ded3] bg-white p-6 shadow-sm">
             <p className="text-sm font-medium text-[#8a7f75]">{label}</p>

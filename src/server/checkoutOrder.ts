@@ -4,12 +4,12 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { db } from "./db";
 import { ApiError } from "./http";
-import { createOrderDraft } from "./orderService";
+import { createOrder } from "./orderService";
 import { petSchema, type ActivePet } from "@/lib/types";
 
 const intervalSchema = z.union([z.literal(14), z.literal(28), z.literal(42), z.literal(56)]).nullable();
 
-export const experienceOrderSchema = z.object({
+export const checkoutOrderSchema = z.object({
   idempotencyKey: z.uuid(),
   paymentMethod: z.enum(["credit", "linepay", "transfer", "cvs"]),
   items: z.array(z.object({
@@ -26,10 +26,11 @@ export const experienceOrderSchema = z.object({
   }),
 }).strict();
 
-type ExperienceOrderInput = z.infer<typeof experienceOrderSchema>;
+type CheckoutOrderInput = z.infer<typeof checkoutOrderSchema>;
 
-export function isExperienceOrder(paymentReference: string | null) {
-  return paymentReference?.startsWith("EXPERIENCE:") ?? false;
+export function checkoutPaymentMethod(paymentReference: string | null) {
+  if (!paymentReference?.startsWith("CHECKOUT:") && !paymentReference?.startsWith("EXPERIENCE:")) return null;
+  return paymentReference.split(":")[1] ?? null;
 }
 
 export function cloudPetId(userId: string, pet: ActivePet) {
@@ -39,7 +40,7 @@ export function cloudPetId(userId: string, pet: ActivePet) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
-export async function syncExperiencePets(userId: string, pets: ActivePet[]) {
+export async function syncCheckoutPets(userId: string, pets: ActivePet[]) {
   for (const pet of pets) {
     const id = cloudPetId(userId, pet);
     const birthday = new Date();
@@ -70,12 +71,12 @@ export async function syncExperiencePets(userId: string, pets: ActivePet[]) {
   }
 }
 
-export async function createExperienceOrder(userId: string, input: ExperienceOrderInput) {
+export async function createCheckoutOrder(userId: string, input: CheckoutOrderInput) {
   const existing = await db.order.findUnique({
     where: { userId_idempotencyKey: { userId, idempotencyKey: input.idempotencyKey } },
   });
   if (existing) {
-    if (existing.paymentReference !== `EXPERIENCE:${input.paymentMethod}:${input.idempotencyKey}`)
+    if (existing.paymentReference !== `CHECKOUT:${input.paymentMethod}:${input.idempotencyKey}`)
       throw new ApiError(409, "訂單識別碼已使用");
   }
 
@@ -95,9 +96,9 @@ export async function createExperienceOrder(userId: string, input: ExperienceOrd
   }
 
   const pets = [...new Map(input.items.map((item) => [item.pet.id, item.pet])).values()];
-  await syncExperiencePets(userId, pets);
+  await syncCheckoutPets(userId, pets);
 
-  return createOrderDraft(userId, {
+  return createOrder(userId, {
     idempotencyKey: input.idempotencyKey,
     items: input.items.map((item) => ({
       variantId: variantByProduct.get(item.productId)!.id,
@@ -106,5 +107,5 @@ export async function createExperienceOrder(userId: string, input: ExperienceOrd
       intervalDays: item.intervalDays,
     })),
     shippingAddress: input.shippingAddress,
-  }, { paymentReference: `EXPERIENCE:${input.paymentMethod}:${input.idempotencyKey}` });
+  }, `CHECKOUT:${input.paymentMethod}:${input.idempotencyKey}`);
 }

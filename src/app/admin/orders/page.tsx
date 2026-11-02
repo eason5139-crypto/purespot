@@ -38,7 +38,6 @@ interface Order {
   items: OrderItem[];
   customerName?: string;
   customerEmail?: string;
-  isExperience?: boolean;
   paymentMethod?: string | null;
 }
 
@@ -76,6 +75,15 @@ const STATUS_CONFIG: Record<
     color: "text-rose-700 bg-rose-50 border-rose-200",
     icon: XCircle,
   },
+};
+
+const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
+  PENDING_PAYMENT: ["PAID", "CANCELLED"],
+  PAID: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["DISPATCHED", "CANCELLED"],
+  DISPATCHED: ["COMPLETED"],
+  COMPLETED: [],
+  CANCELLED: [],
 };
 
 export default function AdminOrdersPage() {
@@ -117,7 +125,8 @@ export default function AdminOrdersPage() {
           prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
         );
       } else {
-        alert("狀態更新失敗，請檢查權限");
+        const result = await res.json() as { error?: string };
+        alert(result.error || "狀態更新失敗，請重新整理");
       }
     } catch {
       alert("狀態更新失敗，請檢查網路連線");
@@ -181,7 +190,7 @@ export default function AdminOrdersPage() {
           <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">訂單管理</h1>
           <p className="mt-1 text-sm text-[#675e53]">
-            查看、篩選並更新訂單狀態。體驗訂單不扣款、不扣庫存，也不計入營收。
+            查看、篩選並更新訂單狀態；取消未出貨訂單時同步回補庫存。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -279,7 +288,6 @@ export default function AdminOrdersPage() {
                         <p className="font-medium text-[#302b26]">
                           {order.customerName ?? "訪客"}
                         </p>
-                        {order.isExperience && <span className="mt-1 inline-block rounded bg-[#eaf3fa] px-2 py-0.5 text-[10px] font-semibold text-[#315F86]">體驗訂單</span>}
                         <p className="text-xs text-[#8a7f75]">
                           {order.customerEmail ?? "-"}
                         </p>
@@ -292,7 +300,7 @@ export default function AdminOrdersPage() {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.color}`}
                         >
                           <StatusIcon size={11} />
-                          {order.isExperience && order.status === "PENDING_PAYMENT" ? "待確認" : cfg.label}
+                          {cfg.label}
                         </span>
                       </td>
                       <td className="p-4 text-right font-mono font-semibold text-[#5B93C5]">
@@ -336,15 +344,7 @@ export default function AdminOrdersPage() {
                                 更新訂單狀態
                               </p>
                               <div className="flex flex-wrap gap-2">
-                                {(
-                                  [
-                                    "PAID",
-                                    "PROCESSING",
-                                    "DISPATCHED",
-                                    "COMPLETED",
-                                    "CANCELLED",
-                                  ] as OrderStatus[]
-                                ).filter((s) => !(order.isExperience && s === "PAID")).map((s) => (
+                                {NEXT_STATUSES[order.status].map((s) => (
                                   <Button
                                     key={s}
                                     size="sm"
@@ -356,11 +356,11 @@ export default function AdminOrdersPage() {
                                       e.stopPropagation();
                                       void updateStatus(order.id, s);
                                     }}
-                                    disabled={order.status === s}
                                   >
                                     {STATUS_CONFIG[s].label}
                                   </Button>
                                 ))}
+                                {NEXT_STATUSES[order.status].length === 0 && <span className="text-xs text-[#8a7f75]">無可用的下一步</span>}
                               </div>
                             </div>
                           </div>

@@ -26,7 +26,6 @@ interface CloudOrder {
   status: string;
   totalNt: number;
   createdAt: string;
-  isExperience?: boolean;
   items: {
     id: string;
     productName: string;
@@ -43,7 +42,6 @@ export default function AccountPage() {
   const setAuthOpen = useUiStore((s) => s.setAuthOpen);
   const editPet = useUiStore((s) => s.setPetEditorOpen);
 
-  const localOrders = useAutoshipStore((s) => s.orders);
   const plans = useAutoshipStore((s) => s.plans);
 
   const allPets = usePetContextStore((s) => s.allPets);
@@ -51,6 +49,7 @@ export default function AccountPage() {
   const setActivePet = usePetContextStore((s) => s.setActivePet);
 
   const [cloudOrders, setCloudOrders] = useState<CloudOrder[]>([]);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(0);
   const [fetchingCloud, setFetchingCloud] = useState(false);
   const [cloudError, setCloudError] = useState("");
 
@@ -62,6 +61,7 @@ export default function AccountPage() {
   useEffect(() => {
     if (!user) {
       setCloudOrders([]);
+      setTotalOrdersCount(0);
       return;
     }
 
@@ -71,9 +71,10 @@ export default function AccountPage() {
       try {
         const res = await fetch("/api/orders", { cache: "no-store" });
         if (res.ok) {
-          const data = (await res.json()) as { orders?: CloudOrder[] };
+          const data = (await res.json()) as { orders?: CloudOrder[]; totalOrdersCount?: number };
           if (Array.isArray(data.orders)) {
             setCloudOrders(data.orders);
+            setTotalOrdersCount(data.totalOrdersCount ?? 0);
           }
         } else throw new Error("訂單無法載入");
       } catch {
@@ -108,15 +109,11 @@ export default function AccountPage() {
           <LogIn />
           登入 / 建立帳戶
         </Button>
-        <p className="mt-4 text-xs text-[#8a7f75]">
-          目前展示訂單與補貨計畫已儲存於此裝置的 localStorage。
-        </p>
       </main>
     );
   }
 
   const activePlans = plans.filter((p) => p.status === "ACTIVE");
-  const totalOrdersCount = cloudOrders.length > 0 ? cloudOrders.length : localOrders.length;
 
   return (
     <main id="main-content" className="page-shell py-10">
@@ -147,15 +144,13 @@ export default function AccountPage() {
         >
           <Package size={24} className="text-[#5B93C5]" />
           <p className="mt-4 text-sm text-[#8a7f75]">
-            {cloudOrders.length > 0 ? "會員訂單" : "本裝置舊紀錄"}
+            已成立訂單
           </p>
           <p className="mt-1 font-mono text-4xl text-[#302b26] font-semibold">
             {fetchingCloud ? "…" : totalOrdersCount}
           </p>
           <p className="mt-3 text-xs text-[#8a7f75]">
-            {cloudOrders.length > 0
-              ? "已與公司後台同步"
-              : "在結帳頁建立訂單後會顯示於此"}
+            {cloudOrders.length > 0 ? "已與公司後台同步" : "在結帳頁建立訂單後會顯示於此"}
           </p>
         </motion.section>
 
@@ -263,11 +258,11 @@ export default function AccountPage() {
 
       {cloudError && <p role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{cloudError}</p>}
 
-      {/* 雲端 / 示範訂單列表 */}
+      {/* 訂單列表 */}
       <section className="mt-10">
         <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[#302b26]">
           <Clock3 size={20} className="text-[#5B93C5]" />
-          {cloudOrders.length > 0 ? "最近訂單" : "本裝置舊紀錄"}
+          最近訂單
         </h2>
 
         {cloudOrders.length > 0 ? (
@@ -284,7 +279,7 @@ export default function AccountPage() {
                   <div className="flex items-center gap-2">
                     <p className="font-mono text-xs font-semibold text-[#302b26]">{order.id}</p>
                     <span className="rounded bg-[#e8f1f8] border border-[#78a6c9]/30 px-2 py-0.5 text-xs text-[#315F86]">
-                      {order.isExperience && order.status === "PENDING_PAYMENT" ? "待確認" : order.status === "PENDING_PAYMENT" ? "待付款" : order.status === "CANCELLED" ? "已取消" : order.status === "PROCESSING" ? "處理中" : order.status === "DISPATCHED" ? "已出貨" : order.status === "COMPLETED" ? "已完成" : "已付款"}
+                      {order.status === "PENDING_PAYMENT" ? "待付款" : order.status === "CANCELLED" ? "已取消" : order.status === "PROCESSING" ? "處理中" : order.status === "DISPATCHED" ? "已出貨" : order.status === "COMPLETED" ? "已完成" : "已付款"}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-[#8a7f75]">
@@ -293,33 +288,6 @@ export default function AccountPage() {
                   </p>
                 </div>
                 <span className="font-mono text-base font-semibold text-[#5B93C5]">
-                  {money(order.totalNt)}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        ) : localOrders.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
-            {localOrders.slice(0, 10).map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.04 }}
-                className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e8ded3] p-4 text-sm last:border-0 hover:bg-[#faf7f2] transition-colors"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-mono text-xs text-[#675e53]">{order.id}</p>
-                    <span className="rounded bg-[#fdf6ea] border border-[#e2a84c]/30 px-1.5 py-0.5 text-[10px] text-[#8a5a14]">
-                      舊紀錄
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[#8a7f75]">
-                    {dateLabel(order.createdAt)} · {order.items.length} 項商品
-                  </p>
-                </div>
-                <span className="font-mono font-semibold text-[#5B93C5]">
                   {money(order.totalNt)}
                 </span>
               </motion.div>
@@ -335,7 +303,7 @@ export default function AccountPage() {
       <div className="mt-10 rounded-2xl border border-[#e8ded3] bg-[#f7f2ea] p-5 text-sm leading-7 text-[#675e53]">
         <p>
           帳戶與資料安全：登入憑證採用 HTTP-only Cookie 與 scrypt 雜湊儲存。
-          會員訂單與已選用的毛孩資料會同步到後台；付款與定期扣款尚未啟用。
+          會員訂單與已選用的毛孩資料會同步到後台。
         </p>
       </div>
     </main>

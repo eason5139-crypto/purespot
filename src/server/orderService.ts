@@ -28,10 +28,10 @@ export const orderInputSchema = z
     }),
   })
   .strict();
-export async function createOrderDraft(
+export async function createOrder(
   userId: string,
   input: z.infer<typeof orderInputSchema>,
-  options?: { paymentReference?: string },
+  paymentReference: string,
 ) {
   const requestHash = createHash("sha256")
     .update(
@@ -111,7 +111,13 @@ export async function createOrderDraft(
       );
       const threshold = lines.every((i) => i.isAutoship) ? 699 : 999;
       const shippingNt = subtotalNt >= threshold ? 0 : 80;
-      // 草稿不扣庫存、不建立已付款狀態；付款介接必須先完成原子庫存保留與回呼驗證。
+      for (const [variantId, quantity] of demand) {
+        const reserved = await tx.productVariant.updateMany({
+          where: { id: variantId, stock: { gte: quantity } },
+          data: { stock: { decrement: quantity } },
+        });
+        if (reserved.count !== 1) throw new ApiError(409, "商品庫存不足，請調整數量");
+      }
       return tx.order.create({
         data: {
           userId,
@@ -121,7 +127,8 @@ export async function createOrderDraft(
           shippingNt,
           totalNt: subtotalNt + shippingNt,
           shippingAddress: input.shippingAddress,
-          paymentReference: options?.paymentReference,
+          paymentReference,
+          status: "PAID",
           expiresAt: new Date(Date.now() + 30 * 60_000),
           items: { create: lines },
         },

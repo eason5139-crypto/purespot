@@ -130,7 +130,7 @@ export default function AdminAnalyticsPage() {
           <span className="eyebrow text-[#5B93C5]">管理端</span>
           <h1 className="mt-2 text-2xl font-bold text-[#302b26]">營業分析與財務動態</h1>
           <p className="mt-1 text-sm text-[#675e53]">
-            營收只統計已收款訂單；體驗訂單另列，不混入財務數據。
+            營收依已成立訂單統計，取消訂單不計入；品類與付款方式同步更新。
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -163,8 +163,8 @@ export default function AdminAnalyticsPage() {
       {fetchError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{fetchError}</p>}
 
       {m && <div className="mb-6 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">體驗訂單數</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{m.experienceOrdersCount}</p></div>
-        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">體驗訂單總額 · 非營收</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{money(m.experienceOrderValueNt)}</p></div>
+        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計訂單數</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{m.totalOrdersCount}</p></div>
+        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計營收</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{money(m.totalRevenueNt)}</p></div>
       </div>}
 
       {/* 頁籤切換 */}

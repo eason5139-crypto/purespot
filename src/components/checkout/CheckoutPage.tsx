@@ -128,7 +128,7 @@ function CheckoutContent() {
           }));
       if (items.some((item) => !item.pet)) throw new Error("毛孩資料已變動，請重新選擇");
       requestKey.current ??= crypto.randomUUID();
-      const response = await fetch("/api/orders/experience", {
+      const response = await fetch("/api/orders/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -196,7 +196,7 @@ function CheckoutContent() {
         {isFamilyMode ? "家庭結帳" : "結帳"}
       </h1>
       <p className="mb-8 rounded-xl border border-[#bcd5e9] bg-[#eaf3fa] px-4 py-3 text-sm text-[#315F86]">
-        體驗結帳不會扣款、轉帳或安排出貨。送出後，訂單會同步到會員帳戶與公司後台。
+        送出後，訂單將同步至會員帳戶與公司後台。
       </p>
 
       {/* Progress Steps */}
@@ -315,7 +315,7 @@ function CheckoutContent() {
               {isFamilyMode && (
                 <div className="mt-4 rounded-xl border border-[#e8ded3] bg-[#f7f2ea] p-3 text-xs text-[#675e53]">
                   <p className="font-semibold text-[#5B93C5] mb-1">主購人一鍵買單優惠</p>
-                  <p>家庭商品可一起檢視總額；分帳與 LINE Pay 目前僅供流程示範。</p>
+                  <p>家庭商品可一起檢視總額，確認品項後由主購人送出訂單。</p>
                 </div>
               )}
 
@@ -339,15 +339,15 @@ function CheckoutContent() {
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold text-[#302b26]">收件資訊</h2>
-                <p className="mt-1 text-sm text-[#675e53]">請填測試資料；送出後會保存在公司後台。</p>
+                <p className="mt-1 text-sm text-[#675e53]">請確認收件資訊，送出後可在訂單管理查看。</p>
               </div>
-              <Button variant="secondary" onClick={() => setAddress({ name: "測試收件人", phone: "0900000000", postalCode: "100", city: "台北市", district: "中正區", address: "體驗路 1 號", note: "僅供體驗" })}>填入測試資料</Button>
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="field-label">收件人姓名 *</label>
+                  <label htmlFor="shipping-name" className="field-label">收件人姓名 *</label>
                   <input
+                    id="shipping-name"
                     type="text"
                     required
                     value={address.name}
@@ -356,8 +356,9 @@ function CheckoutContent() {
                   />
                 </div>
                 <div>
-                  <label className="field-label">聯絡電話 *</label>
+                  <label htmlFor="shipping-phone" className="field-label">聯絡電話 *</label>
                   <input
+                    id="shipping-phone"
                     type="tel"
                     required
                     value={address.phone}
@@ -369,12 +370,13 @@ function CheckoutContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="field-label">郵遞區號 *</label>
-                  <input type="text" inputMode="numeric" maxLength={6} value={address.postalCode} onChange={(e) => setAddress({ ...address, postalCode: e.target.value })} className="input font-mono" />
+                  <label htmlFor="shipping-postal" className="field-label">郵遞區號 *</label>
+                  <input id="shipping-postal" type="text" inputMode="numeric" maxLength={6} value={address.postalCode} onChange={(e) => setAddress({ ...address, postalCode: e.target.value })} className="input font-mono" />
                 </div>
                 <div>
-                  <label className="field-label">縣市 *</label>
+                  <label htmlFor="shipping-city" className="field-label">縣市 *</label>
                   <input
+                    id="shipping-city"
                     type="text"
                     required
                     value={address.city}
@@ -383,8 +385,9 @@ function CheckoutContent() {
                   />
                 </div>
                 <div>
-                  <label className="field-label">鄉鎮市區 *</label>
+                  <label htmlFor="shipping-district" className="field-label">鄉鎮市區 *</label>
                   <input
+                    id="shipping-district"
                     type="text"
                     required
                     value={address.district}
@@ -395,8 +398,9 @@ function CheckoutContent() {
               </div>
 
               <div>
-                <label className="field-label">詳細地址 *</label>
+                <label htmlFor="shipping-address" className="field-label">詳細地址 *</label>
                 <input
+                  id="shipping-address"
                   type="text"
                   required
                   value={address.address}
@@ -406,8 +410,9 @@ function CheckoutContent() {
               </div>
 
               <div>
-                <label className="field-label">配送備註（選填）</label>
+                <label htmlFor="shipping-note" className="field-label">配送備註（選填）</label>
                 <input
+                  id="shipping-note"
                   type="text"
                   value={address.note}
                   onChange={(e) => setAddress({ ...address, note: e.target.value })}
@@ -495,7 +500,7 @@ function CheckoutContent() {
                     <p className="mt-7 font-mono text-xl tracking-[.18em]">•••• •••• •••• 0000</p>
                     <div className="mt-5 flex items-center justify-between text-xs text-white/75"><span>PURESPOT MEMBER</span><CreditCard size={20} /></div>
                   </motion.div>
-                  <p className="mt-4 text-sm">確認後會播放刷卡流程並建立訂單紀錄；此處不輸入卡號。</p>
+                  <p className="mt-4 text-sm">確認後建立訂單紀錄；此處不需輸入卡號。</p>
                 </>
               )}
               {selectedPayment === "linepay" && (
@@ -508,7 +513,7 @@ function CheckoutContent() {
                     <p className="mt-1 font-mono text-2xl font-bold text-[#253b4d]">{money(total)}</p>
                     <div className="mt-4 rounded-xl bg-[#06c755] px-3 py-2 text-xs font-semibold text-white">確認付款</div>
                   </motion.div>
-                  <p className="mt-4 text-sm">確認後會播放手機付款流程並建立訂單紀錄。</p>
+                  <p className="mt-4 text-sm">確認後建立訂單，並可在會員帳戶查看。</p>
                 </>
               )}
               {selectedPayment === "transfer" && (
@@ -516,7 +521,7 @@ function CheckoutContent() {
                   <div className="flex items-center gap-2 font-semibold"><Landmark size={20} />PURESPOT 轉帳資料</div>
                   <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
                     <dt className="text-[#657788]">銀行代碼</dt><dd className="font-mono">000</dd>
-                    <dt className="text-[#657788]">戶名</dt><dd>PURESPOT 體驗帳戶</dd>
+                    <dt className="text-[#657788]">戶名</dt><dd>PURESPOT</dd>
                     <dt className="text-[#657788]">帳號</dt><dd className="font-mono">000-000-000000</dd>
                   </dl>
                   <p className="mt-4 text-sm font-semibold text-[#315F86]">此帳號不能匯款，請勿使用真實銀行 App 操作。</p>
@@ -525,7 +530,7 @@ function CheckoutContent() {
               {selectedPayment === "cvs" && (
                 <>
                   <div className="flex items-center gap-2 font-semibold"><Store size={20} />超商取貨付款</div>
-                  <p className="mt-3 text-sm leading-7">選擇後可留下訂單紀錄；目前不產生門市代碼或繳費單。</p>
+                  <p className="mt-3 text-sm leading-7">確認收件資料後，即可建立訂單並於會員帳戶查看。</p>
                 </>
               )}
             </div>
@@ -589,7 +594,7 @@ function CheckoutContent() {
             </motion.div>
             <h2 className="text-3xl font-bold text-[#302b26]">訂單已建立</h2>
             <p className="mt-3 text-[#675e53]">
-              可在會員帳戶與公司後台查看這筆訂單。目前沒有實際扣款或安排出貨。
+              可在會員帳戶查看這筆訂單與後續處理狀態。
             </p>
 
             <div className="mt-8 panel p-5 text-left bg-white">
@@ -627,7 +632,7 @@ function CheckoutContent() {
               <Button asChild>
                 <Link href="/shop">返回商城</Link>
               </Button>
-              <Button variant="secondary" onClick={() => setStep("cart")}>重新體驗</Button>
+              <Button variant="secondary" asChild><Link href="/account">查看我的訂單</Link></Button>
             </div>
           </motion.div>
         )}

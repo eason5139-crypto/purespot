@@ -80,7 +80,7 @@ export function ProductDetail({ product }: { product: Product }) {
               <span className="text-sm text-[#70665d]">{packageSize(product.bagGrams)} · {product.category}</span>
               <span className="font-serif text-3xl text-[#3b342d]">{money(product.priceNt)}</span>
               </div>
-              <p className="mt-2 text-xs tracking-wide text-[#8a7f75]">展示商品與價格，以結帳頁顯示的配送方式為準</p>
+              <p className="mt-2 text-xs tracking-wide text-[#8a7f75]">商品價格與配送方式以結帳頁顯示為準</p>
             </div>
 
             <div className={`mt-6 flex items-start gap-3 border-l-[3px] px-4 py-3 text-sm leading-6 ${fit.safe ? "border-[#78a6c9] bg-[#e8f1f8] text-[#315F86]" : "border-[#ac705c] bg-[#f4e9df] text-[#734b3b]"}`} role="status">

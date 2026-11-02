@@ -11,7 +11,7 @@ import type {
 } from "@/lib/adminTypes";
 import { requireAdminSession } from "@/server/adminAuth";
 import { apiError } from "@/server/http";
-import { isExperienceOrder } from "@/server/experienceOrder";
+import { checkoutPaymentMethod } from "@/server/checkoutOrder";
 
 export const runtime = "nodejs";
 
@@ -85,7 +85,7 @@ export async function GET() {
         emptyHistory.push({ date: taipeiDate.format(d), revenueNt: 0, ordersCount: 0 });
       }
       const emptyMetrics: RevenueMetric = {
-        experienceOrdersCount: 0, experienceOrderValueNt: 0, pendingOrdersCount: 0,
+        pendingOrdersCount: 0,
         todayRevenueNt: 0, weekRevenueNt: 0, monthRevenueNt: 0, totalRevenueNt: 0,
         todayOrdersCount: 0, weekOrdersCount: 0, monthOrdersCount: 0, totalOrdersCount: 0,
         averageOrderValueNt: 0, repeatPurchaseRate: 0, autoshipRatio: 0,
@@ -130,11 +130,8 @@ export async function GET() {
     // 回購率計算
     const userOrderMap = new Map<string, { dates: Date[]; totalAmount: number }>();
 
-    const experienceOrders = allOrders.filter((order) => isExperienceOrder(order.paymentReference));
-    const experienceOrdersCount = experienceOrders.length;
-    const experienceOrderValueNt = experienceOrders.reduce((sum, order) => sum + order.totalNt, 0);
-    const pendingOrdersCount = allOrders.filter((order) => !isExperienceOrder(order.paymentReference) && order.status === "PENDING_PAYMENT").length;
-    const paidOrders = allOrders.filter((order) => !isExperienceOrder(order.paymentReference) && ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status));
+    const pendingOrdersCount = allOrders.filter((order) => order.status === "PENDING_PAYMENT").length;
+    const paidOrders = allOrders.filter((order) => ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status));
 
     for (const o of paidOrders) {
       const oTime = new Date(o.createdAt).getTime();
@@ -152,16 +149,8 @@ export async function GET() {
         cur.count += 1;
       }
 
-      // 付款方式推算（依 paymentReference 前綴或 status）
-      let payMethod = "其他方式";
-      // 根據訂單狀態分類（PURESPOT 目前無 paymentMethod 欄位）
-      if (o.status === "PAID" || o.status === "PROCESSING" || o.status === "DISPATCHED" || o.status === "COMPLETED") {
-        payMethod = "線上付款";
-      } else if (o.status === "PENDING_PAYMENT") {
-        payMethod = "待付款";
-      } else if (o.status === "CANCELLED") {
-        payMethod = "已取消";
-      }
+      const method = checkoutPaymentMethod(o.paymentReference);
+      const payMethod = method === "credit" ? "信用卡" : method === "linepay" ? "LINE Pay" : method === "transfer" ? "ATM 轉帳" : method === "cvs" ? "超商取貨付款" : "其他方式";
       const pm = paymentMap.get(payMethod) ?? { count: 0, amount: 0 };
       pm.count += 1;
       pm.amount += o.totalNt;
@@ -279,8 +268,6 @@ export async function GET() {
     }));
 
     const metrics: RevenueMetric = {
-      experienceOrdersCount,
-      experienceOrderValueNt,
       pendingOrdersCount,
       todayRevenueNt: todayRev,
       weekRevenueNt: weekRev,

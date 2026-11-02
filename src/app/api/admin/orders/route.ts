@@ -3,7 +3,8 @@ import { db } from "@/server/db";
 import { ApiError, apiError, readBody, verifyOrigin } from "@/server/http";
 import { requireAdminSession } from "@/server/adminAuth";
 import { z } from "zod";
-import { isExperienceOrder } from "@/server/experienceOrder";
+import { Prisma } from "@prisma/client";
+import { checkoutPaymentMethod } from "@/server/checkoutOrder";
 
 export const runtime = "nodejs";
 
@@ -42,8 +43,7 @@ export async function GET() {
       customerName: o.user?.name || "顧客",
       customerEmail: o.user?.email || "未提供",
       customerPhone: o.user?.phone || "未提供",
-      isExperience: isExperienceOrder(o.paymentReference),
-      paymentMethod: isExperienceOrder(o.paymentReference) ? o.paymentReference?.split(":")[1] : null,
+      paymentMethod: checkoutPaymentMethod(o.paymentReference),
       shippingAddress: o.shippingAddress,
       items: o.items.map((i) => ({
         id: i.id,
@@ -67,12 +67,33 @@ export async function PATCH(request: Request) {
     verifyOrigin(request);
     const { orderId, status } = await readBody(request, updateOrderStatusSchema);
 
-    const current = await db.order.findUnique({ where: { id: orderId } });
-    if (!current) throw new ApiError(404, "找不到該訂單");
-    if (isExperienceOrder(current.paymentReference) && status === "PAID")
-      throw new ApiError(400, "體驗流程沒有實際收款，不能標記為已付款");
-    // 草稿建立時未扣庫存，狀態變更也不得憑空增減庫存。
-    const updated = await db.order.update({ where: { id: orderId }, data: { status } });
+    const allowed: Record<string, string[]> = {
+      PENDING_PAYMENT: ["PAID", "CANCELLED"],
+      PAID: ["PROCESSING", "CANCELLED"],
+      PROCESSING: ["DISPATCHED", "CANCELLED"],
+      DISPATCHED: ["COMPLETED"],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+    const updated = await db.$transaction(async (tx) => {
+      const current = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
+      if (!current) throw new ApiError(404, "找不到該訂單");
+      if (current.status === status) return current;
+      if (!allowed[current.status]?.includes(status)) throw new ApiError(400, "此訂單無法變更為所選狀態");
+      const changed = await tx.order.updateMany({ where: { id: orderId, status: current.status }, data: { status } });
+      if (changed.count !== 1) throw new ApiError(409, "訂單狀態已變更，請重新整理");
+      const demand = new Map<string, number>();
+      for (const item of current.items) demand.set(item.variantId, (demand.get(item.variantId) ?? 0) + item.quantity);
+      for (const [variantId, quantity] of demand) {
+        if (current.status === "PENDING_PAYMENT" && status === "PAID") {
+          const reserved = await tx.productVariant.updateMany({ where: { id: variantId, stock: { gte: quantity } }, data: { stock: { decrement: quantity } } });
+          if (reserved.count !== 1) throw new ApiError(409, "商品庫存不足，無法確認訂單");
+        } else if (["PAID", "PROCESSING"].includes(current.status) && status === "CANCELLED") {
+          await tx.productVariant.update({ where: { id: variantId }, data: { stock: { increment: quantity } } });
+        }
+      }
+      return tx.order.findUniqueOrThrow({ where: { id: orderId } });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     return NextResponse.json({ success: true, order: updated });
   } catch (error) {

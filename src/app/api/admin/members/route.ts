@@ -22,13 +22,14 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         pets: { select: { id: true } },
-        orders: { select: { id: true, totalNt: true } },
+        orders: { select: { id: true, totalNt: true, status: true } },
       },
     });
 
     const members = users.map((u) => {
-      const ordersCount = u.orders.length;
-      const totalSpentNt = u.orders.reduce((acc, o) => acc + o.totalNt, 0);
+      const activeOrders = u.orders.filter((order) => ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status));
+      const ordersCount = activeOrders.length;
+      const totalSpentNt = activeOrders.reduce((acc, o) => acc + o.totalNt, 0);
 
       return {
         id: u.id,

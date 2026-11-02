@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { requireUser } from "@/server/auth";
 import { apiError, readBody, verifyOrigin } from "@/server/http";
-import { createOrderDraft, orderInputSchema } from "@/server/orderService";
+import { createOrder, orderInputSchema } from "@/server/orderService";
 import { rateLimit } from "@/server/rateLimit";
-import { isExperienceOrder } from "@/server/experienceOrder";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
@@ -12,14 +11,10 @@ export async function POST(request: Request) {
     const userId = await requireUser();
     await rateLimit(`order:${userId}`, 30, 60);
     const input = await readBody(request, orderInputSchema);
-    const order = await createOrderDraft(userId, input, {
-      paymentReference: `EXPERIENCE:legacy:${input.idempotencyKey}`,
-    });
+    const order = await createOrder(userId, input, `CHECKOUT:legacy:${input.idempotencyKey}`);
     return NextResponse.json(
       {
         order,
-        paymentAvailable: false,
-        message: "訂單草稿已儲存，付款服務尚未啟用，不會扣款或出貨",
       },
       { status: 201 },
     );
@@ -30,19 +25,21 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const userId = await requireUser();
-    const orders = await db.order.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { items: true },
-    });
+    const [orders, totalOrdersCount] = await Promise.all([
+      db.order.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: { items: true },
+      }),
+      db.order.count({ where: { userId, status: { in: ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"] } } }),
+    ]);
     return NextResponse.json(
-      { orders: orders.map((order) => ({
+      { totalOrdersCount, orders: orders.map((order) => ({
         id: order.id,
         status: order.status,
         totalNt: order.totalNt,
         createdAt: order.createdAt,
-        isExperience: isExperienceOrder(order.paymentReference),
         items: order.items,
       })) },
       { headers: { "Cache-Control": "private, no-store" } },

@@ -6,7 +6,6 @@ import {
   Pause,
   Play,
   CalendarDays,
-  Package,
   Clock3,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +17,6 @@ import { Button } from "@/components/ui/button";
 
 export default function AutoshipPage() {
   const plans = useAutoshipStore((s) => s.plans);
-  const orders = useAutoshipStore((s) => s.orders);
   const delay = useAutoshipStore((s) => s.delay);
   const toggle = useAutoshipStore((s) => s.toggle);
   const pets = usePetContextStore((s) => s.allPets);
@@ -31,9 +29,6 @@ export default function AutoshipPage() {
           <h1 className="mt-3 text-3xl font-semibold text-[#302b26]">我的循環補貨</h1>
           <p className="mt-3 text-[#675e53]">照著牠的步調，安排下一份美味。</p>
         </div>
-        <span className="rounded-full border border-[#5B93C5]/20 bg-[#5B93C5]/10 px-3 py-1.5 text-xs text-[#5B93C5] font-medium">
-          示範計畫 · 不會扣款或出貨
-        </span>
       </div>
 
       {plans.length ? (
@@ -128,7 +123,7 @@ export default function AutoshipPage() {
                   </Button>
                 </div>
                 <p className="mt-4 text-xs text-[#8a7f75]">
-                  提醒日期僅供展示，尚未串接 LINE／簡訊通知。
+                  提醒功能尚未開放，請先自行記下預計補貨日期。
                 </p>
               </section>
             );
@@ -141,7 +136,7 @@ export default function AutoshipPage() {
           </span>
           <h2 className="mt-5 text-xl font-semibold text-[#302b26]">從一份剛剛好的配糧計畫開始</h2>
           <p className="mx-auto mb-6 mt-3 max-w-md text-sm leading-7 text-[#675e53]">
-            挑選適合毛孩的主食，試算每日份量並加入循環補貨。建立示範訂單後，計畫就會出現在這裡。
+            挑選適合毛孩的主食，試算每日份量並加入購物車。
           </p>
           <Button asChild>
             <Link href="/shop">開始挑選主食</Link>
@@ -149,33 +144,6 @@ export default function AutoshipPage() {
         </section>
       )}
 
-      {orders.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-[#302b26]">
-            <Package size={20} className="text-[#5B93C5]" />
-            最近的示範訂單
-          </h2>
-          <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
-            {orders.slice(0, 5).map((order) => (
-              <div
-                key={order.id}
-                className="flex flex-wrap justify-between gap-3 border-b border-[#e8ded3] p-4 text-sm last:border-0 hover:bg-[#faf7f2] transition-colors"
-              >
-                <div>
-                  <p className="font-mono text-[#302b26] font-medium">{order.id}</p>
-                  <p className="mt-1 text-xs text-[#8a7f75]">
-                    {dateLabel(order.createdAt)} · 僅限本裝置
-                  </p>
-                </div>
-                <span className="font-semibold text-[#5B93C5]">
-                  {order.items.reduce((n, i) => n + i.quantity, 0)} 件 ·{" "}
-                  {money(order.totalNt)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
     </main>
   );
 }

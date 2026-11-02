@@ -13,6 +13,7 @@ let pendingWrite = Promise.resolve();
 function refreshLegacyArt(content: SiteContent): SiteContent {
   return {
     ...content,
+    footerNotice: content.footerNotice === "商品、檢驗與社群內容為展示樣本 · 未啟用真實扣款" ? defaultSiteContent.footerNotice : content.footerNotice,
     heroImage: content.heroImage === "/images/cat-life.png" || content.heroImage.includes("c6b5137e-941f-47f9-8ac0-709f5dac7b21") ? defaultSiteContent.heroImage : content.heroImage,
     shopImage: content.shopImage === "/images/cat-life.png" ? defaultSiteContent.shopImage : content.shopImage,
     communityImage: content.communityImage === "/images/chicken-dog.png" ? defaultSiteContent.communityImage : content.communityImage,

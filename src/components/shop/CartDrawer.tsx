@@ -34,7 +34,7 @@ import { useCartStore } from "@/store/useCartStore";
 import { usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
-import { DEMO_MODE, getProduct } from "@/lib/catalog";
+import { getProduct } from "@/lib/catalog";
 import { cartTotals, unitPrice } from "@/lib/cart";
 import { matchProduct } from "@/lib/matching";
 import { money } from "@/lib/utils";

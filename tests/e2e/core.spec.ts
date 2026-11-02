@@ -106,7 +106,12 @@ test("結帳付款方式有互動呈現，登入前不建立訂單", async ({ pa
   await page.goto("/checkout");
   await expect(page.getByRole("heading", { name: "結帳", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "前往填寫收件資訊" }).click();
-  await page.getByRole("button", { name: "填入測試資料" }).click();
+  await page.getByRole("textbox", { name: "收件人姓名 *" }).fill("陳小姐");
+  await page.getByRole("textbox", { name: "聯絡電話 *" }).fill("0912345678");
+  await page.getByRole("textbox", { name: "郵遞區號 *" }).fill("100");
+  await page.getByRole("textbox", { name: "縣市 *" }).fill("台北市");
+  await page.getByRole("textbox", { name: "鄉鎮市區 *" }).fill("中正區");
+  await page.getByRole("textbox", { name: "詳細地址 *" }).fill("仁愛路一段一號");
   await page.getByRole("button", { name: "確認收件資訊，選擇付款方式" }).click();
   await page.getByRole("button", { name: /LINE Pay/ }).first().click();
   await expect(page.getByText("LINE Pay 確認")).toBeVisible();

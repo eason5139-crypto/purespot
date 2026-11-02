@@ -35,8 +35,6 @@ export const adminProductInputSchema = z.object({
 export type AdminProductInput = z.infer<typeof adminProductInputSchema>;
 
 export interface RevenueMetric {
-  experienceOrdersCount: number;
-  experienceOrderValueNt: number;
   pendingOrdersCount: number;
   todayRevenueNt: number;
   weekRevenueNt: number;
