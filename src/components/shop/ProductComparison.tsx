@@ -21,7 +21,7 @@ export function ProductComparison({ products }: { products: Product[] }) {
     { label: "適用動物", value: (product: Product) => petLabels[product.type] },
     { label: "分類", value: (product: Product) => product.category },
     { label: "商品類型", value: (product: Product) => product.kind === "SUPPLIES" ? "用品與玩具" : "食物與點心" },
-    { label: "規格重量", value: (product: Product) => packageSize(product.bagGrams) },
+    { label: "規格重量", value: (product: Product) => product.kind === "SUPPLIES" ? "單件" : packageSize(product.bagGrams) },
     { label: "熱量", value: (product: Product) => product.kind !== "SUPPLIES" && product.kcalPer100g > 0 ? `${product.kcalPer100g} kcal / 100g` : "請參考商品資料" },
   ];
 

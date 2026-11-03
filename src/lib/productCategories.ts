@@ -11,4 +11,8 @@ export const shopCategories = [
   { name: "居家用品", kind: "SUPPLIES", english: "10 / COZY HOME", description: "打造牠自在的小天地。", tint: "#e8dfe9" },
   { name: "清潔照護", kind: "SUPPLIES", english: "11 / GENTLE CARE", description: "乾淨舒適，從日常開始。", tint: "#dce8e7" },
   { name: "外出用品", kind: "SUPPLIES", english: "12 / ON THE GO", description: "一起出門，也能安心自在。", tint: "#ebdfd1" },
+  { name: "飲水餐具", kind: "SUPPLIES", english: "13 / DINING RITUAL", description: "從喝水到開飯，整理舒服的小餐桌。", tint: "#dce9ec" },
+  { name: "舒壓嗅聞", kind: "SUPPLIES", english: "14 / SENSE & PLAY", description: "聞一聞、找一找，讓日常多一點探索。", tint: "#e7eadf" },
+  { name: "戶外安全", kind: "SUPPLIES", english: "15 / OUTSIDE TOGETHER", description: "一起出門前，準備合適的陪伴裝備。", tint: "#dce5ee" },
+  { name: "日常保養", kind: "SUPPLIES", english: "16 / GENTLE ROUTINE", description: "把梳理與清潔，放進溫柔的日常。", tint: "#ece3dc" },
 ] as const;

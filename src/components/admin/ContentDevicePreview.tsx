@@ -12,7 +12,23 @@ const devices = {
 type Device = keyof typeof devices;
 const pages = [{ path: "/", label: "首頁" }, { path: "/shop", label: "商城" }, { path: "/transparency", label: "透明資訊" }] as const;
 
-export function ContentDevicePreview({ content, section }: { content: SiteContent; section: string }) {
+function previewTarget(section: string, field: keyof SiteContent | null) {
+  if (section === "benefits") return { page: "/", anchor: "our-approach", label: "品牌特色" } as const;
+  if (section === "stories") {
+    if (field?.startsWith("community")) return { page: "/", anchor: "community-story", label: "社群介紹" } as const;
+    if (field?.startsWith("final")) return { page: "/", anchor: "final-invitation", label: "首頁結尾" } as const;
+    return { page: "/", anchor: "family-story", label: "家庭介紹" } as const;
+  }
+  if (section === "pages") {
+    if (field?.startsWith("transparency")) return { page: "/transparency", anchor: "main-content", label: "透明資訊" } as const;
+    if (field === "shopImage") return { page: "/shop", anchor: "main-content", label: "商城主視覺" } as const;
+    return { page: "/shop", anchor: "main-content", label: "商城主視覺" } as const;
+  }
+  if (section === "global" && field !== "announcement") return { page: "/", anchor: "site-footer", label: "全站頁尾" } as const;
+  return { page: "/", anchor: "home-hero", label: section === "global" ? "頂端公告" : "首頁主視覺" } as const;
+}
+
+export function ContentDevicePreview({ content, section, field }: { content: SiteContent; section: string; field: keyof SiteContent | null }) {
   const [device, setDevice] = useState<Device>("phone");
   const [page, setPage] = useState<(typeof pages)[number]["path"]>("/");
   const [expanded, setExpanded] = useState(false);
@@ -20,6 +36,8 @@ export function ContentDevicePreview({ content, section }: { content: SiteConten
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const selected = devices[device];
+  const target = previewTarget(section, field);
+  const anchor = page === target.page ? target.anchor : (page === "/" ? "home-hero" : "main-content");
   const scale = Math.min(1, Math.max(0.2, (availableWidth - 24) / selected.width));
 
   useEffect(() => {
@@ -34,7 +52,14 @@ export function ContentDevicePreview({ content, section }: { content: SiteConten
     iframeRef.current?.contentWindow?.postMessage({ type: "purespot-content-preview", content }, window.location.origin);
   }, [content, device, page]);
 
-  useEffect(() => { setPage(section === "pages" ? "/shop" : "/"); }, [section]);
+  useEffect(() => { setPage(target.page); }, [target.page]);
+
+  useEffect(() => {
+    const scroll = () => iframeRef.current?.contentDocument?.getElementById(anchor)?.scrollIntoView({ block: "start" });
+    const early = window.setTimeout(scroll, 100);
+    const settled = window.setTimeout(scroll, 600);
+    return () => { window.clearTimeout(early); window.clearTimeout(settled); };
+  }, [anchor, page, device]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -57,7 +82,7 @@ export function ContentDevicePreview({ content, section }: { content: SiteConten
       <div className="border-b border-[#cbd7df] bg-[#f8fbfc] p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3"><p className="text-[11px] font-bold tracking-[.17em] text-[#5B93C5]">LIVE SITE PREVIEW</p><button type="button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "縮小預覽" : "放大預覽"} className="flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[#315F86] hover:bg-[#e6edf2]">{expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{expanded ? "縮小" : "放大"}</button></div>
         <h2 className="mt-1 text-lg font-semibold text-[#263746]">網站即時預覽</h2>
-        <p className="mt-1 text-xs leading-5 text-[#65727a]">切換實際頁面與裝置，儲存前只有你看得到變動。</p>
+        <p className="mt-1 text-xs leading-5 text-[#65727a]">目前查看：{page === target.page ? target.label : pages.find((item) => item.path === page)?.label}。切換裝置，儲存前只有你看得到變動。</p>
         <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="預覽頁面">{pages.map((item) => <button key={item.path} type="button" aria-pressed={page === item.path} onClick={() => setPage(item.path)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${page === item.path ? "bg-[#315F86] text-white" : "bg-[#e6edf2] text-[#60707b] hover:bg-[#d6e5ef]"}`}>{item.label}</button>)}</div>
         <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-[#e6edf2] p-1" role="group" aria-label="預覽裝置">
           {(Object.entries(devices) as [Device, typeof selected][]).map(([key, item]) => {
@@ -72,8 +97,8 @@ export function ContentDevicePreview({ content, section }: { content: SiteConten
             key={`${device}-${page}`}
             ref={iframeRef}
             title={`${selected.label}網站預覽`}
-            src={page}
-            onLoad={() => iframeRef.current?.contentWindow?.postMessage({ type: "purespot-content-preview", content }, window.location.origin)}
+            src={`${page}#${anchor}`}
+            onLoad={() => { iframeRef.current?.contentWindow?.postMessage({ type: "purespot-content-preview", content }, window.location.origin); iframeRef.current?.contentDocument?.getElementById(anchor)?.scrollIntoView({ block: "start" }); }}
             className="block border-0 bg-white"
             style={{ width: selected.width, height: selected.height, transform: `scale(${scale})`, transformOrigin: "top left" }}
           />

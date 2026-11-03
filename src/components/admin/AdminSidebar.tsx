@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, Boxes, ExternalLink, FilePenLine, Images, LayoutDashboard,
-  LogOut, Menu, MessageCircle, Package, ShoppingCart, Users, X,
+  LogOut, Megaphone, Menu, MessageCircle, Package, ShoppingCart, Users, X,
 } from "lucide-react";
 
 const groups = [
@@ -16,7 +16,8 @@ const groups = [
   ] },
   { title: "網站與商品", links: [
     { href: "/admin/content", label: "網站內容", icon: FilePenLine },
-    { href: "/admin/media", label: "圖片媒體庫", icon: Images },
+    { href: "/admin/media", label: "網站圖片", icon: Images },
+    { href: "/admin/promotions", label: "站內活動", icon: Megaphone },
     { href: "/admin/products", label: "商品管理", icon: Package },
     { href: "/admin/inventory", label: "庫存管理", icon: Boxes },
   ] },

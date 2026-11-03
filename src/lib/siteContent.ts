@@ -1,6 +1,22 @@
 import { z } from "zod";
 import { mediaUrlSchema } from "./mediaUrl";
 
+export const promotionSchema = z.object({
+  id: z.string().min(1).max(60),
+  title: z.string().trim().min(1).max(60),
+  description: z.string().trim().min(1).max(180),
+  image: mediaUrlSchema,
+  ctaLabel: z.string().trim().min(1).max(30),
+  href: z.string().regex(/^\/[a-z0-9/?=&-]*$/i, "請使用站內網址"),
+  enabled: z.boolean(),
+}).strict();
+
+export const defaultPromotions = [
+  { id: "daily-selection", title: "為牠，挑一件剛剛好的日常。", description: "從一餐飯到一件玩具，慢慢找到適合你們的生活選物。", image: "/images/editorial/shop-living-v2.png", ctaLabel: "探索商城", href: "/shop", enabled: true },
+  { id: "same-rhythm", title: "毛孩的故事，能遇見同頻的人。", description: "分享生活裡的小片刻，看看其他家庭怎麼陪牠長大。", image: "/images/editorial/small-friends-v2.png", ctaLabel: "走進交流圈", href: "/community", enabled: true },
+  { id: "care-tools", title: "把照顧，排進舒服的節奏。", description: "食量、補貨與換糧，一步一步陪你整理好。", image: "/images/editorial/home-living-v2.png", ctaLabel: "看看照顧工具", href: "/care", enabled: true },
+];
+
 export const siteContentSchema = z.object({
   announcement: z.string().trim().min(1).max(120),
   footerTagline: z.string().trim().min(1).max(150),
@@ -36,6 +52,7 @@ export const siteContentSchema = z.object({
   shopImage: mediaUrlSchema,
   transparencyTitle: z.string().trim().min(1).max(100),
   transparencyDescription: z.string().trim().min(1).max(300),
+  promotions: z.array(promotionSchema).max(6).default(defaultPromotions),
 }).strict();
 
 export type SiteContent = z.infer<typeof siteContentSchema>;
@@ -75,4 +92,5 @@ export const defaultSiteContent: SiteContent = {
   shopImage: "/images/editorial/shop-living-v2.png",
   transparencyTitle: "成分透明，讓愛有據可查",
   transparencyDescription: "查看商品的原料、營養保證值與示範批次資料。正式報告會在核實來源後提供下載。",
+  promotions: defaultPromotions,
 };

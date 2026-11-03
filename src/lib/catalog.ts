@@ -1,6 +1,7 @@
 import type { ActivePet, Product, UgcPost } from "./types";
 import { supplementalProducts } from "./catalogExpansion";
 import { lifestyleProducts } from "./lifestyleProducts";
+import { moreProducts } from "./catalogMore";
 export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
 export const initialPets: ActivePet[] = [
   {
@@ -86,7 +87,7 @@ export const products: Product[] = [
     bagGrams: 2000,
     priceNt: 890,
     stock: 28,
-    image: "/images/chicken-dog.png",
+    image: "/images/chicken-cat-v2.webp",
     color: "amber",
     proteinMin: 40,
     moistureMax: 10,
@@ -134,7 +135,7 @@ export const products: Product[] = [
     bagGrams: 2500,
     priceNt: 1180,
     stock: 20,
-    image: "/images/salmon-cat.png",
+    image: "/images/beef-dog-v2.webp",
     color: "blue",
     proteinMin: 30,
     moistureMax: 10,
@@ -146,6 +147,7 @@ export const products: Product[] = [
   },
   ...supplementalProducts,
   ...lifestyleProducts,
+  ...moreProducts,
 ];
 export const ugcPosts: UgcPost[] = [
   {

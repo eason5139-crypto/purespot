@@ -7,10 +7,10 @@ async function seed() {
   const categoryIds = new Map<string, string>();
   const names = [...new Set(products.map((product) => product.category))];
 
-  for (const [index, name] of names.entries()) {
+  for (const name of names) {
     const existing = await prisma.category.findFirst({ where: { name } });
     const category = existing ?? await prisma.category.create({
-      data: { id: `00000000-0000-0000-0000-${String(index + 1).padStart(12, "0")}`, name },
+      data: { name },
     });
     categoryIds.set(name, category.id);
   }
@@ -18,7 +18,14 @@ async function seed() {
   let created = 0;
   for (const product of products) {
     // 已有商品可能由後台修改過：重新執行時不得覆蓋名稱、價格、圖片或庫存。
-    if (await prisma.product.findUnique({ where: { id: product.id }, select: { id: true } })) continue;
+    const existingProduct = await prisma.product.findUnique({ where: { id: product.id }, select: { imageUrl: true } });
+    if (existingProduct) {
+      const repeatedOldImage = product.id === "chicken-cat" ? "/images/chicken-dog.png" : product.id === "beef-dog" ? "/images/salmon-cat.png" : null;
+      if (repeatedOldImage && existingProduct.imageUrl === repeatedOldImage) {
+        await prisma.product.update({ where: { id: product.id }, data: { imageUrl: product.image } });
+      }
+      continue;
+    }
     const categoryId = categoryIds.get(product.category);
     if (!categoryId) throw new Error(`缺少分類：${product.category}`);
 
@@ -48,7 +55,7 @@ async function seed() {
         variants: {
           create: {
             sku: `PS-${product.id}`,
-            label: `${product.bagGrams} 克`,
+            label: product.kind === "SUPPLIES" ? "單件" : `${product.bagGrams} 克`,
             bagGrams: product.bagGrams,
             priceNt: product.priceNt,
             stock: product.stock,

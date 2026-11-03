@@ -54,7 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
         >
           <Image
             src={product.image}
-            alt={`${product.name}包裝概念示意，商品規格以文字為準`}
+            alt={`${product.name}商品形象照`}
             fill
             sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,25vw"
             className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
@@ -82,14 +82,14 @@ export function ProductCard({ product }: { product: Product }) {
           </AnimatePresence>
         </div>
         <span className="absolute bottom-2 right-3 bg-[#f8f4ed]/80 px-1 text-[10px] text-[#766c62]">
-          概念包裝示意
+          商品形象照
         </span>
         <button type="button" aria-label={isFavorite ? `取消收藏${product.name}` : `收藏${product.name}`} aria-pressed={isFavorite} onClick={() => { toggleFavorite(product.id); toast.success(isFavorite ? "已移除收藏" : "已加入收藏"); }} className={`absolute bottom-3 left-3 flex size-11 items-center justify-center rounded-full border bg-[#fffaf4]/95 shadow-sm transition-transform hover:scale-105 ${isFavorite ? "border-[#ab6c51] text-[#a65a3f]" : "border-[#dfd0c0] text-[#705f51]"}`}><Heart size={19} fill={isFavorite ? "currentColor" : "none"} /></button>
       </div>
       <div className="p-5">
         <div className="mb-2 flex items-center justify-between text-xs text-[#7d7165]">
           <span>
-            {packageSize(product.bagGrams)} · {product.category}
+            {product.kind === "SUPPLIES" ? "單件" : packageSize(product.bagGrams)} · {product.category}
           </span>
           {product.kind !== "SUPPLIES" && <span className="flex items-center gap-1 text-[#5B93C5]">
             <FlaskConical size={12} />

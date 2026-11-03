@@ -8,7 +8,7 @@ import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { ContentDevicePreview } from "@/components/admin/ContentDevicePreview";
 import { defaultSiteContent, type SiteContent } from "@/lib/siteContent";
 
-type ContentKey = keyof SiteContent;
+type ContentKey = Exclude<keyof SiteContent, "promotions">;
 type Field = { key: ContentKey; label: string; kind?: "long" | "image"; help?: string };
 type Section = { id: string; title: string; description: string; fields: Field[] };
 
@@ -87,6 +87,7 @@ const sections: Section[] = [
 export default function AdminContentPage() {
   const [content, setContent] = useState<SiteContent>(defaultSiteContent);
   const [active, setActive] = useState(sections[0]!.id);
+  const [focusedField, setFocusedField] = useState<ContentKey | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -150,7 +151,7 @@ export default function AdminContentPage() {
             <button
               key={item.id}
               type="button"
-              onClick={() => setActive(item.id)}
+              onClick={() => { setActive(item.id); setFocusedField(null); }}
               aria-current={active === item.id ? "page" : undefined}
               className={`whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-medium transition-all lg:w-full ${
                 active === item.id
@@ -173,7 +174,7 @@ export default function AdminContentPage() {
           ) : (
             <div className="grid gap-6 py-7">
               {section.fields.map((field) => (
-                <div key={field.key}>
+                <div key={field.key} onFocusCapture={() => setFocusedField(field.key)} onClickCapture={() => setFocusedField(field.key)}>
                   {field.kind === "image" ? (
                     <MediaUploadField label={field.label} value={content[field.key]} onChange={(url) => change(field.key, url)} />
                   ) : (
@@ -208,7 +209,7 @@ export default function AdminContentPage() {
             <Button type="submit" disabled={loading || saving} className="gap-2"><Save size={16} />{saving ? "儲存中…" : "儲存網站內容"}</Button>
           </div>
         </form>
-        {!loading && <ContentDevicePreview content={content} section={active} />}
+        {!loading && <ContentDevicePreview content={content} section={active} field={section.fields.some((item) => item.key === focusedField) ? focusedField : null} />}
       </div>
     </div>
   );

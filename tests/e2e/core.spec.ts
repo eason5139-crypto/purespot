@@ -1,12 +1,16 @@
 import { test, expect } from "@playwright/test";
 
-test("商城十二個分類各能查看五款商品", async ({ page }) => {
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("purespot-promotions-seen-v1", "1"));
+});
+
+test("商城十六個分類各能查看五款商品", async ({ page }) => {
   await page.goto("/shop");
-  for (const name of ["主食乾糧", "主食罐頭", "鮮食餐包", "凍乾主食", "風乾主食", "機能配方", "小動物主食", "零食點心", "玩具互動", "居家用品", "清潔照護", "外出用品"]) {
+  for (const name of ["主食乾糧", "主食罐頭", "鮮食餐包", "凍乾主食", "風乾主食", "機能配方", "小動物主食", "零食點心", "玩具互動", "居家用品", "清潔照護", "外出用品", "飲水餐具", "舒壓嗅聞", "戶外安全", "日常保養"]) {
     await page.getByRole("button", { name: new RegExp(name) }).first().click();
     await expect(page.locator(".product-card")).toHaveCount(5);
   }
-  await page.getByRole("button", { name: /看全部 60 款/ }).click();
+  await page.getByRole("button", { name: /看全部 80 款/ }).click();
   await expect(page.getByRole("button", { name: "查看更多商品" })).toBeVisible();
 });
 test("收藏、價格篩選與商品比較可以操作", async ({ page }) => {

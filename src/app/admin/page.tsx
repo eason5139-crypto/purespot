@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BarChart3, FilePenLine, MessageCircle, Package, ShoppingCart, Users } from "lucide-react";
+import { ArrowUpRight, BarChart3, FilePenLine, Megaphone, MessageCircle, Package, ShoppingCart, Users } from "lucide-react";
 import type { RevenueMetric } from "@/lib/adminTypes";
 import { money } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ const shortcuts = [
   { href: "/admin/orders", label: "處理訂單", detail: "查看與更新訂單狀態", icon: ShoppingCart },
   { href: "/admin/members", label: "管理會員", detail: "搜尋與檢視顧客資料", icon: Users },
   { href: "/admin/community", label: "審核社群內容", detail: "日記投稿、檢舉與留言", icon: MessageCircle },
+  { href: "/admin/promotions", label: "安排站內活動", detail: "首頁與商城的活動卡片", icon: Megaphone },
 ];
 
 export default function AdminPage() {

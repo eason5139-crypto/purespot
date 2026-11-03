@@ -372,7 +372,7 @@ export function CartDrawer() {
                           </p>
                           <p className="mt-0.5 text-sm font-medium text-[#302b26] truncate">{p.name}</p>
                           <p className="text-xs text-[#8a7f75]">
-                            {p.bagGrams / 1000}kg · {money(unitPrice(p, item.mode))}
+                            {p.kind === "SUPPLIES" ? "單件" : `${p.bagGrams / 1000}kg`} · {money(unitPrice(p, item.mode))}
                           </p>
                           {item.mode === "AUTOSHIP" && (
                             <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#315F86] font-medium">

@@ -53,7 +53,7 @@ export function ProductDetail({ product }: { product: Product }) {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,.88fr)] lg:gap-16">
           <div>
             <div className="relative aspect-[1.04] overflow-hidden bg-[#ebe5da]">
-              <Image src={activeImage} alt={`${product.name}概念包裝示意`} fill priority className="object-contain p-8 md:p-14" sizes="(max-width: 1024px) 100vw, 55vw" />
+              <Image src={activeImage} alt={`${product.name}商品形象照`} fill priority className="object-contain p-8 md:p-14" sizes="(max-width: 1024px) 100vw, 55vw" />
               <span className="absolute left-5 top-5 bg-[#f8f4ed]/95 px-3 py-2 text-[11px] font-semibold tracking-[.14em] text-[#765b4c]">PURESPOT SELECT</span>
             </div>
             {images.length > 1 && (
@@ -77,7 +77,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
             <div className="mt-8 border-y border-[#d9cfc3] py-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm text-[#70665d]">{packageSize(product.bagGrams)} · {product.category}</span>
+              <span className="text-sm text-[#70665d]">{isSupply ? "單件" : packageSize(product.bagGrams)} · {product.category}</span>
               <span className="font-serif text-3xl text-[#3b342d]">{money(product.priceNt)}</span>
               </div>
               <p className="mt-2 text-xs tracking-wide text-[#8a7f75]">商品價格與配送方式以結帳頁顯示為準</p>
@@ -102,7 +102,7 @@ export function ProductDetail({ product }: { product: Product }) {
               <div><strong className="block font-serif text-2xl">{product.kcalPer100g}</strong><span className="mt-1 block text-xs text-[#756c63]">大卡 / 100 克</span></div>
               <div><strong className="block font-serif text-2xl">{packageSize(product.bagGrams)}</strong><span className="mt-1 block text-xs text-[#756c63]">包裝規格</span></div>
             </div>}
-            {!canCalculate && <div className="mt-10 border-y border-[#d9cfc3] py-5 text-sm text-[#756c63]">{product.category} · {packageSize(product.bagGrams)} · {petLabels[product.type]}適用</div>}
+            {!canCalculate && <div className="mt-10 border-y border-[#d9cfc3] py-5 text-sm text-[#756c63]">{product.category} · {isSupply ? "單件" : packageSize(product.bagGrams)} · {petLabels[product.type]}適用</div>}
             <p className="mt-4 text-xs leading-6 text-[#8a7f75]">商品與圖片為展示資料，正式資訊請以實品標示為準。{!isSupply && "特殊飲食需求請先詢問獸醫師。"}</p>
           </div>
         </div>
