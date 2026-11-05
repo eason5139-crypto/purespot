@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useCatalogStore } from "@/store/useCatalogStore";
 import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { syncSavedPets } from "@/lib/petCloudSync";
+import { syncCloudFavorites } from "@/lib/favoriteCloudSync";
 import { useCareStore } from "@/store/useCareStore";
 export function Providers({ children }: { children: React.ReactNode }) {
   const [storageError, setStorageError] = useState(false);
@@ -52,7 +53,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    void syncSavedPets(userId).catch(() => { if (active) setPetSyncError(true); });
+    void Promise.all([syncSavedPets(userId), syncCloudFavorites(userId)]).catch(() => { if (active) setPetSyncError(true); });
     return () => { active = false; };
   }, [userId]);
   return (

@@ -121,6 +121,9 @@ export async function PATCH(request: Request) {
           },
         });
       }
+      if (input.stock === 0) {
+        await tx.favorite.updateMany({ where: { productId: id, watchRestock: true }, data: { savedOutOfStock: true } });
+      }
     });
     return NextResponse.json({ product: (await getCatalogProducts(true)).find((p) => p.id === id) });
   } catch (error) {

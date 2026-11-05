@@ -117,6 +117,10 @@ export async function createOrder(
           data: { stock: { decrement: quantity } },
         });
         if (reserved.count !== 1) throw new ApiError(409, "商品庫存不足，請調整數量");
+        const variant = variants.find((item) => item.id === variantId);
+        if (variant && variant.stock === quantity) {
+          await tx.favorite.updateMany({ where: { productId: variant.productId, watchRestock: true }, data: { savedOutOfStock: true } });
+        }
       }
       return tx.order.create({
         data: {

@@ -2,19 +2,34 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { z } from "zod";
+import { toast } from "sonner";
 
 interface FavoritesState {
   ids: string[];
   toggle: (id: string) => void;
   clear: () => void;
+  setIds: (ids: string[]) => void;
 }
 
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set) => ({
       ids: [],
-      toggle: (id) => set((state) => ({ ids: state.ids.includes(id) ? state.ids.filter((item) => item !== id) : [...state.ids, id].slice(-200) })),
+      toggle: (id) => {
+        const wasSaved = useFavoritesStore.getState().ids.includes(id);
+        set((state) => ({ ids: wasSaved ? state.ids.filter((item) => item !== id) : [...state.ids, id].slice(-200) }));
+        void import("./useAuthStore").then(({ useAuthStore }) => {
+          if (!useAuthStore.getState().user) return;
+          return fetch("/api/account/favorites", { method: wasSaved ? "DELETE" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: id }) }).then((response) => {
+            if (!response.ok) throw new Error("收藏暫時無法同步");
+          });
+        }).catch(() => {
+          set((state) => ({ ids: wasSaved ? [...state.ids, id] : state.ids.filter((item) => item !== id) }));
+          toast.error("收藏暫時無法同步，請再試一次");
+        });
+      },
       clear: () => set({ ids: [] }),
+      setIds: (ids) => set({ ids: [...new Set(ids)].slice(-200) }),
     }),
     {
       name: "purespot-favorites",

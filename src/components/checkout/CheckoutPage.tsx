@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -26,6 +26,7 @@ import { cartTotals } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
 import { money } from "@/lib/utils";
 import { getProduct } from "@/lib/catalog";
+import type { SavedAddress } from "@/lib/accountTypes";
 
 type Step = "cart" | "address" | "payment" | "confirm";
 
@@ -88,11 +89,30 @@ function CheckoutContent() {
     address: "",
     note: isFamilyMode ? "請放管理室，家庭主食補貨" : "",
   });
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState(isFamilyMode ? "linepay" : "credit");
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    void fetch("/api/account/addresses", { cache: "no-store" }).then(async (response) => {
+      if (!response.ok) return;
+      const data = await response.json() as { addresses?: SavedAddress[] };
+      if (!active || !data.addresses) return;
+      setSavedAddresses(data.addresses);
+      const preferred = data.addresses.find((item) => item.isDefault) ?? data.addresses[0];
+      if (preferred) {
+        setSelectedAddressId(preferred.id);
+        setAddress((current) => current.address ? current : { name: preferred.name, phone: preferred.phone, postalCode: preferred.postalCode, city: preferred.city, district: preferred.district, address: preferred.address, note: preferred.note });
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [user?.id]);
 
   const subtotal = isFamilyMode
     ? sharedItems.reduce((acc, i) => acc + (getProduct(i.productId)?.priceNt ?? i.priceNt) * i.quantity, 0)
@@ -343,6 +363,7 @@ function CheckoutContent() {
               </div>
             </div>
             <div className="space-y-4">
+              {savedAddresses.length > 0 && <div className="rounded-xl bg-[#f3f8fb] p-4"><p className="mb-3 text-xs font-semibold text-[#315F86]">使用已儲存的收件地址</p><div className="grid gap-2 sm:grid-cols-2">{savedAddresses.map((item) => <button type="button" key={item.id} aria-pressed={selectedAddressId === item.id} onClick={() => { setSelectedAddressId(item.id); setAddress({ name: item.name, phone: item.phone, postalCode: item.postalCode, city: item.city, district: item.district, address: item.address, note: item.note }); }} className={`rounded-xl border p-3 text-left text-xs ${selectedAddressId === item.id ? "border-[#5B93C5] bg-white text-[#315F86]" : "border-[#d9e5ed] text-[#687985]"}`}><strong className="block">{item.label}{item.isDefault ? " · 預設" : ""}</strong><span className="mt-1 block truncate">{item.name} · {item.city}{item.district}{item.address}</span></button>)}</div></div>}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="shipping-name" className="field-label">收件人姓名 *</label>

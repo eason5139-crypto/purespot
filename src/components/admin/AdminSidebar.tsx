@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, Boxes, ExternalLink, FilePenLine, Images, LayoutDashboard,
-  LogOut, Megaphone, Menu, MessageCircle, Package, ShoppingCart, Users, X,
+  LogOut, Megaphone, Menu, MessageCircle, Package, ShoppingCart, Headset, Users, X,
 } from "lucide-react";
 
 const groups = [
@@ -23,6 +23,7 @@ const groups = [
   ] },
   { title: "交易與顧客", links: [
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
+    { href: "/admin/support", label: "售後需求", icon: Headset },
     { href: "/admin/members", label: "會員管理", icon: Users },
   ] },
   { title: "社群", links: [

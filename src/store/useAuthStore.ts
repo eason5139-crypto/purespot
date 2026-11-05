@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { usePetContextStore } from "./usePetContextStore";
 import { useCartStore } from "./useCartStore";
 import { useCareStore } from "./useCareStore";
+import { useFavoritesStore } from "./useFavoritesStore";
 
 export interface AuthUser {
   id: string;
@@ -80,6 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     usePetContextStore.getState().resetPets();
     useCartStore.getState().clear();
     useCareStore.getState().resetCare();
+    useFavoritesStore.getState().clear();
     set({ user: null });
   },
 }));

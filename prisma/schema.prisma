@@ -61,6 +61,12 @@ model User {
   communityLikes CommunityLike[]
   communityBookmarks CommunityBookmark[]
   communityReports CommunityReport[]
+  addresses SavedAddress[]
+  accountPreference AccountPreference?
+  favorites Favorite[]
+  careRecords CareRecord[]
+  careReminders CareReminder[]
+  supportRequests SupportRequest[]
   sessions Session[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,6 +102,9 @@ model Pet {
   communityPosts CommunityPost[]
   autoshipItems AutoshipItem[]
   weightRecords WeightRecord[]
+  favorites Favorite[]
+  careRecords CareRecord[]
+  careReminders CareReminder[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([userId])
@@ -195,6 +204,7 @@ model Product {
   variants ProductVariant[]
   batches BatchReport[]
   reviews Review[]
+  favorites Favorite[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([targetPetType, isPublished])
@@ -240,6 +250,7 @@ model Order {
   paymentReference String? @unique
   expiresAt DateTime
   items OrderItem[]
+  supportRequests SupportRequest[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([userId, idempotencyKey])
@@ -315,4 +326,90 @@ model OutboxEvent {
   processedAt DateTime?
   createdAt DateTime @default(now())
   @@index([processedAt, availableAt])
+}
+
+model SavedAddress {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label String
+  name String
+  phone String
+  postalCode String
+  city String
+  district String
+  address String
+  note String @default("")
+  isDefault Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+}
+
+model AccountPreference {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderUpdates Boolean @default(true)
+  refillReminders Boolean @default(true)
+  restockAlerts Boolean @default(true)
+  careReminders Boolean @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  petId String?
+  pet Pet? @relation(fields: [petId], references: [id], onDelete: SetNull)
+  watchRestock Boolean @default(false)
+  savedOutOfStock Boolean @default(false)
+  createdAt DateTime @default(now())
+  @@id([userId, productId])
+  @@index([userId, petId])
+}
+
+model CareRecord {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId String
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+  kind String
+  note String
+  weightKg Float?
+  recordedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  @@index([userId, petId, recordedAt])
+}
+
+model CareReminder {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId String
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+  title String
+  dueAt DateTime
+  repeatDays Int?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, dueAt])
+}
+
+model SupportRequest {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId String
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind String
+  status String @default("OPEN")
+  message String
+  response String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }

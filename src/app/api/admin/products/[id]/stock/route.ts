@@ -43,6 +43,9 @@ export async function PATCH(
       where: { id: variant.id },
       data: { stock: newStock },
     });
+    if (newStock === 0) {
+      await db.favorite.updateMany({ where: { productId: id, watchRestock: true }, data: { savedOutOfStock: true } });
+    }
 
     return NextResponse.json({
       success: true,
