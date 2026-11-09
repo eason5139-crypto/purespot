@@ -43,7 +43,7 @@ export const lifestyleProducts: Product[] = entries.map(([id, name, petLabel, ty
     ingredients: kind === "FOOD" ? [name.replace(/^(貓咪|狗狗|倉鼠|兔兔)/, "")] : [],
     allergens: [], kcalPer100g: kind === "FOOD" && !smallPet ? 350 : 0,
     bagGrams, priceNt, stock: 12 + ((index * 7) % 18),
-    image: `/images/products/${id}.svg`, color: ["amber", "cyan", "blue"][index % 3] as Product["color"],
+    image: `/images/products-photo/${id}.webp`, color: ["amber", "cyan", "blue"][index % 3] as Product["color"],
     proteinMin: kind === "FOOD" && !smallPet ? 20 : 0,
     moistureMax: kind === "FOOD" && !smallPet ? 12 : 0,
     ashMax: kind === "FOOD" && !smallPet ? 8 : 0,

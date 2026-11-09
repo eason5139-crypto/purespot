@@ -12,6 +12,7 @@ import type {
 import { requireAdminSession } from "@/server/adminAuth";
 import { apiError } from "@/server/http";
 import { checkoutPaymentMethod } from "@/server/checkoutOrder";
+import { inventorySpending } from "@/server/stockAdjustment";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ const taipeiDate = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireAdminSession();
   } catch (error) {
@@ -40,6 +41,9 @@ export async function GET() {
   const startOfMonth = new Date(Date.UTC(year!, month! - 1, 1) - 8 * 3_600_000);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const requestedDays = Number(new URL(request.url).searchParams.get("abcDays") ?? 30);
+  const abcDays = [7, 30, 90].includes(requestedDays) ? requestedDays : 30;
+  const abcStart = new Date(now.getTime() - abcDays * 86_400_000);
 
   try {
     // 一次取得所有訂單（含 items、user、variant->product）
@@ -57,10 +61,14 @@ export async function GET() {
             productName: true,
             quantity: true,
             unitPriceNt: true,
+            unitCostNt: true,
+            unitCostSource: true,
             isAutoship: true,
             variant: {
               select: {
                 productId: true,
+                unitCostNt: true,
+                costSource: true,
                 product: {
                   select: {
                     id: true,
@@ -76,6 +84,7 @@ export async function GET() {
       },
       orderBy: { createdAt: "asc" },
     });
+    const inventorySpendingData = await inventorySpending();
 
     if (allOrders.length === 0) {
       // 空資料庫：回傳全零但真實結構
@@ -89,6 +98,7 @@ export async function GET() {
         todayRevenueNt: 0, weekRevenueNt: 0, monthRevenueNt: 0, totalRevenueNt: 0,
         todayOrdersCount: 0, weekOrdersCount: 0, monthOrdersCount: 0, totalOrdersCount: 0,
         averageOrderValueNt: 0, repeatPurchaseRate: 0, autoshipRatio: 0,
+        monthGrossProfitNt: null, monthGrossMarginPct: null, monthCostCoveragePct: 0, monthCostEstimated: false,
       };
       return NextResponse.json({
         metrics: emptyMetrics,
@@ -97,6 +107,7 @@ export async function GET() {
         categoryBreakdown: [] as CategoryBreakdown[],
         petTypeBreakdown: [] as PetTypeBreakdown[],
         abcProducts: [] as ABCProductData[],
+        inventorySpending: inventorySpendingData,
         repeatDetail: { totalBuyers: 0, repeatBuyers: 0, rate: 0, avgOrdersPerRepeatBuyer: 0, avgDaysBetweenOrders: 0 } as RepeatPurchaseDetail,
         source: "database",
       });
@@ -125,7 +136,8 @@ export async function GET() {
     const petTypeCountMap = new Map<string, { count: number; amount: number }>();
 
     // ABC 商品統計
-    const abcMap = new Map<string, { name: string; salesQty: number; revenue: number; qtyRecent: number; qtyPrior: number }>();
+    const abcMap = new Map<string, { name: string; category: string; petType: string; salesQty: number; revenue: number; cogs: number; coveredRevenue: number; estimatedCost: boolean; qtyRecent: number; qtyPrior: number }>();
+    let monthProductRevenue = 0, monthCoveredRevenue = 0, monthCogs = 0, monthCostEstimated = false;
 
     // 回購率計算
     const userOrderMap = new Map<string, { dates: Date[]; totalAmount: number }>();
@@ -168,6 +180,13 @@ export async function GET() {
         if (item.isAutoship) hasAutoship = true;
         const itemRev = item.unitPriceNt * item.quantity;
         const prod = item.variant?.product;
+        const unitCost = item.unitCostNt ?? item.variant?.unitCostNt ?? null;
+        const costEstimated = item.unitCostNt === null || (item.unitCostSource ?? item.variant?.costSource) !== "MANUAL";
+        if (oDate >= startOfMonth) {
+          monthProductRevenue += itemRev;
+          if (unitCost !== null) { monthCoveredRevenue += itemRev; monthCogs += unitCost * item.quantity; }
+          if (costEstimated) monthCostEstimated = true;
+        }
         const catName = prod?.category?.name ?? "其他";
         categoryMap.set(catName, (categoryMap.get(catName) ?? 0) + itemRev);
 
@@ -180,12 +199,16 @@ export async function GET() {
         // ABC 統計（用 productId 作為 key）
         const productId = prod?.id ?? item.productName;
         const productName = prod?.name ?? item.productName;
-        const prev = abcMap.get(productId) ?? { name: productName, salesQty: 0, revenue: 0, qtyRecent: 0, qtyPrior: 0 };
-        prev.salesQty += item.quantity;
-        prev.revenue += itemRev;
-        if (oDate >= sevenDaysAgo) prev.qtyRecent += item.quantity;
-        else if (oDate >= fourteenDaysAgo) prev.qtyPrior += item.quantity;
-        abcMap.set(productId, prev);
+        if (oDate >= abcStart) {
+          const prev = abcMap.get(productId) ?? { name: productName, category: catName, petType, salesQty: 0, revenue: 0, cogs: 0, coveredRevenue: 0, estimatedCost: false, qtyRecent: 0, qtyPrior: 0 };
+          prev.salesQty += item.quantity;
+          prev.revenue += itemRev;
+          if (unitCost !== null) { prev.cogs += unitCost * item.quantity; prev.coveredRevenue += itemRev; }
+          if (costEstimated) prev.estimatedCost = true;
+          if (oDate >= sevenDaysAgo) prev.qtyRecent += item.quantity;
+          else if (oDate >= fourteenDaysAgo) prev.qtyPrior += item.quantity;
+          abcMap.set(productId, prev);
+        }
       }
       if (hasAutoship) autoshipRev += o.totalNt;
     }
@@ -256,7 +279,15 @@ export async function GET() {
 
     // ── ABC 商品資料 ──────────────────────────────────────
     const abcProducts: ABCProductData[] = Array.from(abcMap.entries())
-      .map(([productId, d]) => ({ productId, ...d }))
+      .map(([productId, d]) => ({
+        productId, name: d.name, category: d.category, petType: d.petType,
+        salesQty: d.salesQty, revenue: d.revenue, qtyRecent: d.qtyRecent, qtyPrior: d.qtyPrior,
+        cogsNt: d.coveredRevenue === d.revenue ? d.cogs : null,
+        grossProfitNt: d.coveredRevenue === d.revenue ? d.revenue - d.cogs : null,
+        marginPct: d.coveredRevenue === d.revenue && d.revenue > 0 ? Math.round((d.revenue - d.cogs) / d.revenue * 1000) / 10 : null,
+        costCoveragePct: d.revenue > 0 ? Math.round(d.coveredRevenue / d.revenue * 1000) / 10 : 0,
+        estimatedCost: d.estimatedCost,
+      }))
       .filter(p => p.revenue > 0)
       .sort((a, b) => b.revenue - a.revenue);
 
@@ -280,6 +311,10 @@ export async function GET() {
       averageOrderValueNt: paidOrders.length > 0 ? Math.round(totalRev / paidOrders.length) : 0,
       repeatPurchaseRate: repeatDetail.rate,
       autoshipRatio: totalRev > 0 ? Math.round((autoshipRev / totalRev) * 1000) / 10 : 0,
+      monthGrossProfitNt: monthCoveredRevenue === monthProductRevenue && monthProductRevenue > 0 ? monthProductRevenue - monthCogs : null,
+      monthGrossMarginPct: monthCoveredRevenue === monthProductRevenue && monthProductRevenue > 0 ? Math.round((monthProductRevenue - monthCogs) / monthProductRevenue * 1000) / 10 : null,
+      monthCostCoveragePct: monthProductRevenue > 0 ? Math.round(monthCoveredRevenue / monthProductRevenue * 1000) / 10 : 0,
+      monthCostEstimated,
     };
 
     return NextResponse.json({
@@ -289,6 +324,7 @@ export async function GET() {
       categoryBreakdown,
       petTypeBreakdown,
       abcProducts,
+      inventorySpending: inventorySpendingData,
       repeatDetail,
       source: "database",
     });

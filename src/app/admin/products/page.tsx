@@ -11,6 +11,7 @@ import { shopCategories } from "@/lib/productCategories";
 import type { Product } from "@/lib/types";
 import { petLabels, type PetType } from "@/lib/types";
 import { money } from "@/lib/utils";
+import { estimateUnitCostNt } from "@/lib/costEstimate";
 
 const emptyProduct: AdminProductInput = {
   name: "",
@@ -19,6 +20,8 @@ const emptyProduct: AdminProductInput = {
   kind: "FOOD",
   category: "主食乾糧",
   priceNt: 0,
+  unitCostNt: null,
+  costSource: null,
   stock: 0,
   bagGrams: 1000,
   kcalPer100g: 380,
@@ -53,6 +56,8 @@ function fromProduct(product: Product): AdminProductInput {
     kind: product.kind ?? "FOOD",
     category: product.category,
     priceNt: product.priceNt,
+    unitCostNt: product.unitCostNt ?? null,
+    costSource: product.costSource ?? null,
     stock: product.stock,
     bagGrams: product.bagGrams,
     kcalPer100g: product.kcalPer100g,
@@ -317,6 +322,11 @@ export default function AdminProductsPage() {
                   <TextField label="庫存（包）" type="number" value={form.stock} onChange={(value) => update("stock", Number(value))} />
                   <TextField label="包裝重量（g）" type="number" value={form.bagGrams} onChange={(value) => update("bagGrams", Number(value))} />
                 </div>
+                <div className="rounded-2xl border border-[#c4d9e7] bg-[#f3f8fb] p-5">
+                    <label className="block text-sm font-semibold text-[#263746]">每件進貨成本（NT$）<input type="number" min="0" step="1" value={form.costSource === "MANUAL" ? form.unitCostNt ?? "" : ""} onChange={(event) => setForm((previous) => ({ ...previous, unitCostNt: event.target.value === "" ? null : Number(event.target.value), costSource: event.target.value === "" ? null : "MANUAL" }))} placeholder="留空使用公開價格估算" className="input mt-2" /></label>
+                  <p className="mt-3 text-xs leading-6 text-[#687985]">{form.costSource === "MANUAL" ? "目前採用手動輸入成本。請依供應商報價或實際發票核對。" : `目前採用估算成本 ${money(estimateUnitCostNt(form.priceNt, form.category))}／件。公開同類價格只供規劃，請取得實際報價後覆蓋。`}</p>
+                  {form.priceNt > 0 && <p className="mt-1 text-sm font-semibold text-[#315F86]">參考毛利率 {(((form.priceNt - (form.costSource === "MANUAL" && form.unitCostNt != null ? form.unitCostNt : estimateUnitCostNt(form.priceNt, form.category))) / form.priceNt) * 100).toFixed(1)}%</p>}
+                </div>
                 {form.kind === "FOOD" && (form.type === "CAT" || form.type === "DOG") && <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#5B93C5]" checked={form.autoshipEligible} onChange={(event) => update("autoshipEligible", event.target.checked)} />提供循環補貨</label>}
                 <label className="flex items-center gap-3 rounded-xl border border-[#e8ded3] bg-[#fbf8f4] p-4 text-sm text-[#302b26]"><input type="checkbox" className="size-4 accent-[#5B93C5]" checked={form.isPublished} onChange={(event) => update("isPublished", event.target.checked)} />在官網上架並可供選購</label>
                 <p className="text-sm text-[#8a7f75]">先保存為草稿，確認圖片與規格後再上架。下架商品保留資料，可隨時重新發布。</p>
@@ -371,7 +381,7 @@ export default function AdminProductsPage() {
                   <div className="min-w-[190px] flex-1">
                     <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-[#302b26]">{product.name}</h2><span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${product.isPublished ? "bg-[#e8f1f8] text-[#315F86] border border-[#78a6c9]/30" : "bg-[#f5ede3] text-[#8a7f75]"}`}>{product.isPublished ? "上架中" : "草稿／下架"}</span></div>
                     <p className="mt-1 text-sm text-[#675e53]">{petLabels[product.type]} · {product.kind === "SUPPLIES" ? "用品" : "食物"} · {product.category} · {product.bagGrams}g</p>
-                    <p className="mt-1 text-sm font-semibold text-[#5B93C5]">{money(product.priceNt)} · 庫存 {product.stock}</p>
+                    <p className="mt-1 text-sm font-semibold text-[#5B93C5]">{money(product.priceNt)} · 庫存 {product.stock} · 成本 {product.unitCostNt == null ? "待填" : money(product.unitCostNt)}{product.costSource === "ESTIMATE" ? "（估算）" : ""}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {product.isPublished && <Link href={`/products/${product.slug}`} target="_blank" className="inline-flex min-h-10 items-center gap-1 rounded-xl border border-[#d9cfc3] bg-white px-3 text-sm text-[#675e53] hover:bg-[#ede5da]"><ExternalLink size={14} />預覽</Link>}

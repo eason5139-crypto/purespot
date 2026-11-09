@@ -1,549 +1,64 @@
 "use client";
-import { useState, useRef } from "react";
-import { Package } from "lucide-react";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { Download, Search } from "lucide-react";
 import type { ABCProductData } from "@/lib/adminTypes";
+import { money } from "@/lib/utils";
 
-// 大地色系 ABC 配色
-const ABC_COLOR = { A: "#5B93C5", B: "#5b7b63", C: "#8a7f75" } as const;
+type ClassName = "A" | "B" | "C";
+type Classified = ABCProductData & { rank: number; abc: ClassName; contributionPct: number; cumulativePct: number };
+const COLORS: Record<ClassName, string> = { A: "#315F86", B: "#5B93C5", C: "#91a4a7" };
 
-interface ABCProduct {
-  productId: string;
-  name: string;
-  salesQty: number;
-  revenue: number;
-  revenuePct: number;
-  cumulativePct: number;
-  marginPct: null; // PURESPOT 無 BOM，統一為 null
-  abc: "A" | "B" | "C";
-  velocity: number;
-  healthScore: number;
-}
-
-interface TooltipState {
-  product: ABCProduct;
-  x: number;
-  y: number;
-}
-
-// 九宮格標籤 [yBand][xBand]（y:0=低 2=高, x:0=低 2=高）
-const ZONE_LABELS: string[][] = [
-  ["觀察淘汰", "低效商品", "穩定獲利"],
-  ["一般潛力", "穩定成長", "精選主力"],
-  ["快速走量", "明星商品", "核心之星"],
-];
-
-// 策略建議（PURESPOT 版，移除 bestPair/peakHour）
-function getStrategy(p: ABCProduct, maxQty: number): string {
-  const qtyRank = maxQty > 0 ? p.salesQty / maxQty : 0;
-  const isTopQty = qtyRank > 0.65;
-  const isMidQty = qtyRank > 0.3 && qtyRank <= 0.65;
-  const isRising = p.velocity > 0.15;
-  const isDeclining = p.velocity < -0.15;
-  const isKeyRev = p.revenuePct > 8;
-
-  if (p.abc === "A") {
-    if (isTopQty && isKeyRev && isRising)
-      return "核心主力商品持續成長——供應穩定是第一優先，可規劃組合優惠進一步提升客單價。";
-    if (isTopQty && isKeyRev && isDeclining)
-      return "主力商品出現下滑訊號，建議調查原因（缺貨？競品？）並優先補足庫存，避免流失回購顧客。";
-    if (isTopQty && isKeyRev)
-      return "高貢獻核心商品，維持供應穩定是首要任務。可搭配定期配優惠鎖定長期顧客。";
-    if (isTopQty && isRising)
-      return "銷量高且持續成長，是強化推廣的最佳時機——加入首頁精選、提升曝光位置。";
-    if (isMidQty && isRising)
-      return "成長中的 A 類商品，距離主力只差一步。建議加強推薦頁位置、搭配定期配折扣吸引回購。";
-    if (isDeclining)
-      return "A 類商品銷售下滑，需立即確認庫存與顧客反饋，找出問題點後快速修正。";
-    return "穩定 A 類商品，維持現有策略並監控庫存水位，確保不斷貨。";
-  }
-
-  if (p.abc === "B") {
-    if (isRising)
-      return "B 類商品正在成長，有潛力晉升 A 類。建議適度增加推廣資源，觀察 4 週走勢。";
-    if (isDeclining)
-      return "B 類商品出現下滑，應在滑入 C 類前找出原因——可調整定價或進行促銷測試。";
-    if (isMidQty)
-      return "穩定中段商品，搭配套組活動或定期配優惠有機會帶動銷量提升。";
-    return "穩定 B 類商品，持續觀察銷售走勢，任何持續下滑訊號就應提早行動。";
-  }
-
-  // C 類
-  if (isRising)
-    return "C 類商品但正在成長——這是被低估的潛力商品，給予適當曝光位置觀察 2 週，若持續成長則考慮推廣。";
-  if (p.revenuePct > 3 && !isDeclining)
-    return "C 類中貢獻不低，至今無明顯下滑——可能只是曝光不足。試試加入套組或加強商品頁描述。";
-  if (isDeclining)
-    return "C 類且持續下滑——設定明確 KPI（如 4 週內提升 20%），未達標則評估下架以釋放管理資源。";
-  return "低貢獻 C 類商品，建議試行一次促銷測試，若無起色則評估調整陳列或下架。";
-}
-
-// SVG 尺寸常數
-const PAD = { left: 60, right: 24, top: 28, bottom: 56 };
-const W = 720;
-const H = 380;
-const PLOT_W = W - PAD.left - PAD.right;
-const PLOT_H = H - PAD.top - PAD.bottom;
-
-interface Props {
-  rawData: ABCProductData[];
-}
-
-export function ProductABCChart({ rawData }: Props) {
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  // 前端計算 ABC 分類
-  const totalRevenue = rawData.reduce((s, p) => s + p.revenue, 0);
-  let cum = 0;
-  const data: ABCProduct[] = rawData.map((p) => {
-    const revenuePct = totalRevenue > 0 ? (p.revenue / totalRevenue) * 100 : 0;
-    const abc: "A" | "B" | "C" = cum < 70 ? "A" : cum < 90 ? "B" : "C";
-    cum += revenuePct;
-    const velocity =
-      p.qtyPrior > 0
-        ? (p.qtyRecent - p.qtyPrior) / p.qtyPrior
-        : p.qtyRecent > 0
-          ? 1
-          : 0;
-    const healthScore = Math.min(
-      100,
-      Math.max(0, (velocity + 1) * 30 + (revenuePct / 10) * 20),
-    );
-    return {
-      productId: p.productId,
-      name: p.name,
-      salesQty: p.salesQty,
-      revenue: p.revenue,
-      revenuePct,
-      cumulativePct: cum,
-      marginPct: null,
-      abc,
-      velocity,
-      healthScore,
-    };
+function classify(products: ABCProductData[], first: number, second: number): Classified[] {
+  const ordered = [...products].sort((a, b) => b.revenue - a.revenue || a.name.localeCompare(b.name));
+  const total = ordered.reduce((sum, product) => sum + product.revenue, 0);
+  let cumulative = 0;
+  return ordered.map((product, index) => {
+    const before = cumulative;
+    const contributionPct = total ? product.revenue / total * 100 : 0;
+    cumulative += contributionPct;
+    return { ...product, rank: index + 1, abc: before < first ? "A" : before < second ? "B" : "C", contributionPct, cumulativePct: cumulative };
   });
-
-  const maxQty = Math.max(...data.map((p) => p.salesQty), 1);
-  const maxRev = Math.max(...data.map((p) => p.revenue), 1);
-  const counts = {
-    A: data.filter((p) => p.abc === "A").length,
-    B: data.filter((p) => p.abc === "B").length,
-    C: data.filter((p) => p.abc === "C").length,
-  };
-
-  function getBubble(p: ABCProduct) {
-    // 無 marginPct，改用 revenuePct 作為 X 軸（貢獻比例），salesQty 作為 Y 軸
-    const xPct = Math.min(p.revenuePct / 20, 1); // 最高 20% 貢獻 → 滿軸
-    const yPct = p.salesQty / maxQty;
-    const x = PAD.left + xPct * PLOT_W;
-    const y = PAD.top + (1 - yPct) * PLOT_H;
-    const r = Math.max(8, Math.min(32, Math.sqrt(p.revenue / maxRev) * 32));
-    return { x, y, r };
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="panel p-10 bg-white border border-[#e8ded3] shadow-sm rounded-2xl text-center">
-        <Package size={40} className="mx-auto mb-3 text-[#8a7f75]" />
-        <p className="text-sm font-semibold text-[#675e53]">尚無銷售資料</p>
-        <p className="text-xs text-[#8a7f75] mt-1">
-          建立訂單後系統將自動彙整商品結構分析。
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* ABC 摘要卡片 */}
-      <div className="grid grid-cols-3 gap-4">
-        {(["A", "B", "C"] as const).map((cls) => {
-          const labels = { A: "核心商品", B: "穩定商品", C: "觀察商品" };
-          const desc = { A: "營收貢獻前 70%", B: "貢獻 70–90%", C: "其餘品項" };
-          return (
-            <div
-              key={cls}
-              className="panel p-5 bg-white border border-[#e8ded3] shadow-sm"
-              style={{ borderLeftColor: ABC_COLOR[cls], borderLeftWidth: 4 }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <span
-                  className="text-lg font-black"
-                  style={{ color: ABC_COLOR[cls] }}
-                >
-                  {cls}
-                </span>
-                <span className="text-sm font-semibold text-[#302b26]">
-                  {labels[cls]}
-                </span>
-              </div>
-              <p
-                className="text-3xl font-bold font-mono"
-                style={{ color: ABC_COLOR[cls] }}
-              >
-                {counts[cls]}
-                <span className="text-sm ml-1 opacity-60 font-normal">種</span>
-              </p>
-              <p className="text-xs text-[#8a7f75] mt-1">{desc[cls]}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 散佈圖 */}
-      <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <p className="text-sm font-semibold text-[#302b26]">商品分布矩陣</p>
-          <span className="text-xs text-[#8a7f75]">
-            橫軸：貢獻佔比　縱軸：銷售數量　氣泡大小：銷售金額
-          </span>
-        </div>
-        <div className="relative overflow-x-auto">
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${W} ${H}`}
-            className="w-full"
-            style={{ maxHeight: 400 }}
-            onMouseLeave={() => setTooltip(null)}
-          >
-            {/* 九宮格背景 */}
-            {[0, 1, 2].map((yi) =>
-              [0, 1, 2].map((xi) => {
-                const zx = PAD.left + xi * (PLOT_W / 3);
-                const zy = PAD.top + (2 - yi) * (PLOT_H / 3);
-                const zoneColors = [
-                  ["#e8ded308", "#e8ded308", "#5b7b6308"],
-                  ["#e8ded308", "#5B93C508", "#5B93C510"],
-                  ["#5b7b6308", "#5B93C510", "#5B93C518"],
-                ];
-                return (
-                  <g key={`zone-${xi}-${yi}`}>
-                    <rect
-                      x={zx}
-                      y={zy}
-                      width={PLOT_W / 3}
-                      height={PLOT_H / 3}
-                      fill={zoneColors[yi]?.[xi] ?? "transparent"}
-                      stroke="#e8ded3"
-                      strokeWidth="0.5"
-                    />
-                    <text
-                      x={zx + 8}
-                      y={zy + 16}
-                      fill="#8a7f75"
-                      fontSize="9"
-                      fontWeight="700"
-                      opacity="0.6"
-                    >
-                      {ZONE_LABELS[yi]?.[xi] ?? ""}
-                    </text>
-                  </g>
-                );
-              }),
-            )}
-
-            {/* X 軸分隔標籤 */}
-            {["低貢獻", "中貢獻", "高貢獻"].map((label, i) => (
-              <text
-                key={label}
-                x={PAD.left + (i + 0.5) * (PLOT_W / 3)}
-                y={H - 10}
-                fill="#8a7f75"
-                fontSize="10"
-                fontWeight="700"
-                textAnchor="middle"
-              >
-                {label}
-              </text>
-            ))}
-
-            {/* Y 軸標籤 */}
-            {["低", "中", "高"].map((label, i) => (
-              <text
-                key={label}
-                x={PAD.left - 10}
-                y={PAD.top + (2.5 - i) * (PLOT_H / 3)}
-                fill="#8a7f75"
-                fontSize="10"
-                fontWeight="700"
-                textAnchor="end"
-                dominantBaseline="middle"
-              >
-                {label}
-              </text>
-            ))}
-
-            {/* X 軸線 */}
-            <line
-              x1={PAD.left}
-              y1={PAD.top + PLOT_H}
-              x2={PAD.left + PLOT_W}
-              y2={PAD.top + PLOT_H}
-              stroke="#e8ded3"
-              strokeWidth="1"
-            />
-            {/* X 軸標題 */}
-            <text
-              x={PAD.left + PLOT_W / 2}
-              y={H - 28}
-              fill="#8a7f75"
-              fontSize="9"
-              textAnchor="middle"
-              opacity="0.7"
-            >
-              營收貢獻佔比 →
-            </text>
-            {/* Y 軸標題 */}
-            <text
-              x={14}
-              y={PAD.top + PLOT_H / 2}
-              fill="#8a7f75"
-              fontSize="9"
-              textAnchor="middle"
-              transform={`rotate(-90, 14, ${PAD.top + PLOT_H / 2})`}
-              opacity="0.7"
-            >
-              銷售數量 ↑
-            </text>
-
-            {/* 商品氣泡 */}
-            {data.map((p) => {
-              const { x, y, r } = getBubble(p);
-              const isHovered = tooltip?.product.productId === p.productId;
-              return (
-                <g
-                  key={p.productId}
-                  style={{ cursor: "pointer" }}
-                  onMouseEnter={(e) => {
-                    const svgRect = svgRef.current?.getBoundingClientRect();
-                    if (!svgRect) return;
-                    setTooltip({
-                      product: p,
-                      x: e.clientX - svgRect.left,
-                      y: e.clientY - svgRect.top,
-                    });
-                  }}
-                  onMouseMove={(e) => {
-                    const svgRect = svgRef.current?.getBoundingClientRect();
-                    if (!svgRect) return;
-                    setTooltip((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            x: e.clientX - svgRect.left,
-                            y: e.clientY - svgRect.top,
-                          }
-                        : null,
-                    );
-                  }}
-                >
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={r}
-                    fill={ABC_COLOR[p.abc]}
-                    fillOpacity={isHovered ? 0.9 : 0.65}
-                    stroke={ABC_COLOR[p.abc]}
-                    strokeWidth={isHovered ? "2" : "1"}
-                    style={{ transition: "all 0.15s ease" }}
-                  />
-                  {r > 16 && (
-                    <text
-                      x={x}
-                      y={y + 1}
-                      fill="white"
-                      fontSize="7"
-                      fontWeight="700"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      style={{ pointerEvents: "none", userSelect: "none" }}
-                    >
-                      {p.name.length > 5 ? p.name.slice(0, 5) + "…" : p.name}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-
-            {/* Tooltip */}
-            {tooltip &&
-              (() => {
-                const p = tooltip.product;
-                const tx = Math.min(tooltip.x, W - 200);
-                const ty = Math.max(tooltip.y - 80, PAD.top);
-                return (
-                  <g style={{ pointerEvents: "none" }}>
-                    <rect
-                      x={tx}
-                      y={ty}
-                      width={190}
-                      height={80}
-                      rx="8"
-                      fill="#faf7f2"
-                      stroke={ABC_COLOR[p.abc]}
-                      strokeWidth="1.5"
-                    />
-                    <text
-                      x={tx + 10}
-                      y={ty + 18}
-                      fill={ABC_COLOR[p.abc]}
-                      fontSize="10"
-                      fontWeight="800"
-                    >
-                      [{p.abc}] {p.name}
-                    </text>
-                    <text
-                      x={tx + 10}
-                      y={ty + 34}
-                      fill="#675e53"
-                      fontSize="9"
-                    >
-                      銷售數量：{p.salesQty} 件
-                    </text>
-                    <text
-                      x={tx + 10}
-                      y={ty + 48}
-                      fill="#675e53"
-                      fontSize="9"
-                    >
-                      銷售金額：NT$ {p.revenue.toLocaleString()}
-                    </text>
-                    <text
-                      x={tx + 10}
-                      y={ty + 62}
-                      fill="#675e53"
-                      fontSize="9"
-                    >
-                      貢獻佔比：{p.revenuePct.toFixed(1)}%
-                    </text>
-                  </g>
-                );
-              })()}
-          </svg>
-
-          {/* 圖例 */}
-          <div className="flex items-center gap-6 mt-3 px-2 flex-wrap">
-            {(["A", "B", "C"] as const).map((cls) => {
-              const names = {
-                A: "核心商品 (前 70%)",
-                B: "穩定商品 (70-90%)",
-                C: "觀察商品",
-              };
-              return (
-                <div key={cls} className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ background: ABC_COLOR[cls] }}
-                  />
-                  <span className="text-xs text-[#675e53] font-medium">
-                    {names[cls]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* 詳細表格 */}
-      <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
-        <div className="p-5 border-b border-[#e8ded3]">
-          <p className="text-sm font-semibold text-[#302b26]">商品分類明細</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-[#e8ded3] bg-[#fcfaf7]">
-                {[
-                  "分類",
-                  "商品名稱",
-                  "近期趨勢",
-                  "健康指數",
-                  "銷售量",
-                  "貢獻金額",
-                  "佔比",
-                  "策略建議",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="px-4 py-3 text-left text-[10px] font-semibold text-[#675e53] uppercase tracking-wide"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((p, i) => (
-                <tr
-                  key={p.productId}
-                  className={`border-b border-[#e8ded3] hover:bg-[#fbf8f4] transition-colors ${i % 2 === 0 ? "" : "bg-[#fdfcfa]"}`}
-                >
-                  <td className="px-4 py-3">
-                    <span
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold"
-                      style={{
-                        background: ABC_COLOR[p.abc] + "22",
-                        color: ABC_COLOR[p.abc],
-                      }}
-                    >
-                      {p.abc}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-[#302b26] max-w-[140px] truncate">
-                    {p.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.velocity > 0.1 ? (
-                      <span className="text-xs font-semibold text-[#5b7b63]">
-                        ↑ {Math.round(p.velocity * 100)}%
-                      </span>
-                    ) : p.velocity < -0.1 ? (
-                      <span className="text-xs font-semibold text-rose-600">
-                        ↓ {Math.abs(Math.round(p.velocity * 100))}%
-                      </span>
-                    ) : (
-                      <span className="text-xs text-[#8a7f75]">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="w-16 h-1.5 rounded-full bg-[#f0ece4] overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-1000 rounded-full"
-                        style={{
-                          width: `${p.healthScore}%`,
-                          background:
-                            p.healthScore > 70
-                              ? "#5b7b63"
-                              : p.healthScore > 40
-                                ? "#5B93C5"
-                                : "#c98e3b",
-                        }}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-[#675e53] font-mono">
-                    {p.salesQty}
-                  </td>
-                  <td
-                    className="px-4 py-3 font-mono font-semibold"
-                    style={{ color: ABC_COLOR[p.abc] }}
-                  >
-                    NT$ {p.revenue.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[#8a7f75]">
-                    {p.revenuePct.toFixed(1)}%
-                  </td>
-                  <td className="px-4 py-3 text-[#8a7f75] max-w-[200px] text-[10px] leading-relaxed">
-                    {getStrategy(p, maxQty)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
 }
 
+function csvCell(value: string | number | null) {
+  const raw = value == null ? "" : String(value);
+  const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+  return `"${safe.replaceAll('"', '""')}"`;
+}
+
+export function ProductABCChart({ rawData, days, onDaysChange }: { rawData: ABCProductData[]; days: 7 | 30 | 90; onDaysChange: (days: 7 | 30 | 90) => void }) {
+  const [threshold, setThreshold] = useState<"70/90" | "80/95">("70/90");
+  const [category, setCategory] = useState("ALL");
+  const [petType, setPetType] = useState("ALL");
+  const [abcFilter, setAbcFilter] = useState("ALL");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"rank" | "margin" | "sales">("rank");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const data = useMemo(() => classify(rawData, threshold === "70/90" ? 70 : 80, threshold === "70/90" ? 90 : 95), [rawData, threshold]);
+  const categories = [...new Set(data.map((product) => product.category))].sort();
+  const displayed = data.filter((product) => (category === "ALL" || product.category === category) && (petType === "ALL" || product.petType === petType) && (abcFilter === "ALL" || product.abc === abcFilter) && product.name.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === "sales" ? b.salesQty - a.salesQty : sort === "margin" ? (b.marginPct ?? -Infinity) - (a.marginPct ?? -Infinity) : a.rank - b.rank);
+  const selected = displayed.find((product) => product.productId === selectedId) ?? displayed[0];
+  const totalRevenue = data.reduce((sum, product) => sum + product.revenue, 0);
+  const complete = data.filter((product) => product.costCoveragePct === 100);
+  const knownRevenue = complete.reduce((sum, product) => sum + product.revenue, 0);
+  const totalProfit = complete.reduce((sum, product) => sum + (product.grossProfitNt ?? 0), 0);
+
+  function downloadCsv() {
+    const rows = [["ABC", "排名", "商品", "分類", "銷量", "商品營收", "營收占比%", "累計占比%", "銷貨成本", "毛利", "毛利率%", "成本性質"], ...displayed.map((product) => [product.abc, product.rank, product.name, product.category, product.salesQty, product.revenue, product.contributionPct.toFixed(1), product.cumulativePct.toFixed(1), product.cogsNt, product.grossProfitNt, product.marginPct, product.estimatedCost ? "含估算" : "實際/手動"])];
+    const content = "\ufeff" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a"); anchor.href = url; anchor.download = `purespot-abc-${days}d.csv`; anchor.click(); URL.revokeObjectURL(url);
+  }
+
+  return <div className="space-y-6 text-[#263746]">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h3 className="text-xl font-semibold">商品 ABC 與毛利分析</h3><p className="mt-2 max-w-3xl text-xs leading-6 text-[#687985]">依選定期間的商品營收排序；商品跨越 A 或 B 門檻時歸入當前級別。毛利＝商品營收－成交時單件成本 × 件數；不包含運費、廣告及其他營業費用。舊訂單缺少成本快照時，使用目前成本回推並標示估算。</p></div><button type="button" onClick={downloadCsv} disabled={!displayed.length} className="flex min-h-10 items-center gap-2 rounded-xl border border-[#cbdce7] bg-white px-4 text-sm font-semibold text-[#315F86] disabled:opacity-40"><Download size={15} />下載目前表格</button></div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Summary label="商品營收" value={money(totalRevenue)} detail={`近 ${days} 日`} /><Summary label="可計算毛利" value={knownRevenue ? money(totalProfit) : "待補成本"} detail={`成本覆蓋 ${totalRevenue ? (knownRevenue / totalRevenue * 100).toFixed(1) : 0}% 商品營收`} /><Summary label="可計算商品毛利率" value={knownRevenue ? `${(totalProfit / knownRevenue * 100).toFixed(1)}%` : "—"} detail="僅統計成本完整的商品" /><Summary label="估算成本商品" value={`${data.filter((product) => product.estimatedCost).length} 款`} detail="可在商品管理改填實際報價" /></div>
+    <div className="flex flex-wrap gap-3 rounded-2xl border border-[#dce5e9] bg-white p-4"><label className="text-xs font-medium">分析期間<select aria-label="ABC 分析期間" value={days} onChange={(event) => onDaysChange(Number(event.target.value) as 7 | 30 | 90)} className="input mt-1"><option value="7">近 7 日</option><option value="30">近 30 日</option><option value="90">近 90 日</option></select></label><label className="text-xs font-medium">ABC 門檻<select aria-label="ABC 門檻" value={threshold} onChange={(event) => setThreshold(event.target.value as typeof threshold)} className="input mt-1"><option value="70/90">70% / 90%</option><option value="80/95">80% / 95%</option></select></label><label className="text-xs font-medium">級別<select aria-label="ABC 級別" value={abcFilter} onChange={(event) => setAbcFilter(event.target.value)} className="input mt-1"><option value="ALL">全部</option><option value="A">A 類</option><option value="B">B 類</option><option value="C">C 類</option></select></label><label className="text-xs font-medium">分類<select aria-label="ABC 商品分類" value={category} onChange={(event) => setCategory(event.target.value)} className="input mt-1"><option value="ALL">全部分類</option>{categories.map((name) => <option key={name} value={name}>{name}</option>)}</select></label><label className="text-xs font-medium">毛孩<select aria-label="ABC 毛孩類型" value={petType} onChange={(event) => setPetType(event.target.value)} className="input mt-1"><option value="ALL">全部</option><option value="CAT">貓咪</option><option value="DOG">狗狗</option><option value="HAMSTER">倉鼠</option><option value="RABBIT">兔兔</option></select></label><label className="text-xs font-medium">排序<select aria-label="ABC 排序" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="input mt-1"><option value="rank">營收貢獻</option><option value="margin">毛利率</option><option value="sales">銷售件數</option></select></label><label className="relative min-w-[160px] flex-1 self-end"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b918f]" /><input aria-label="搜尋 ABC 商品" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜尋商品" className="input pl-9" /></label></div>
+    {!data.length ? <div className="rounded-2xl border border-[#dce5e9] bg-white p-10 text-center text-sm text-[#8b918f]">所選期間沒有已成立訂單。可以切換到較長的分析期間。</div> : <><div className="grid gap-4 lg:grid-cols-[1.3fr_.7fr]"><section className="rounded-2xl border border-[#dce5e9] bg-white p-5"><h4 className="font-semibold">營收貢獻排列</h4><p className="mt-1 text-xs text-[#8b918f]">橫條為單品商品營收，右側為累計占比。</p><div className="mt-5 max-h-80 space-y-3 overflow-y-auto">{data.slice(0, 15).map((product) => <button type="button" key={product.productId} onClick={() => setSelectedId(product.productId)} className={`grid w-full grid-cols-[120px_1fr_45px] items-center gap-3 rounded-lg p-2 text-left text-xs ${selected?.productId === product.productId ? "bg-[#edf5fa]" : "hover:bg-[#f8f5ef]"}`}><span className="truncate">{product.rank}. {product.name}</span><span className="h-3 overflow-hidden rounded-full bg-[#edf0f1]"><span className="block h-full rounded-full" style={{ width: `${totalRevenue ? product.revenue / data[0]!.revenue * 100 : 0}%`, background: COLORS[product.abc] }} /></span><span className="text-right">{product.cumulativePct.toFixed(0)}%</span></button>)}</div></section><section className="rounded-2xl border border-[#dce5e9] bg-[#f8f5ef] p-5"><h4 className="font-semibold">{selected ? `${selected.abc} 類 · ${selected.name}` : "選擇一款商品"}</h4>{selected && <div className="mt-4 space-y-3 text-sm"><p>商品營收 <strong className="float-right">{money(selected.revenue)}</strong></p><p>銷售件數 <strong className="float-right">{selected.salesQty} 件</strong></p><p>營收占比 <strong className="float-right">{selected.contributionPct.toFixed(1)}%</strong></p><p>毛利率 <strong className="float-right">{selected.marginPct == null ? "待補成本" : `${selected.marginPct.toFixed(1)}%`}</strong></p>{selected.estimatedCost && <p className="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-800">含公開價格估算成本，請以供應商報價核對。</p>}<p className="border-t border-[#dce5e9] pt-3 text-xs leading-6 text-[#687985]">{selected.abc === "A" ? "優先確認供應與安全庫存；高營收且低毛利時先檢查成本與售價。" : selected.abc === "B" ? "觀察回購與毛利，測試商品組合與陳列位置。" : "控制補貨量，檢查庫存週轉與商品頁表現。"}</p><Link href="/admin/products" className="inline-block text-xs font-semibold text-[#315F86] underline">檢查商品成本</Link></div>}</section></div>
+      <div className="overflow-x-auto rounded-2xl border border-[#dce5e9] bg-white"><table className="w-full min-w-[900px] text-left text-xs"><thead className="bg-[#f6f8f8] text-[#687985]"><tr>{["級別", "排名／商品", "分類", "銷量", "商品營收", "占比／累計", "銷貨成本", "毛利", "毛利率", "成本性質"].map((name) => <th key={name} className="px-3 py-3">{name}</th>)}</tr></thead><tbody className="divide-y divide-[#eef0ef]">{displayed.map((product) => <tr key={product.productId} className="hover:bg-[#f8f5ef]"><td className="px-3 py-3"><span className="rounded-full px-2 py-1 font-bold text-white" style={{ background: COLORS[product.abc] }}>{product.abc}</span></td><td className="px-3 py-3 font-semibold">{product.rank}. {product.name}</td><td className="px-3 py-3">{product.category}</td><td className="px-3 py-3">{product.salesQty}</td><td className="px-3 py-3">{money(product.revenue)}</td><td className="px-3 py-3">{product.contributionPct.toFixed(1)}% / {product.cumulativePct.toFixed(1)}%</td><td className="px-3 py-3">{product.cogsNt == null ? "待補" : money(product.cogsNt)}</td><td className="px-3 py-3">{product.grossProfitNt == null ? "—" : money(product.grossProfitNt)}</td><td className={`px-3 py-3 font-bold ${product.marginPct != null && product.marginPct < 20 ? "text-rose-700" : "text-[#315F86]"}`}>{product.marginPct == null ? "—" : `${product.marginPct.toFixed(1)}%`}</td><td className="px-3 py-3">{product.costCoveragePct < 100 ? "成本不完整" : product.estimatedCost ? "含估算" : "實際/手動"}</td></tr>)}{!displayed.length && <tr><td colSpan={10} className="p-8 text-center text-[#8b918f]">沒有符合篩選條件的商品。</td></tr>}</tbody></table></div></>}
+  </div>;
+}
+
+function Summary({ label, value, detail }: { label: string; value: string; detail: string }) { return <div className="rounded-2xl border border-[#dce5e9] bg-white p-5"><p className="text-xs text-[#687985]">{label}</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{value}</p><p className="mt-2 text-xs text-[#8b918f]">{detail}</p></div>; }

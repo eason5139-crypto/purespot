@@ -101,6 +101,8 @@ export async function createOrder(
           productName: p.name,
           quantity: item.quantity,
           unitPriceNt,
+          unitCostNt: variant.unitCostNt,
+          unitCostSource: variant.costSource,
           isAutoship: !!item.intervalDays,
           intervalDays: item.intervalDays,
         };

@@ -34,6 +34,7 @@ interface AnalyticsData {
   petTypeBreakdown: PetTypeBreakdown[];
   abcProducts: ABCProductData[];
   repeatDetail: RepeatPurchaseDetail;
+  inventorySpending: { procurementNt: number; lossNt: number; totalNt: number };
 }
 
 // 進度條元件
@@ -75,6 +76,7 @@ const PALETTE = ["#5B93C5", "#5b7b63", "#c98e3b", "#8a7f75", "#a8654c", "#315F86
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [timeRange, setTimeRange] = useState<"7D" | "30D" | "90D">("30D");
+  const [abcDays, setAbcDays] = useState<7 | 30 | 90>(30);
   const [activeTab, setActiveTab] = useState<"overview" | "abc">("overview");
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
@@ -83,7 +85,7 @@ export default function AdminAnalyticsPage() {
     try {
       setLoading(true);
       setFetchError("");
-      const res = await fetch("/api/admin/analytics");
+      const res = await fetch(`/api/admin/analytics?abcDays=${abcDays}`, { cache: "no-store" });
       if (res.ok) {
         const json = await res.json();
         setData({
@@ -93,6 +95,7 @@ export default function AdminAnalyticsPage() {
           categoryBreakdown: json.categoryBreakdown || [],
           petTypeBreakdown: json.petTypeBreakdown || [],
           abcProducts: json.abcProducts || [],
+          inventorySpending: json.inventorySpending ?? { procurementNt: 0, lossNt: 0, totalNt: 0 },
           repeatDetail: json.repeatDetail ?? {
             totalBuyers: 0,
             repeatBuyers: 0,
@@ -111,7 +114,7 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     void fetchData();
-  }, []);
+  }, [abcDays]);
 
   // 依選取時距過濾 history
   const filteredHistory = (() => {
@@ -166,6 +169,7 @@ export default function AdminAnalyticsPage() {
         <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計訂單數</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{m.totalOrdersCount}</p></div>
         <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計營收</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{money(m.totalRevenueNt)}</p></div>
       </div>}
+      {m && <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月進貨成本</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.procurementNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月耗損／負向校正</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.lossNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月庫存成本負擔</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.totalNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月商品毛利率</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{m.monthGrossMarginPct == null ? "待補成本" : `${m.monthGrossMarginPct.toFixed(1)}%`}</p><p className="mt-1 text-[11px] text-[#8b918f]">成本覆蓋 {m.monthCostCoveragePct}%{m.monthCostEstimated ? " · 含估算" : ""}</p></div></div>}
 
       {/* 頁籤切換 */}
       <div className="flex gap-1 mb-6 bg-[#f8f5ef] rounded-xl p-1 w-fit border border-[#e8ded3]">
@@ -425,10 +429,10 @@ export default function AdminAnalyticsPage() {
             <div className="mb-4">
               <h2 className="text-lg font-semibold text-[#302b26]">商品 ABC 矩陣分析</h2>
               <p className="text-xs text-[#8a7f75] mt-1">
-                依累積營收佔比分類：A 類（前 70%）、B 類（70–90%）、C 類（其餘）
+                依商品營收累積占比分類，期間與 A／B 門檻可於下方調整。
               </p>
             </div>
-            <ProductABCChart rawData={data?.abcProducts ?? []} />
+            <ProductABCChart rawData={data?.abcProducts ?? []} days={abcDays} onDaysChange={setAbcDays} />
           </div>
         </div>
       )}

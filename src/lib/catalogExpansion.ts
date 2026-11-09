@@ -76,7 +76,7 @@ export const supplementalProducts: Product[] = specs.map((spec, index) => ({
   bagGrams: spec.bagGrams,
   priceNt: spec.priceNt,
   stock: 18 + ((index * 7) % 23),
-  image: `/images/products/${spec.id}.svg`,
+  image: `/images/products-photo/${spec.id}.webp`,
   color: colors[index % colors.length]!,
   proteinMin: spec.proteinMin,
   moistureMax: spec.moistureMax,

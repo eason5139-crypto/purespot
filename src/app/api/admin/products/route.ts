@@ -6,6 +6,7 @@ import { getCatalogProducts } from "@/server/productCatalog";
 import { readBody, apiError, verifyOrigin, ApiError } from "@/server/http";
 import { requireAdminSession } from "@/server/adminAuth";
 import { adminProductInputSchema, type AdminProductInput } from "@/lib/adminTypes";
+import { estimateReference, estimateUnitCostNt } from "@/lib/costEstimate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,6 +63,8 @@ export async function POST(request: Request) {
     const id = randomUUID();
     const slug = `product-${id.slice(0, 8)}`;
     const categoryId = await getCategoryId(input.category);
+    const unitCostNt = input.costSource === "MANUAL" && input.unitCostNt != null ? input.unitCostNt : estimateUnitCostNt(input.priceNt, input.category);
+    const costSource = input.costSource === "MANUAL" && input.unitCostNt != null ? "MANUAL" : "ESTIMATE";
     await db.product.create({
       data: {
         id,
@@ -73,7 +76,15 @@ export async function POST(request: Request) {
             label: `${input.bagGrams} 克`,
             bagGrams: input.bagGrams,
             priceNt: input.priceNt,
+            unitCostNt,
+            costSource,
+            costReferenceUrl: costSource === "ESTIMATE" ? estimateReference(input.category) : null,
+            costUpdatedAt: new Date(),
             stock: input.stock,
+            ...(input.stock > 0 ? { stockMovements: { create: {
+              type: "RESTOCK", delta: input.stock, stockBefore: 0, stockAfter: input.stock,
+              unitCostNt, costImpactNt: input.stock * unitCostNt, note: "新增商品時建立初始庫存",
+            } } } : {}),
           },
         },
       },
@@ -96,19 +107,30 @@ export async function PATCH(request: Request) {
     const existing = await db.product.findUnique({ where: { id }, include: { variants: true } });
     if (!existing) throw new ApiError(404, "找不到商品");
     const categoryId = await getCategoryId(input.category);
+    const unitCostNt = input.costSource === "MANUAL" && input.unitCostNt != null ? input.unitCostNt : estimateUnitCostNt(input.priceNt, input.category);
+    const costSource = input.costSource === "MANUAL" && input.unitCostNt != null ? "MANUAL" : "ESTIMATE";
     await db.$transaction(async (tx) => {
       await tx.product.update({ where: { id }, data: productData(input, categoryId) });
       const variant = existing.variants[0];
       if (variant) {
-        await tx.productVariant.update({
-          where: { id: variant.id },
+        const changed = await tx.productVariant.updateMany({
+          where: { id: variant.id, stock: variant.stock },
           data: {
             label: `${input.bagGrams} 克`,
             bagGrams: input.bagGrams,
             priceNt: input.priceNt,
+            unitCostNt,
+            costSource,
+            costReferenceUrl: costSource === "ESTIMATE" ? estimateReference(input.category) : null,
+            costUpdatedAt: new Date(),
             stock: input.stock,
           },
         });
+        if (changed.count !== 1) throw new ApiError(409, "庫存已更新，請重新整理後再編輯商品");
+        if (variant.stock !== input.stock) {
+          const delta = input.stock - variant.stock;
+          await tx.stockMovement.create({ data: { variantId: variant.id, type: "ADJUSTMENT", delta, stockBefore: variant.stock, stockAfter: input.stock, unitCostNt, costImpactNt: delta < 0 ? -delta * unitCostNt : 0, note: "商品資料編輯時調整庫存" } });
+        }
       } else {
         await tx.productVariant.create({
           data: {
@@ -117,7 +139,15 @@ export async function PATCH(request: Request) {
             label: `${input.bagGrams} 克`,
             bagGrams: input.bagGrams,
             priceNt: input.priceNt,
+            unitCostNt,
+            costSource,
+            costReferenceUrl: costSource === "ESTIMATE" ? estimateReference(input.category) : null,
+            costUpdatedAt: new Date(),
             stock: input.stock,
+            ...(input.stock > 0 ? { stockMovements: { create: {
+              type: "RESTOCK", delta: input.stock, stockBefore: 0, stockAfter: input.stock,
+              unitCostNt, costImpactNt: input.stock * unitCostNt, note: "商品規格初始庫存",
+            } } } : {}),
           },
         });
       }

@@ -217,9 +217,14 @@ model ProductVariant {
   label String
   bagGrams Int
   priceNt Int
+  unitCostNt Int?
+  costSource String?
+  costReferenceUrl String?
+  costUpdatedAt DateTime?
   stock Int
   orderItems OrderItem[]
   autoshipItems AutoshipItem[]
+  stockMovements StockMovement[]
   @@index([productId])
 }
 model BatchReport {
@@ -267,11 +272,30 @@ model OrderItem {
   pet Pet @relation(fields: [petId], references: [id])
   productName String
   unitPriceNt Int
+  unitCostNt Int?
+  unitCostSource String?
   quantity Int
   isAutoship Boolean @default(false)
   intervalDays Int?
   @@index([orderId])
   @@index([petId])
+}
+model StockMovement {
+  id String @id @default(uuid())
+  variantId String
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+  type String
+  delta Int
+  stockBefore Int
+  stockAfter Int
+  unitCostNt Int?
+  costImpactNt Int?
+  note String @default("")
+  batchId String?
+  createdAt DateTime @default(now())
+  @@index([createdAt, type])
+  @@index([variantId, createdAt])
+  @@index([batchId])
 }
 model AutoshipPlan {
   id String @id @default(uuid())

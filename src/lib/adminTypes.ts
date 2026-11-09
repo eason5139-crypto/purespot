@@ -8,6 +8,8 @@ export const adminProductInputSchema = z.object({
   kind: z.enum(["FOOD", "SUPPLIES"]).default("FOOD"),
   category: z.string().min(1, "請選擇分類"),
   priceNt: z.number().int().min(1, "售價需大於 0"),
+  unitCostNt: z.number().int().min(0).nullable().optional(),
+  costSource: z.enum(["ESTIMATE", "MANUAL"]).nullable().optional(),
   stock: z.number().int().min(0, "庫存不可為負數"),
   bagGrams: z.number().int().min(1, "規格重量需大於 0"),
   kcalPer100g: z.number().min(0).max(800),
@@ -47,6 +49,10 @@ export interface RevenueMetric {
   averageOrderValueNt: number; // 客單價 (AOV)
   repeatPurchaseRate: number; // 回購率 (%)
   autoshipRatio: number; // 定期配營收佔比 (%)
+  monthGrossProfitNt: number | null;
+  monthGrossMarginPct: number | null;
+  monthCostCoveragePct: number;
+  monthCostEstimated: boolean;
 }
 
 export interface SalesHistoryPoint {
@@ -85,6 +91,13 @@ export interface ABCProductData {
   name: string;
   salesQty: number;
   revenue: number;
+  cogsNt: number | null;
+  grossProfitNt: number | null;
+  marginPct: number | null;
+  costCoveragePct: number;
+  estimatedCost: boolean;
+  category: string;
+  petType: string;
   qtyRecent: number;  // 近 7 天
   qtyPrior: number;   // 前 7-14 天
 }

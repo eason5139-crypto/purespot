@@ -39,6 +39,9 @@ export interface Product {
   kcalPer100g: number;
   bagGrams: number;
   priceNt: number;
+  unitCostNt?: number | null;
+  costSource?: "ESTIMATE" | "MANUAL" | null;
+  costReferenceUrl?: string | null;
   stock: number;
   image: string;
   gallery?: string[];

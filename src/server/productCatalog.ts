@@ -12,7 +12,7 @@ const productInclude = {
 
 type DatabaseProduct = Prisma.ProductGetPayload<{ include: typeof productInclude }>;
 
-export function toCatalogProduct(record: DatabaseProduct): Product {
+export function toCatalogProduct(record: DatabaseProduct, includeCost = false): Product {
   const analysis = (record.guaranteedAnalysis ?? {}) as Record<string, unknown>;
   const variant = record.variants[0];
   const gallery = Array.isArray(analysis.gallery)
@@ -35,6 +35,7 @@ export function toCatalogProduct(record: DatabaseProduct): Product {
     kcalPer100g: Number(analysis.kcalPer100g ?? 380),
     bagGrams: variant?.bagGrams ?? 1000,
     priceNt: variant?.priceNt ?? 0,
+    ...(includeCost ? { unitCostNt: variant?.unitCostNt ?? null, costSource: variant?.costSource as Product["costSource"] ?? null, costReferenceUrl: variant?.costReferenceUrl ?? null } : {}),
     stock: variant?.stock ?? 0,
     image: record.imageUrl,
     gallery,
@@ -62,5 +63,5 @@ export async function getCatalogProducts(includeDrafts = false): Promise<Product
     include: productInclude,
     orderBy: { createdAt: "asc" },
   });
-  return records.map(toCatalogProduct);
+  return records.map((record) => toCatalogProduct(record, includeDrafts));
 }

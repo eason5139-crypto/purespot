@@ -38,6 +38,7 @@ test("會員帳戶的地址、收藏、照顧與訂單資料保持同步", async
     expect(favorites[0]).toMatchObject({ productId: product.id, petId: pet.id, watchRestock: true });
 
     expect((await page.request.post("/api/account/care", { data: { action: "record", petId: pet.id, kind: "WEIGHT", note: "例行量測", weightKg: 4.2 } })).status()).toBe(201);
+    expect((await page.request.post("/api/account/care", { data: { action: "record", petId: pet.id, kind: "FOOD", note: "早晨進食狀況良好" } })).status()).toBe(201);
     expect((await db.pet.findUniqueOrThrow({ where: { id: pet.id } })).weightKg).toBe(4.2);
     expect((await page.request.post("/api/account/care", { data: { action: "reminder", petId: pet.id, title: "量體重", dueAt: new Date(Date.now() + 86400000).toISOString(), repeatDays: 7 } })).status()).toBe(201);
     expect((await (await page.request.get("/api/account/rhythm")).json()).cards).toHaveLength(1);
@@ -55,6 +56,9 @@ test("會員帳戶的地址、收藏、照顧與訂單資料保持同步", async
     await page.getByRole("button", { name: "照顧紀錄" }).click();
     await page.getByRole("button", { name: "測試毛孩" }).last().click();
     await expect(page.getByText("例行量測")).toBeVisible();
+    await page.getByRole("button", { name: "飲食 1" }).click();
+    await expect(page.getByText("早晨進食狀況良好")).toBeVisible();
+    await expect(page.getByText("例行量測")).toHaveCount(0);
     await page.getByRole("button", { name: "完整訂單" }).click();
     await expect(page.getByText(orderId.slice(0, 8), { exact: false })).toBeVisible();
   } finally {
