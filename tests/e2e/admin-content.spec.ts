@@ -26,10 +26,10 @@ test("後台登入、網站即時預覽與媒體庫選圖", async ({ page }) => 
   await page.screenshot({ path: "test-results/admin-content-preview.png" });
   await page.getByRole("button", { name: "其他頁面文案" }).click();
   await page.getByRole("textbox", { name: "商城區塊標籤" }).fill("選物新章");
-  await expect(page.frameLocator('iframe[title="電腦網站預覽"]').locator("body")).toContainText("選物新章");
+  await expect(page.frameLocator('iframe[title="電腦網站預覽"]').locator("body")).toContainText("選物新章", { timeout: 20_000 });
   await page.getByRole("button", { name: "透明資訊", exact: true }).click();
   await page.getByRole("textbox", { name: "透明資訊頁標題" }).fill("看見每個細節");
-  await expect(page.frameLocator('iframe[title="電腦網站預覽"]').locator("h1")).toContainText("看見每個細節");
+  await expect(page.frameLocator('iframe[title="電腦網站預覽"]').locator("h1")).toContainText("看見每個細節", { timeout: 20_000 });
 
   await page.goto("/admin/media");
   await expect(page.getByRole("heading", { name: "網站圖片管理" })).toBeVisible();

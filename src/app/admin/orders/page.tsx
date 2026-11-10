@@ -92,26 +92,31 @@ export default function AdminOrdersPage() {
   const [fetchError, setFetchError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    setFetchError("");
-    try {
-      const res = await fetch("/api/admin/orders");
-      if (!res.ok) throw new Error("訂單暫時無法載入，請重新整理");
-      const data = (await res.json()) as { orders?: Order[] };
-      setOrders(data.orders || []);
-    } catch {
-      setFetchError("訂單暫時無法載入，請重新整理");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    void fetchOrders();
-  }, []);
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      setFetchError("");
+      try {
+        const params = new URLSearchParams({ page: String(page), status: statusFilter, q: search.trim() });
+        const res = await fetch(`/api/admin/orders?${params}`, { cache: "no-store", signal: controller.signal });
+        if (!res.ok) throw new Error("訂單暫時無法載入，請重新整理");
+        const data = (await res.json()) as { orders?: Order[]; total?: number };
+        setOrders(data.orders || []);
+        setTotal(data.total ?? 0);
+      } catch {
+        if (!controller.signal.aborted) setFetchError("訂單暫時無法載入，請重新整理");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, search ? 250 : 0);
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, [page, search, statusFilter, refreshTick]);
 
   async function updateStatus(orderId: string, newStatus: OrderStatus) {
     try {
@@ -133,14 +138,7 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const filtered = orders.filter((o) => {
-    const matchSearch =
-      o.id.includes(search) ||
-      (o.customerName ?? "").includes(search) ||
-      (o.customerEmail ?? "").includes(search);
-    const matchStatus = statusFilter === "ALL" || o.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const filtered = orders;
 
   const exportCsv = () => {
     if (filtered.length === 0) return;
@@ -202,13 +200,13 @@ export default function AdminOrdersPage() {
             disabled={filtered.length === 0}
           >
             <Download size={14} />
-            匯出 CSV ({filtered.length})
+            匯出本頁 CSV ({filtered.length})
           </Button>
           <Button
             variant="secondary"
             size="sm"
             className="gap-1.5"
-            onClick={() => void fetchOrders()}
+            onClick={() => setRefreshTick((value) => value + 1)}
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             重新整理
@@ -228,13 +226,13 @@ export default function AdminOrdersPage() {
             type="text"
             placeholder="搜尋訂單編號、會員姓名..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="input pl-9 py-2 min-h-0"
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="input w-auto min-h-0 py-2 pr-8"
         >
           <option value="ALL">全部狀態</option>
@@ -245,6 +243,8 @@ export default function AdminOrdersPage() {
           ))}
         </select>
       </div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#675e53]"><span>符合條件共 {total} 筆 · 第 {page} / {Math.max(1, Math.ceil(total / 50))} 頁</span><div className="flex gap-2"><Button variant="secondary" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)}>上一頁</Button><Button variant="secondary" size="sm" disabled={page >= Math.ceil(total / 50) || loading} onClick={() => setPage((value) => value + 1)}>下一頁</Button></div></div>
 
       {loading ? (
         <div className="py-20 text-center">

@@ -20,18 +20,36 @@ const updateOrderStatusSchema = z.object({
   ]),
 });
 
-// 公司端取得所有即時訂單列表
-export async function GET() {
+// 公司端依條件分頁取得訂單，避免大量訂單被截斷。
+export async function GET(request: Request) {
   try {
     await requireAdminSession();
-    const orders = await db.order.findMany({
+    const params = new URL(request.url).searchParams;
+    const requestedPage = Number(params.get("page") ?? 1);
+    const page = Number.isInteger(requestedPage) ? Math.max(1, Math.min(1000, requestedPage)) : 1;
+    const pageSize = 50;
+    const query = params.get("q")?.trim().slice(0, 80) ?? "";
+    const requestedStatus = params.get("status") ?? "ALL";
+    const statuses = ["PENDING_PAYMENT", "PAID", "PROCESSING", "DISPATCHED", "COMPLETED", "CANCELLED"] as const;
+    if (requestedStatus !== "ALL" && !statuses.includes(requestedStatus as typeof statuses[number])) throw new ApiError(400, "訂單狀態不正確");
+    const where: Prisma.OrderWhereInput = {
+      ...(requestedStatus !== "ALL" ? { status: requestedStatus as typeof statuses[number] } : {}),
+      ...(query ? { OR: [
+        { id: { contains: query, mode: "insensitive" } },
+        { user: { is: { name: { contains: query, mode: "insensitive" } } } },
+        { user: { is: { email: { contains: query, mode: "insensitive" } } } },
+      ] } : {}),
+    };
+    const [orders, total] = await Promise.all([db.order.findMany({
+      where,
       orderBy: { createdAt: "desc" },
-      take: 100,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       include: {
         user: { select: { name: true, email: true, phone: true } },
         items: true,
       },
-    });
+    }), db.order.count({ where })]);
 
     const formattedOrders = orders.map((o) => ({
       id: o.id,
@@ -54,7 +72,7 @@ export async function GET() {
       })),
     }));
 
-    return NextResponse.json({ orders: formattedOrders });
+    return NextResponse.json({ orders: formattedOrders, total, page, pageSize });
   } catch (error) {
     return apiError(error);
   }
