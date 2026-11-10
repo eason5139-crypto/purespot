@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { money } from "@/lib/utils";
 import { getProduct } from "@/lib/catalog";
 import type { SavedAddress } from "@/lib/accountTypes";
+import { PaymentExperience } from "./PaymentExperience";
 
 type Step = "cart" | "address" | "payment" | "confirm";
 
@@ -92,6 +93,7 @@ function CheckoutContent() {
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [selectedPayment, setSelectedPayment] = useState(isFamilyMode ? "linepay" : "credit");
+  const [paymentReady, setPaymentReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
@@ -125,6 +127,7 @@ function CheckoutContent() {
   const hasItems = isFamilyMode ? sharedItems.length > 0 : personalItems.length > 0;
 
   async function handlePlaceOrder() {
+    if (!paymentReady) return;
     if (!user) {
       openAuth(true);
       return;
@@ -165,7 +168,7 @@ function CheckoutContent() {
       });
       const result = await response.json() as { order?: { id: string; totalNt: number }; error?: string };
       if (!response.ok || !result.order) throw new Error(result.error || "訂單無法建立，請稍後再試");
-      await new Promise((resolve) => window.setTimeout(resolve, Math.max(0, 1500 - (Date.now() - started))));
+      await new Promise((resolve) => window.setTimeout(resolve, Math.max(0, 2200 - (Date.now() - started))));
       setOrderId(result.order.id);
       setConfirmedTotal(result.order.totalNt);
       if (isFamilyMode) clearSharedItems();
@@ -473,7 +476,7 @@ function CheckoutContent() {
               {paymentMethods.map((method) => (
                 <button
                   key={method.id}
-                  onClick={() => setSelectedPayment(method.id)}
+                  onClick={() => { if (method.id !== selectedPayment) { setSelectedPayment(method.id); setPaymentReady(method.id === "transfer" || method.id === "cvs"); } }}
                   className={`w-full panel p-5 flex items-center gap-4 text-left transition-all ${
                     selectedPayment === method.id
                       ? "border-[#5B93C5] bg-[#fbf8f4] ring-1 ring-[#5B93C5]"
@@ -506,55 +509,7 @@ function CheckoutContent() {
               ))}
             </div>
 
-            <div className="mb-6 rounded-[1.5rem] border border-[#bcd5e9] bg-[#f2f8fc] p-5 text-[#253b4d]" aria-live="polite">
-              {selectedPayment === "credit" && (
-                <>
-                  <div className="flex items-center gap-2 font-semibold"><CreditCard size={20} />信用卡確認</div>
-                  <motion.div
-                    initial={{ rotateY: -12, y: 16, opacity: 0 }}
-                    animate={{ rotateY: 0, y: 0, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 140, damping: 18 }}
-                    className="relative mt-4 max-w-xs overflow-hidden rounded-2xl bg-[#315F86] p-5 text-white shadow-xl"
-                  >
-                    <motion.div className="pointer-events-none absolute inset-y-0 w-24 -skew-x-12 bg-white/15 blur-xl" initial={{ x: -160 }} animate={{ x: 430 }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 1.7 }} />
-                    <p className="relative text-xs tracking-[.2em] text-white/75">PURESPOT · CARD</p>
-                    <p className="mt-7 font-mono text-xl tracking-[.18em]">•••• •••• •••• 0000</p>
-                    <div className="mt-5 flex items-center justify-between text-xs text-white/75"><span>PURESPOT MEMBER</span><CreditCard size={20} /></div>
-                  </motion.div>
-                  <p className="mt-4 text-sm">確認後建立訂單紀錄；此處不需輸入卡號。</p>
-                </>
-              )}
-              {selectedPayment === "linepay" && (
-                <>
-                  <div className="flex items-center gap-2 font-semibold"><Smartphone size={20} />LINE Pay 確認</div>
-                  <motion.div initial={{ y: 20, opacity: 0, scale: .96 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 150, damping: 18 }} className="mx-auto mt-4 max-w-[220px] rounded-[2rem] border-[7px] border-[#253b4d] bg-white p-4 text-center shadow-xl">
-                    <div className="mx-auto mb-4 h-1 w-14 rounded-full bg-[#253b4d]/30" />
-                    <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 2.2 }} className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#06c755] text-xl font-bold text-white">LINE</motion.div>
-                    <p className="mt-4 text-sm font-semibold text-[#253b4d]">PURESPOT</p>
-                    <p className="mt-1 font-mono text-2xl font-bold text-[#253b4d]">{money(total)}</p>
-                    <div className="mt-4 rounded-xl bg-[#06c755] px-3 py-2 text-xs font-semibold text-white">確認付款</div>
-                  </motion.div>
-                  <p className="mt-4 text-sm">確認後建立訂單，並可在會員帳戶查看。</p>
-                </>
-              )}
-              {selectedPayment === "transfer" && (
-                <>
-                  <div className="flex items-center gap-2 font-semibold"><Landmark size={20} />PURESPOT 轉帳資料</div>
-                  <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[6rem_1fr]">
-                    <dt className="text-[#657788]">銀行代碼</dt><dd className="font-mono">000</dd>
-                    <dt className="text-[#657788]">戶名</dt><dd>PURESPOT</dd>
-                    <dt className="text-[#657788]">帳號</dt><dd className="font-mono">000-000-000000</dd>
-                  </dl>
-                  <p className="mt-4 text-sm font-semibold text-[#315F86]">此帳號不能匯款，請勿使用真實銀行 App 操作。</p>
-                </>
-              )}
-              {selectedPayment === "cvs" && (
-                <>
-                  <div className="flex items-center gap-2 font-semibold"><Store size={20} />超商取貨付款</div>
-                  <p className="mt-3 text-sm leading-7">確認收件資料後，即可建立訂單並於會員帳戶查看。</p>
-                </>
-              )}
-            </div>
+            <PaymentExperience method={selectedPayment} total={total} onReadyChange={setPaymentReady} />
 
             {/* 收件資訊確認 */}
             <div className="panel p-5 mb-6 bg-white">
@@ -578,10 +533,10 @@ function CheckoutContent() {
               </Button>
               <Button
                 className="flex-1 gap-2"
-                disabled={submitting}
+                disabled={submitting || !paymentReady}
                 onClick={() => void handlePlaceOrder()}
               >
-                {submitting ? "正在確認訂單..." : user ? "確認建立訂單" : "登入後建立訂單"}
+                {submitting ? "正在確認訂單..." : !paymentReady ? "請先確認付款畫面" : user ? "確認建立訂單" : "登入後建立訂單"}
                 {!submitting && <ChevronRight size={16} />}
               </Button>
             </div>
@@ -590,7 +545,7 @@ function CheckoutContent() {
               {submitting && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="status" className="mt-5 flex items-center gap-4 rounded-2xl border border-[#bcd5e9] bg-white p-5 shadow-sm">
                   <motion.span animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} className="flex size-11 items-center justify-center rounded-full border-2 border-[#bcd5e9] border-t-[#315F86] text-[#315F86]">{selectedPayment === "linepay" ? <Smartphone size={17} /> : <CreditCard size={17} />}</motion.span>
-                  <span><strong className="block text-sm text-[#253b4d]">{selectedPayment === "linepay" ? "正在開啟手機付款畫面" : selectedPayment === "credit" ? "正在感應卡片" : "正在建立訂單"}</strong><span className="mt-1 block text-xs text-[#657788]">請稍候，訂單即將同步到會員與後台</span></span>
+                  <span><strong className="block text-sm text-[#253b4d]">正在建立訂單</strong><span className="mt-1 block text-xs text-[#657788]">請稍候，訂單即將同步到會員與後台</span></span>
                 </motion.div>
               )}
             </AnimatePresence>

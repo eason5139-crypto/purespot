@@ -120,16 +120,34 @@ test("結帳付款方式有互動呈現，登入前不建立訂單", async ({ pa
   await page.getByRole("textbox", { name: "鄉鎮市區 *" }).fill("中正區");
   await page.getByRole("textbox", { name: "詳細地址 *" }).fill("仁愛路一段一號");
   await page.getByRole("button", { name: "確認收件資訊，選擇付款方式" }).click();
+  await expect(page.getByRole("button", { name: "請先確認付款畫面" })).toBeDisabled();
   await page.getByRole("button", { name: /LINE Pay/ }).first().click();
-  await expect(page.getByText("LINE Pay 確認")).toBeVisible();
+  await page.getByRole("button", { name: "開啟付款畫面" }).click();
+  await page.getByRole("button", { name: "確認付款", exact: true }).click();
+  await expect(page.getByText("可送出訂單")).toBeVisible();
   await page.getByRole("button", { name: /信用卡/ }).first().click();
-  await expect(page.getByText("信用卡確認")).toBeVisible();
+  await expect(page.getByRole("button", { name: "請先確認付款畫面" })).toBeDisabled();
+  await page.getByRole("button", { name: "感應卡片" }).click();
+  await page.getByRole("button", { name: "確認此筆付款" }).click();
+  await expect(page.getByText("可送出訂單")).toBeVisible();
   await page.getByRole("button", { name: /ATM 轉帳/ }).click();
   await expect(page.getByText("此帳號不能匯款，請勿使用真實銀行 App 操作。")).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole("button", { name: "登入後建立訂單" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
+});
+test("首頁活動與社群入口可在桌機和手機使用", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#site-events")).toBeVisible();
+  await expect(page.getByRole("button", { name: /本期活動/ })).toBeVisible();
+  await page.getByRole("link", { name: "LINE 分享", exact: true }).click();
+  await expect(page).toHaveURL(/\/community\/connect\?channel=LINE/);
+  await expect(page.getByRole("button", { name: "LINE", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator("#site-events")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 test("TradingView 指標切換與離開重掛載無錯誤", async ({ page }) => {
   const errors: string[] = [];

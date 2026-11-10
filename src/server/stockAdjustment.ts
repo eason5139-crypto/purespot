@@ -27,8 +27,16 @@ export async function adjustStock(lines: StockLine[]) {
   const batchId = randomUUID();
   return db.$transaction(async (tx) => {
     const result = [];
+    const variants = await tx.productVariant.findMany({
+      where: { productId: { in: validLines.map((line) => line.productId) } },
+      orderBy: { sku: "asc" },
+    });
+    const variantByProduct = new Map<string, (typeof variants)[number]>();
+    for (const variant of variants) {
+      if (!variantByProduct.has(variant.productId)) variantByProduct.set(variant.productId, variant);
+    }
     for (const line of validLines) {
-      const variant = await tx.productVariant.findFirst({ where: { productId: line.productId }, orderBy: { sku: "asc" } });
+      const variant = variantByProduct.get(line.productId);
       if (!variant) throw new ApiError(404, "找不到商品規格");
       if (variant.unitCostNt === null) throw new ApiError(400, "商品尚未設定進貨單價，請先編輯商品成本");
       const newStock = variant.stock + line.delta;
@@ -45,7 +53,7 @@ export async function adjustStock(lines: StockLine[]) {
       result.push({ productId: line.productId, stock: newStock, movement });
     }
     return { batchId, items: result, estimatedTotalNt: result.reduce((sum, item) => sum + (item.movement.costImpactNt ?? 0), 0) };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10000, timeout: 45000 });
 }
 
 export function startOfTaipeiMonth(now = new Date()) {

@@ -22,9 +22,9 @@ const topics = [
 function readDrafts(): Draft[] { try { const value: unknown = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "[]"); return Array.isArray(value) ? value.filter((entry): entry is Draft => entry && typeof entry.id === "string" && (entry.channel === "INSTAGRAM" || entry.channel === "LINE") && typeof entry.message === "string" && typeof entry.title === "string" && typeof entry.link === "string").slice(0, 30) : []; } catch { return []; } }
 function readSettings(): Settings { try { const value = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "null") as Partial<Settings> | null; return value ? { instagramName: String(value.instagramName ?? "").slice(0, 50), lineName: String(value.lineName ?? "").slice(0, 50), notifyNewPost: value.notifyNewPost !== false, notifyReplies: value.notifyReplies !== false } : defaultSettings; } catch { return defaultSettings; } }
 
-export function SocialStudio() {
-  const [channel, setChannel] = useState<Channel>("INSTAGRAM");
-  const [format, setFormat] = useState<Format>("POST");
+export function SocialStudio({ initialChannel = "INSTAGRAM" }: { initialChannel?: Channel }) {
+  const [channel, setChannel] = useState<Channel>(initialChannel);
+  const [format, setFormat] = useState<Format>(initialChannel === "LINE" ? "FRIEND" : "POST");
   const [topic, setTopic] = useState(0);
   const [message, setMessage] = useState(topics[0]!.defaultMessage);
   const [settings, setSettings] = useState<Settings>(defaultSettings);

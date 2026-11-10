@@ -22,6 +22,7 @@ function draftProduct(name: string, unitCostNt: number) {
 }
 
 test("批次進貨、耗損與營運成本使用同一份流水", async ({ page }) => {
+  test.setTimeout(120_000);
   test.skip(!process.env.PURESPOT_ADMIN_TEST_PASSWORD, "需要後台測試密碼");
   const db = testDatabase();
   const productIds: string[] = [];
@@ -30,7 +31,7 @@ test("批次進貨、耗損與營運成本使用同一份流水", async ({ page 
     await page.getByRole("textbox", { name: "管理員帳號" }).fill("Yichen");
     await page.getByLabel("密碼", { exact: true }).fill(process.env.PURESPOT_ADMIN_TEST_PASSWORD!);
     await page.getByRole("button", { name: "登入", exact: true }).click();
-    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page).toHaveURL(/\/admin$/, { timeout: 20_000 });
 
     const before = await (await page.request.get("/api/admin/inventory")).json();
     const first = await page.request.post("/api/admin/products", { data: draftProduct(`驗證玩具甲${randomUUID().slice(0, 6)}`, 200) });
@@ -42,22 +43,29 @@ test("批次進貨、耗損與營運成本使用同一份流水", async ({ page 
     const secondId = (await second.json()).product.id as string;
     productIds.push(secondId);
 
+    for (let index = 0; index < 10; index++) {
+      const response = await page.request.post("/api/admin/products", { data: draftProduct(`批次驗證${index}${randomUUID().slice(0, 6)}`, 100) });
+      expect(response.status(), await response.text()).toBe(201);
+      productIds.push((await response.json()).product.id as string);
+    }
+
     const batch = await page.request.post("/api/admin/inventory", { data: { items: [
       { productId: firstId, delta: 3, type: "restock", note: "驗證批次" },
       { productId: secondId, delta: 4, type: "restock", note: "驗證批次" },
+      ...productIds.slice(2).map((productId) => ({ productId, delta: 1, type: "restock", note: "驗證批次" })),
     ] } });
     expect(batch.status(), await batch.text()).toBe(200);
-    expect((await batch.json()).estimatedTotalNt).toBe(1200);
+    expect((await batch.json()).estimatedTotalNt).toBe(2200);
     const loss = await page.request.patch(`/api/admin/products/${firstId}/stock`, { data: { delta: -1, type: "deduction", note: "驗證耗損" } });
     expect(loss.status(), await loss.text()).toBe(200);
     const correction = await page.request.patch(`/api/admin/products/${secondId}/stock`, { data: { delta: -1, type: "adjustment", note: "驗證盤點" } });
     expect(correction.status(), await correction.text()).toBe(200);
 
     const after = await (await page.request.get("/api/admin/inventory")).json();
-    expect(after.spending.procurementNt - before.spending.procurementNt).toBe(1200);
+    expect(after.spending.procurementNt - before.spending.procurementNt).toBe(2200);
     expect(after.spending.lossNt - before.spending.lossNt).toBe(350);
-    expect(after.spending.totalNt - before.spending.totalNt).toBe(1550);
-    expect(after.logs.filter((entry: { productId: string }) => productIds.includes(entry.productId))).toHaveLength(4);
+    expect(after.spending.totalNt - before.spending.totalNt).toBe(2550);
+    expect(after.logs.filter((entry: { productId: string }) => productIds.includes(entry.productId))).toHaveLength(14);
     const analytics = await (await page.request.get("/api/admin/analytics?abcDays=30")).json();
     expect(analytics.inventorySpending.totalNt).toBe(after.spending.totalNt);
 

@@ -85,7 +85,13 @@ export function apiError(error: unknown) {
       { error: "資料已存在或正在處理，請重新整理確認" },
       { status: 409 },
     );
-  if (process.env.NODE_ENV !== "production") console.error("API request failed", error);
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034")
+    return NextResponse.json({ error: "庫存同時有其他異動，請更新資料後重試" }, { status: 409 });
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2028") {
+    console.error("API transaction timeout", { code: error.code, message: error.message });
+    return NextResponse.json({ error: "入庫處理逾時，請先更新庫存確認是否已完成，再重新送出" }, { status: 503 });
+  }
+  console.error("API request failed", error);
   return NextResponse.json(
     { error: "服務暫時無法使用，請稍後再試" },
     { status: 503 },
