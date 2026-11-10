@@ -16,6 +16,7 @@ async function revealAnimatedSections(page: import("@playwright/test").Page) {
 }
 
 test("擷取桌機、手機、試算與商品詳情畫面", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("purespot-promotions-seen-v1", "1"));
   await page.goto("/", { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
   await expect(

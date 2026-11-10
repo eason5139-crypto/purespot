@@ -50,6 +50,8 @@ export function toCatalogProduct(record: DatabaseProduct, includeCost = false): 
       protein: batch.protein,
       moisture: batch.moisture,
       ash: batch.ash,
+      isDemo: batch.isDemo,
+      reportUrl: batch.reportUrl,
     })),
     autoshipEligible: record.isAutoshipEligible,
     description: record.description,

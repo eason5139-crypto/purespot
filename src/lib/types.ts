@@ -24,6 +24,8 @@ export interface BatchRecord {
   protein: number;
   moisture: number;
   ash: number;
+  isDemo?: boolean;
+  reportUrl?: string | null;
 }
 export interface Product {
   id: string;

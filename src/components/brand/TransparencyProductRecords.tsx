@@ -102,6 +102,7 @@ export function TransparencyProductRecords({ products }: { products: Product[] }
               {food ? <div className="mt-4 grid grid-cols-3 gap-2 border-y border-[#eee5db] py-3 text-center"><Metric label="粗蛋白" value={`${product.proteinMin}%`} /><Metric label="水分" value={`${product.moistureMax}%`} /><Metric label="熱量 / 100g" value={`${product.kcalPer100g}`} /></div> : <p className="mt-4 line-clamp-2 border-y border-[#eee5db] py-3 text-sm leading-6 text-[#756a5e]">{product.description}</p>}
               {food && <p className="mt-3 line-clamp-1 text-xs text-[#806a5c]">主要成分：{product.ingredients.join("、") || "待補充"}</p>}
               <Link href={`/products/${product.slug}`} className="mt-5 inline-flex min-h-10 w-fit items-center gap-2 rounded-full bg-[#315F86] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#244b6b]">查看商品詳情 <ArrowUpRight size={15} /></Link>
+              {food && <Link href={`/care/ingredients?product=${encodeURIComponent(product.slug)}`} className="mt-2 inline-flex min-h-10 w-fit items-center gap-2 text-sm font-semibold text-[#315F86] underline underline-offset-4">用成分放大鏡看這款 <ArrowUpRight size={15}/></Link>}
             </div>
           </motion.article>;
         })}

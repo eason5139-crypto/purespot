@@ -68,6 +68,7 @@ export function ProductDetail({ product }: { product: Product }) {
             {product.videoUrl && (
               <a className="mt-5 inline-flex items-center gap-2 text-sm text-[#7c4e3c] underline underline-offset-4" href={product.videoUrl} target="_blank" rel="noopener noreferrer">觀看商品影片 <ExternalLink size={14} /></a>
             )}
+            {!isSupply && <Link href={`/care/ingredients?product=${encodeURIComponent(product.slug)}`} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#315F86] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#244b6b]">打開成分放大鏡 <ArrowRight size={16} /></Link>}
           </div>
 
           <div className="lg:pt-3">
@@ -112,7 +113,7 @@ export function ProductDetail({ product }: { product: Product }) {
           <div><p className="mb-5 text-xs font-semibold tracking-[.16em] text-[#8b634e]">{isSupply ? "商品介紹" : "原料與營養"}</p><p className="text-base leading-9 text-[#5e554d]">{isSupply ? product.description : product.ingredients.join("、")}</p><div className="mt-8 border-t border-[#d7cabd] pt-6 text-sm leading-7 text-[#6c6258]">{isSupply ? "圖片與規格為概念示意，請以實際上架資訊為準。" : "我們把配方與檢驗資訊放在同一頁，讓選擇有依據。包裝上的標示是最終資訊來源。"}</div></div>
         </section>
 
-        {product.batches.length > 0 && <section className="mt-20"><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="editorial-kicker">TRANSPARENCY IN PRACTICE</p><h2 className="editorial-title mt-3 font-serif text-4xl">批次檢驗，公開可查。</h2></div><Link href="/transparency" className="inline-flex items-center gap-2 text-sm text-[#795340] underline underline-offset-4">了解透明承諾 <ArrowRight size={15} /></Link></div><NutritionalTrendChart batches={product.batches} proteinMin={product.proteinMin} moistureMax={product.moistureMax} ashMax={product.ashMax} /></section>}
+        {product.batches.length > 0 && <section className="mt-20"><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="editorial-kicker">TRANSPARENCY IN PRACTICE</p><h2 className="editorial-title mt-3 font-serif text-4xl">批次數值走勢</h2><p className="mt-3 text-sm text-[#756c63]">{product.batches.some((batch) => batch.isDemo !== false || !/^https?:\/\//i.test(batch.reportUrl ?? "")) ? "目前含展示或未附來源的批次，正式檢驗報告尚待核實。" : "批次已附來源連結，仍請核對正式報告與實品標示。"}</p></div><Link href="/transparency" className="inline-flex items-center gap-2 text-sm text-[#795340] underline underline-offset-4">了解透明承諾 <ArrowRight size={15} /></Link></div><NutritionalTrendChart batches={product.batches} proteinMin={product.proteinMin} moistureMax={product.moistureMax} ashMax={product.ashMax} /></section>}
       </div>
     </main>
   );
