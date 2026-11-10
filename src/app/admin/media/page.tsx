@@ -9,7 +9,7 @@ import type { SiteContent } from "@/lib/siteContent";
 const locations = [
   { key: "heroImage", name: "首頁第一張大照片", detail: "訪客一進網站最先看到", href: "/" },
   { key: "shopImage", name: "商城形象照片", detail: "商城上方與首頁選物區", href: "/shop" },
-  { key: "communityImage", name: "社群形象照片", detail: "首頁毛孩日常區", href: "/community" },
+  { key: "communityImage", name: "社群形象照片", detail: "首頁毛孩社群區", href: "/community" },
 ] as const;
 type Location = typeof locations[number]["key"];
 type Source = "all" | "uploaded" | "bundled";

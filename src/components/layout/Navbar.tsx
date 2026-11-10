@@ -33,8 +33,8 @@ import {
 const links = [
   { href: "/", label: "品牌首頁" },
   { href: "/shop", label: "精品商城" },
-  { href: "/transparency", label: "7C 透明度" },
-  { href: "/community", label: "毛孩日常" },
+  { href: "/transparency", label: "安心選物" },
+  { href: "/community", label: "毛孩社群" },
   { href: "/care", label: "照顧工具" },
   { href: "/account", label: "我的帳戶" },
 ];

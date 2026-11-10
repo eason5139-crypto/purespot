@@ -396,7 +396,7 @@ export function Storefront({ content }: { content: SiteContent }) {
             href="/community"
             className="text-sm font-medium text-[#74675b] hover:text-[#5B93C5]"
           >
-            逛逛毛孩日常
+            逛逛毛孩社群
           </Link>
         </div>
         <div className="grid gap-5 md:grid-cols-2">

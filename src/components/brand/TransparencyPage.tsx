@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowUpRight, FileText, FlaskConical, Leaf, ShieldCheck } from "lucide-react";
+import { FileText, FlaskConical, Leaf, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import type { SiteContent } from "@/lib/siteContent";
 import { useSiteContentPreview } from "@/lib/useSiteContentPreview";
 import { useCatalogStore } from "@/store/useCatalogStore";
+import { TransparencyProductRecords } from "./TransparencyProductRecords";
 
 const pillars = [
   { title: "原料看得懂", text: "每款商品列出主要成分與已知過敏原。", icon: Leaf },
@@ -22,7 +22,7 @@ export function TransparencyPage({ content }: { content: SiteContent }) {
     <main id="main-content" className="bg-[#f8f4ed] pb-24 text-[#302b26]">
       <section className="border-b border-[#d9cbbd] bg-[#e7e2d7] py-16 sm:py-24">
         <div className="page-shell">
-          <span className="editorial-kicker">7C · CONTENT TRANSPARENCY</span>
+          <span className="editorial-kicker">PURESPOT · 安心選物</span>
           <h1 className="editorial-title mt-5 max-w-3xl text-5xl leading-tight tracking-[-.05em] sm:text-7xl">{displayContent.transparencyTitle}</h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-[#775f50]">{displayContent.transparencyDescription}</p>
           <p className="mt-7 inline-flex border-l-[3px] border-[#9c6048] bg-[#f8f4ed] px-4 py-3 text-sm text-[#82543a]">
@@ -52,41 +52,7 @@ export function TransparencyPage({ content }: { content: SiteContent }) {
         </div>
       </section>
 
-      <section className="page-shell">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <span className="editorial-kicker">02 / PRODUCT RECORDS</span>
-            <h2 className="editorial-title mt-3 text-4xl">商品營養與批次資料</h2>
-          </div>
-          <Link href="/shop" className="inline-flex items-center gap-1 text-sm font-medium text-[#ae6744]">前往商城 <ArrowUpRight size={16} /></Link>
-        </div>
-        <div className="mt-7 grid gap-4 md:grid-cols-2">
-          {products.map((product) => (
-            <article key={product.id} className="border border-[#d9cbbd] bg-[#fffdf9] p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs text-[#a17a61]">{product.type === "CAT" ? "貓咪" : product.type === "DOG" ? "狗狗" : product.type === "HAMSTER" ? "倉鼠" : "兔兔"} · {product.category}</p>
-                  <h3 className="mt-1 text-xl font-semibold">{product.name}</h3>
-                  <p className="mt-1 text-sm text-[#806a5c]">{product.subtitle}</p>
-                </div>
-                <span className="bg-[#f0e8de] px-3 py-1 text-xs text-[#876149]">
-                  {product.batches.length ? `${product.batches.length} 筆示範批次` : "尚無批次資料"}
-                </span>
-              </div>
-              <div className="mt-5 grid grid-cols-3 gap-2 border-y border-[#eee2d5] py-4 text-center">
-                <div><p className="text-xs text-[#8d7567]">粗蛋白最低</p><strong className="mt-1 block text-lg">{product.proteinMin}%</strong></div>
-                <div><p className="text-xs text-[#8d7567]">水分最高</p><strong className="mt-1 block text-lg">{product.moistureMax}%</strong></div>
-                <div><p className="text-xs text-[#8d7567]">熱量 / 100g</p><strong className="mt-1 block text-lg">{product.kcalPer100g}</strong></div>
-              </div>
-              <p className="mt-4 text-sm text-[#806a5c]">主要成分：{product.ingredients.join("、") || "待補充"}</p>
-              <p className="mt-1 text-sm text-[#806a5c]">過敏原：{product.allergens.join("、") || "未列出"}</p>
-              <Link href={`/products/${product.slug}`} className="editorial-action mt-5 inline-flex min-h-11 items-center gap-2 bg-[#955a42] px-4 text-sm font-semibold text-white hover:bg-[#7e4833]">
-                查看商品詳情 <ArrowUpRight size={16} />
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+      <TransparencyProductRecords products={products} />
     </main>
   );
 }

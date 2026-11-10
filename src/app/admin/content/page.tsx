@@ -62,7 +62,7 @@ const sections: Section[] = [
   {
     id: "pages",
     title: "其他頁面文案",
-    description: "商城引言與 7C 透明度頁面的標題與說明。",
+    description: "商城引言與安心選物頁面的標題與說明。",
     fields: [
       { key: "shopBadge", label: "商城區塊標籤" },
       { key: "shopTitleAccent", label: "商城標題強調文字" },
