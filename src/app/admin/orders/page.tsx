@@ -10,6 +10,7 @@ import {
   ChevronDown,
   RefreshCw,
   Download,
+  ListChecks,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ export default function AdminOrdersPage() {
   const [total, setTotal] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [batchSaving, setBatchSaving] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -135,6 +137,23 @@ export default function AdminOrdersPage() {
       }
     } catch {
       alert("狀態更新失敗，請檢查網路連線");
+    }
+  }
+
+  const completableIds = orders.filter((order) => ["PAID", "PROCESSING", "DISPATCHED"].includes(order.status)).map((order) => order.id);
+  async function completePage() {
+    if (!completableIds.length || !window.confirm(`要將本頁 ${completableIds.length} 筆訂單標為已完成嗎？`)) return;
+    setBatchSaving(true);
+    try {
+      const response = await fetch("/api/admin/orders/complete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderIds: completableIds }) });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || "批次完成失敗");
+      setOrders((previous) => previous.map((order) => completableIds.includes(order.id) ? { ...order, status: "COMPLETED" } : order));
+      setRefreshTick((value) => value + 1);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "批次完成失敗");
+    } finally {
+      setBatchSaving(false);
     }
   }
 
@@ -192,6 +211,7 @@ export default function AdminOrdersPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void completePage()} disabled={batchSaving || loading || completableIds.length === 0}><ListChecks size={14}/>{batchSaving ? "處理中..." : `批次完成本頁 (${completableIds.length})`}</Button>
           <Button
             variant="secondary"
             size="sm"
