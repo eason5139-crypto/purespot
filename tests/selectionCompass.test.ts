@@ -15,6 +15,8 @@ describe("選物羅盤的商品排除與提案", () => {
     expect(allergenConflicts(["大豆"], [], ["黃豆粉"])).toEqual(["大豆"]);
     expect(allergenConflicts(["雞肉"], [], ["雞油", "南瓜"])).toEqual(["雞肉"]);
     expect(allergenConflicts(["禽肉"], [], ["鴨肉"])).toEqual(["禽肉"]);
+    expect(allergenConflicts(["雞肉"], ["家禽"], [])).toEqual(["雞肉"]);
+    expect(allergenConflicts(["鴨肉"], [], ["雞肉"])).toEqual([]);
     expect(allergenConflicts(["牛肉"], [], ["鮭魚"])).toEqual([]);
   });
 

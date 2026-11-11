@@ -58,7 +58,10 @@ function normalize(value: string) {
 
 function groupFor(value: string) {
   const normalized = normalize(value);
-  return Object.entries(aliases).find(([, names]) =>
+  if (["禽肉", "家禽", "poultry"].some((term) => normalize(term) === normalized))
+    return "POULTRY";
+  return Object.entries(aliases).find(([group, names]) =>
+    group !== "POULTRY" &&
     names.some((name) => normalize(name) === normalized),
   )?.[0];
 }
@@ -75,7 +78,14 @@ export function allergenConflicts(
     const normalized = normalize(allergy);
     if (!normalized) return false;
     const group = groupFor(allergy);
-    const terms = group ? aliases[group]!.map(normalize) : [normalized];
+    const terms = group
+      ? [
+          ...aliases[group]!,
+          ...(group === "CHICKEN" || group === "DUCK"
+            ? ["禽肉", "家禽", "poultry"]
+            : []),
+        ].map(normalize)
+      : [normalized];
     return declared.some((item) => terms.some((term) => item.includes(term)));
   });
 }
