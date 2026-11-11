@@ -39,6 +39,7 @@ export interface Product {
   ingredients: string[];
   allergens: string[];
   kcalPer100g: number;
+  nutritionDataProvided?: boolean;
   bagGrams: number;
   priceNt: number;
   unitCostNt?: number | null;

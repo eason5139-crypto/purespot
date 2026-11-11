@@ -19,8 +19,17 @@ export const metadata: Metadata = {
 
 const tools = [
   {
-    href: "/care/selection",
+    href: "/care/compass",
     number: "04",
+    title: "選物羅盤",
+    en: "THE CHOICE COMPASS",
+    description: "說出需求，查看三種有理由的提案；比較後直接加入購物袋。",
+    icon: Compass,
+    color: "bg-[#dcebf5]",
+  },
+  {
+    href: "/care/selection",
+    number: "05",
     title: "選物實驗室",
     en: "THE SELECTION LAB",
     description: "從毛孩資料出發，分層比較適合的食物與用品。",
@@ -29,7 +38,7 @@ const tools = [
   },
   {
     href: "/care/refill",
-    number: "05",
+    number: "06",
     title: "補貨天氣預報",
     en: "THE REFILL FORECAST",
     description: "把家中存量換算成剩餘天數，提早安排下一袋。",
@@ -38,7 +47,7 @@ const tools = [
   },
   {
     href: "/care/transition",
-    number: "06",
+    number: "07",
     title: "換糧陪跑",
     en: "THE FOOD TRANSITION",
     description: "看見每天的新舊食物比例，也記下毛孩的反應。",
@@ -47,7 +56,7 @@ const tools = [
   },
   {
     href: "/health",
-    number: "07",
+    number: "08",
     title: "健康儀表板",
     en: "THE PET PROFILE",
     description: "查看毛孩基本資料、份量估算與照顧紀錄。",
@@ -76,7 +85,7 @@ export default function CarePage() {
           <p className="mt-7 max-w-xl text-sm leading-8 text-[#e3edf1] sm:text-base">
             今天想看懂一袋食物？準備一趟出門？還是用三分鐘完成探索任務？從你的問題出發，走進毛孩生活工作室。
           </p>
-          <div className="mt-8 flex flex-wrap gap-3"><Link href="/care/ingredients" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#dcebf3] px-5 text-sm font-semibold text-[#284a63]">開始探索 <ArrowUpRight size={16}/></Link><a href="#today" className="inline-flex min-h-11 items-center rounded-full border border-white/40 px-5 text-sm font-semibold">看看今天能玩什麼</a></div>
+          <div className="mt-8 flex flex-wrap gap-3"><Link href="/care/compass" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#dcebf3] px-5 text-sm font-semibold text-[#284a63]">打開選物羅盤 <ArrowUpRight size={16}/></Link><a href="#today" className="inline-flex min-h-11 items-center rounded-full border border-white/40 px-5 text-sm font-semibold">看看今天能玩什麼</a></div>
           </div>
           <div className="relative hidden h-[440px] lg:block" aria-hidden="true"><div className="absolute inset-5 rotate-[-5deg] overflow-hidden rounded-[12rem_12rem_3rem_3rem] bg-[#7399a8]"><Image src="/images/editorial/home-living-v2.png" alt="" fill priority sizes="50vw" className="object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-[#183b4a]/60 to-transparent"/></div><div className="absolute -bottom-3 right-0 flex size-36 rotate-[8deg] items-center justify-center rounded-[2rem] bg-[#f1d6a8] text-[#284a63] shadow-xl"><ScanSearch size={75} strokeWidth={1.1}/></div><span className="absolute left-0 top-6 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-[#315F86]">來找今天的靈感 ↗</span></div>
         </div>
@@ -94,7 +103,7 @@ export default function CarePage() {
             >
               <div className="flex items-start justify-between">
                 <span className="font-mono text-sm text-[#5f6c6c]">
-                  {number} / 07
+                  {number} / 08
                 </span>
                 <Icon size={29} className="text-[#315F86]" />
               </div>

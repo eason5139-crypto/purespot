@@ -33,6 +33,7 @@ export function toCatalogProduct(record: DatabaseProduct, includeCost = false): 
     ingredients: record.ingredientsText.split(/[、,，]/).map((s) => s.trim()).filter(Boolean),
     allergens: record.allergens,
     kcalPer100g: Number(analysis.kcalPer100g ?? 380),
+    nutritionDataProvided: typeof analysis.kcalPer100g === "number" && Number.isFinite(analysis.kcalPer100g) && analysis.kcalPer100g > 0,
     bagGrams: variant?.bagGrams ?? 1000,
     priceNt: variant?.priceNt ?? 0,
     ...(includeCost ? { unitCostNt: variant?.unitCostNt ?? null, costSource: variant?.costSource as Product["costSource"] ?? null, costReferenceUrl: variant?.costReferenceUrl ?? null } : {}),
