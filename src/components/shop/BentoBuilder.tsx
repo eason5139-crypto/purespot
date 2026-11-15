@@ -17,7 +17,7 @@ import { useActivePet } from "@/store/usePetContextStore";
 import { useCatalogStore } from "@/store/useCatalogStore";
 import { useCartStore } from "@/store/useCartStore";
 import { matchProduct } from "@/lib/matching";
-import { triggerFlyToCart } from "@/lib/flyToCart";
+import { triggerFlyToCart, triggerPawBurst } from "@/lib/flyToCart";
 import { money } from "@/lib/utils";
 import { petLabels, type Product } from "@/lib/types";
 import { BentoWoodBoxSvg } from "@/components/ui/CraftEmblems";
@@ -185,10 +185,13 @@ export function BentoBuilder() {
         ? sideId
         : treatId;
 
-  function selectFromPool(id: string) {
+  function selectFromPool(id: string, targetEl?: HTMLElement | null) {
     if (activeSlot === "main") setMainId(id);
     else if (activeSlot === "side") setSideId(id);
     else setTreatId(id);
+    if (targetEl) {
+      triggerPawBurst(targetEl);
+    }
   }
 
   return (
@@ -513,7 +516,7 @@ export function BentoBuilder() {
                     key={item.id}
                     type="button"
                     whileTap={{ scale: 0.96 }}
-                    onClick={() => selectFromPool(item.id)}
+                    onClick={(e) => selectFromPool(item.id, e.currentTarget)}
                     className={`flex items-center gap-2.5 rounded-xl border p-2 text-left transition-all ${
                       isSelected
                         ? "border-[#935941] bg-[#fdf3e7] shadow-2xs"
