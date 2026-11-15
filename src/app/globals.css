@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@theme inline {
+:root {
+  color-scheme: light;
   --color-background: #faf6f0;
   --color-foreground: #302b26;
   --color-card: #ffffff;
@@ -9,9 +10,6 @@
     system-ui, sans-serif;
   --font-mono:
     "SFMono-Regular", Consolas, "Liberation Mono", "Noto Sans TC", monospace;
-}
-:root {
-  color-scheme: light;
 }
 * {
   box-sizing: border-box;
@@ -116,17 +114,33 @@ summary {
   );
   border: 1px dashed rgba(147, 89, 65, 0.28);
 }
+/* 日台生活工藝道具店：活版印刷雙線框、產地吊牌、黃銅標籤 */
+.craft-letterpress {
+  background: #fffdf8;
+  border: 1px solid #d9cbb9;
+  box-shadow:
+    inset 0 0 0 3px #fffdf8,
+    inset 0 0 0 4px #ede2d4,
+    0 14px 32px -20px rgba(95, 62, 38, 0.18);
+}
+.craft-tag {
+  position: relative;
+  border: 1px solid #d4c3af;
+  background: #faf3e8;
+  box-shadow: 0 2px 6px rgba(95, 62, 38, 0.08);
+}
+.craft-brass-pill {
+  background: linear-gradient(135deg, #f5e2bb 0%, #dfc088 100%);
+  border: 1px solid #b58d4f;
+  color: #4f3512;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
 .care-weather-float {
   animation: care-weather-float 5s ease-in-out infinite;
 }
 @keyframes care-weather-float {
   50% {
     transform: translateY(-8px) rotate(6deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .care-weather-float {
-    animation: none;
   }
 }
 .panel {
@@ -151,41 +165,9 @@ summary {
   background-color: #f8f5ef !important;
   color: #302b26 !important;
 }
-.admin-shell .panel,
-.admin-shell [class~="bg-[#111827]"],
-.admin-shell [class~="bg-[#2a1b15]"],
-.admin-shell [class~="bg-[#21150f]"],
-.admin-shell [class~="bg-[#1b120e]"] {
+.admin-shell .panel {
   background-color: #ffffff !important;
   border-color: #e8ded3 !important;
-}
-.admin-shell [class~="text-cyan-300"],
-.admin-shell [class~="text-cyan-400"],
-.admin-shell [class~="text-cyan-200"],
-.admin-shell [class~="text-[#8db7da]"] {
-  color: #935941 !important;
-}
-.admin-shell [class~="bg-cyan-500"],
-.admin-shell [class~="bg-cyan-400"],
-.admin-shell [class~="bg-[#8db7da]"] {
-  background-color: #935941 !important;
-  color: #ffffff !important;
-}
-.admin-shell [class~="border-cyan-400/20"],
-.admin-shell [class~="border-cyan-400/40"],
-.admin-shell [class~="border-[#e9a06d]/20"],
-.admin-shell [class~="border-[#e9a06d]/15"] {
-  border-color: #e8ded3 !important;
-}
-.admin-shell [class~="text-[#fff7ec]"],
-.admin-shell [class~="text-[#f4e5d9]"] {
-  color: #302b26 !important;
-}
-.admin-shell [class~="text-[#b59d8d]"],
-.admin-shell [class~="text-[#bda595]"],
-.admin-shell [class~="text-[#aa9385]"],
-.admin-shell [class~="text-[#a78c7c]"] {
-  color: #6f645a !important;
 }
 .eyebrow {
   font-size: 0.75rem;
@@ -224,37 +206,10 @@ summary {
   border-color: #e8ded3;
   box-shadow: 0 20px 55px -45px rgba(147, 89, 65, 0.14);
 }
-.shop-surface .product-card .text-slate-400,
-.shop-surface .text-slate-400 {
-  color: #6f645a;
-}
-.shop-surface .text-slate-500 {
-  color: #8a7f75;
-}
-.shop-surface .text-cyan-300,
-.shop-surface .text-cyan-400,
-.shop-surface .text-cyan-200 {
-  color: #935941;
-}
 .shop-surface .input {
   background: #ffffff;
   border-color: #d9cfc3;
   color: #302b26;
-}
-.shop-surface .product-card strong,
-.shop-surface .panel h2,
-.shop-surface .panel p:not([class]) {
-  color: #302b26;
-}
-.shop-surface .product-card button[class*="border"],
-.shop-surface .panel button[class*="border"] {
-  color: #4e443a;
-  border-color: #d9cfc3;
-  background: #fbf8f3;
-}
-.shop-surface .product-card button[class*="border"]:hover,
-.shop-surface .panel button[class*="border"]:hover {
-  background: #ede5da;
 }
 .dialog-overlay[data-state="open"] {
   animation: fade-in 0.18s ease-out;
@@ -291,6 +246,9 @@ summary {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .care-weather-float {
+    animation: none;
+  }
   .editorial-action:hover,
   .btn-tactile:hover {
     transform: none;

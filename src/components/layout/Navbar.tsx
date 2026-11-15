@@ -35,10 +35,10 @@ import {
 
 const links = [
   { href: "/", label: "品牌首頁", badge: "" },
-  { href: "/shop", label: "柑仔選物店", badge: "便當自由配" },
-  { href: "/transparency", label: "透明履歷", badge: "" },
-  { href: "/community", label: "街坊毛孩牆", badge: "印里民證" },
-  { href: "/care", label: "照顧小工具", badge: "" },
+  { href: "/shop", label: "選物本舖", badge: "旬食木盒" },
+  { href: "/transparency", label: "7C 溯源誌", badge: "" },
+  { href: "/community", label: "街坊生活誌", badge: "里民手形" },
+  { href: "/care", label: "飼育道具室", badge: "" },
   { href: "/account", label: "我的帳戶", badge: "" },
 ];
 
@@ -64,7 +64,7 @@ export function Navbar({ announcement }: { announcement: string }) {
     const onBump = (event: Event) => {
       const detail = (event as CustomEvent<{ label?: string }>).detail;
       setCartBumping(true);
-      setBumpLabel(detail?.label ? `已放進：${detail.label}` : "+1 放進菜籃囉！");
+      setBumpLabel(detail?.label ? `已納入購物籃：${detail.label}` : "+1 納入購物籃");
       const t1 = window.setTimeout(() => setCartBumping(false), 600);
       const t2 = window.setTimeout(() => setBumpLabel(null), 1900);
       return () => {
@@ -207,7 +207,7 @@ export function Navbar({ announcement }: { announcement: string }) {
               onClick={() => setCartOpen(true)}
             >
               <ShoppingBag className="size-4.5 text-[#935941]" />
-              <span className="hidden text-xs font-bold sm:inline">菜籃</span>
+              <span className="hidden text-xs font-bold sm:inline">購物籃</span>
               {count > 0 && (
                 <motion.span
                   key={count}
@@ -227,9 +227,10 @@ export function Navbar({ announcement }: { announcement: string }) {
                   initial={{ opacity: 0, y: 8, scale: 0.85 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.9 }}
-                  className="pointer-events-none absolute right-0 top-13 z-50 whitespace-nowrap rounded-full border border-[#935941]/30 bg-[#302b26] px-3 py-1 text-[11px] font-semibold text-[#fffaf2] shadow-lg"
+                  className="pointer-events-none absolute right-0 top-13 z-50 flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#935941]/30 bg-[#302b26] px-3 py-1 text-[11px] font-semibold text-[#fffaf2] shadow-lg"
                 >
-                  🐾 {bumpLabel}
+                  <PawPrint size={12} className="text-[#e2a84c]" />
+                  <span>{bumpLabel}</span>
                 </motion.div>
               )}
             </AnimatePresence>

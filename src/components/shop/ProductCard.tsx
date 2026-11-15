@@ -28,22 +28,23 @@ import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import { petLabels, supportsFoodCalculator } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { NtdCoinSvg } from "@/components/ui/CraftEmblems";
 
 function getIngredientVernacular(product: Product): string {
   const joined = product.ingredients.join("、");
   if (product.kind === "SUPPLIES") {
-    return "居家陪伴與日常放電設計，耐抓耐玩、清潔省心。";
+    return "符合台灣居家住宅尺度的生活道具，導圓修邊且便於日常擦拭養護。";
   }
   if (joined.includes("鮭魚") || joined.includes("魚")) {
-    return "富含天然魚油 Omega-3，幫毛孩把毛髮養得像剛曬過太陽一樣蓬鬆發亮！";
+    return "富含冷壓深海魚油 Omega-3，兼顧皮毛保水度與日常皮膚屏障穩定。";
   }
   if (joined.includes("鹿") || joined.includes("鴨") || joined.includes("羊")) {
-    return "低敏新型態肉源，特別適合容易抓癢或肚肚敏感的玻璃心毛孩。";
+    return "選用單一新型態低敏肉源，減輕敏弱體質的消化負擔。";
   }
   if (joined.includes("草") || joined.includes("牧草")) {
-    return "高纖草本幫助磨牙與腸道蠕動，便便圓滾滾又漂亮！";
+    return "足量天然植物粗纖維支持臼齒磨耗與消化道規律蠕動。";
   }
-  return "高比例真實肉源打底，不加奇奇怪怪的人工誘食劑，開袋就是自然肉香。";
+  return "以高比例鮮肉為第一順位基底，低溫慢焙保留原肉香氣，無人工誘食添加。";
 }
 
 export function ProductCard({ product }: { product: Product }) {
@@ -77,7 +78,7 @@ export function ProductCard({ product }: { product: Product }) {
         image: product.image,
         label: product.name,
       });
-      toast.success(`已幫 ${pet.name} 把「${product.name}」放進菜籃！`);
+      toast.success(`已為 ${pet.name} 將「${product.name}」納入購物籃`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "加入失敗");
     }
@@ -86,7 +87,7 @@ export function ProductCard({ product }: { product: Product }) {
   function handleFavoriteClick(event: React.MouseEvent<HTMLButtonElement>) {
     triggerPawBurst(event.currentTarget);
     toggleFavorite(product.id);
-    toast.success(isFavorite ? "已從收藏口袋移除" : "已收進毛孩願望口袋 ♥");
+    toast.success(isFavorite ? "已從願望清單移除" : "已收入毛孩願望清單");
   }
 
   const pickyScore =
@@ -118,7 +119,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-1">
           <span className="rounded-full border border-[#dfd0be] bg-[#fffcf7]/95 px-2.5 py-1 text-xs font-bold text-[#6b5547] shadow-2xs">
             {petLabels[product.type]} ·{" "}
-            {product.kind === "SUPPLIES" ? "好物" : "伙食"}
+            {product.kind === "SUPPLIES" ? "道具" : "膳食"}
           </span>
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
@@ -144,7 +145,7 @@ export function ProductCard({ product }: { product: Product }) {
           </AnimatePresence>
         </div>
 
-        {/* 左下收藏按鈕（帶粒子噴發） */}
+        {/* 左下收藏按鈕 */}
         <motion.button
           type="button"
           whileHover={{ scale: 1.12 }}
@@ -163,17 +164,17 @@ export function ProductCard({ product }: { product: Product }) {
           <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
         </motion.button>
 
-        {/* 右下「翻看白話文」互動按鈕 */}
+        {/* 右下「翻閱溯源手記」互動按鈕 */}
         <button
           type="button"
           onClick={() => setFlipped((v) => !v)}
           className="absolute bottom-3 right-3 z-20 inline-flex items-center gap-1 rounded-full border border-[#d4c2ae] bg-[#fffcf7]/95 px-2.5 py-1.5 text-[11px] font-bold text-[#78523d] shadow-xs transition-transform hover:scale-105 active:scale-95"
         >
           <RotateCcw size={12} />
-          {flipped ? "翻回正面" : "翻看白話文"}
+          {flipped ? "返回正面" : "翻閱溯源手記"}
         </button>
 
-        {/* 翻轉背面：成分白話文與台灣 1 元硬幣比例尺 */}
+        {/* 翻轉背面：活版印刷風產地溯源與微距剖面小卡 */}
         <AnimatePresence>
           {flipped && (
             <motion.div
@@ -181,16 +182,16 @@ export function ProductCard({ product }: { product: Product }) {
               animate={{ opacity: 1, rotateY: 0, scale: 1 }}
               exit={{ opacity: 0, rotateY: -60, scale: 0.95 }}
               transition={{ duration: 0.28, ease: "easeOut" }}
-              className="absolute inset-0 z-10 flex flex-col justify-between bg-[#fffcf7]/98 p-4 text-xs text-[#302b26] backdrop-blur-md"
+              className="craft-letterpress absolute inset-0 z-10 flex flex-col justify-between bg-[#fffcf7]/98 p-4 text-xs text-[#302b26] backdrop-blur-md"
             >
               <div>
                 <div className="flex items-center justify-between border-b border-[#e8dac9] pb-2">
                   <span className="inline-flex items-center gap-1 font-bold text-[#935941]">
                     <Sparkles size={13} />
-                    店長白話文小抄
+                    產地溯源手記
                   </span>
-                  <span className="rounded-full bg-[#eef2eb] px-2 py-0.5 text-[10px] font-bold text-[#4e6752]">
-                    挑嘴突破率 {pickyScore}%
+                  <span className="rounded-full bg-[#eef2eb] px-2 py-0.5 font-mono text-[10px] font-bold text-[#4e6752]">
+                    適口完食率 {pickyScore}%
                   </span>
                 </div>
                 <p className="mt-2.5 leading-5 text-[#5a4e43]">
@@ -199,33 +200,35 @@ export function ProductCard({ product }: { product: Product }) {
 
                 {product.kind !== "SUPPLIES" ? (
                   <div className="mt-3 rounded-xl border border-[#e6d7c5] bg-[#faf4eb] p-2.5">
-                    <p className="text-[11px] font-bold text-[#755843]">
-                      🪙 台灣 1 元硬幣 (20mm) 大小對照：
+                    <p className="font-mono text-[10px] font-bold text-[#755843]">
+                      SCALE SPEC · 台灣壹圓 (20mm) 實體比例對照
                     </p>
-                    <div className="mt-1.5 flex items-center gap-3">
-                      <span className="flex size-7 items-center justify-center rounded-full border border-[#b8926a] bg-[#e9d2b0] font-mono text-[10px] font-bold text-[#5c4228]">
-                        $1
-                      </span>
-                      <span className="flex size-3.5 items-center justify-center rounded-full bg-[#7c4f38]" />
+                    <div className="mt-2 flex items-center gap-3">
+                      <NtdCoinSvg size={28} />
+                      <span
+                        className="flex size-3.5 items-center justify-center rounded-full bg-[#7c4f38] shadow-xs"
+                        aria-hidden="true"
+                      />
                       <span className="text-[11px] text-[#66584b]">
-                        約 8–10mm 小顆粒，好咬不卡牙
+                        約 8.5–10mm 扁圓顆粒，好咬不卡牙
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div className="mt-3 rounded-xl border border-[#e6d7c5] bg-[#faf4eb] p-2.5">
-                    <p className="text-[11px] font-bold text-[#755843]">
-                      ✨ 街坊飼主實測回饋：
+                    <p className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-[#755843]">
+                      <Sparkles size={11} />
+                      WORKSHOP NOTE · 居家實測回饋
                     </p>
                     <p className="mt-1 text-[11px] text-[#66584b]">
-                      耐玩不刺手，擺在客廳也好看的溫暖大地色系。
+                      手感溫潤耐看，自然融入現代台灣居家的暖大地色調空間。
                     </p>
                   </div>
                 )}
               </div>
 
               <div className="pb-9 text-[11px] text-[#7c6e60]">
-                主要內容：{product.ingredients.slice(0, 4).join("、")}
+                核心成分：{product.ingredients.slice(0, 4).join("、")}
               </div>
             </motion.div>
           )}
@@ -285,7 +288,7 @@ export function ProductCard({ product }: { product: Product }) {
             whileTap={{ scale: 0.9, y: 2 }}
             disabled={!fit.safe || product.stock === 0}
             onClick={addToCart}
-            aria-label={`將${product.name}加入購物車`}
+            aria-label={`將${product.name}納入購物籃`}
             className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[#935941] px-3.5 text-xs font-bold text-white shadow-[0_3px_0_#6e3f2c] transition-colors hover:bg-[#7d4934] disabled:cursor-not-allowed disabled:opacity-35"
           >
             <ShoppingBag size={15} />
@@ -305,7 +308,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="mt-3 inline-flex min-h-8 items-center gap-1.5 text-xs font-semibold text-[#856650] underline-offset-4 hover:text-[#935941] hover:underline"
         >
           <Scale size={14} />
-          {isCompared ? "已放進比一比 · 點擊移除" : "加入商品比一比"}
+          {isCompared ? "已加入比對 · 點擊移除" : "加入規格比對"}
         </button>
       </div>
     </motion.article>

@@ -46,7 +46,7 @@ export const useFamilyStore = create<FamilyState>()(
       groupName: "我的家庭清單",
       inviteCode: "PURE-BOBI-8821",
       cartMode: "PERSONAL",
-      members: [{ id: "m1", name: "我", avatar: "🧑", role: "OWNER", relationship: "主購人", linePayConnected: false }],
+      members: [{ id: "m1", name: "我", avatar: "主", role: "OWNER", relationship: "主購人", linePayConnected: false }],
       sharedItems: [],
       setCartMode: (mode) => set({ cartMode: mode }),
       addSharedItem: (item) =>
@@ -76,7 +76,7 @@ export const useFamilyStore = create<FamilyState>()(
         const newMember: FamilyMember = {
           id,
           name,
-          avatar: "🧑",
+          avatar: name.trim().slice(0, 1) || "友",
           role: "MEMBER",
           relationship,
           linePayConnected: true,

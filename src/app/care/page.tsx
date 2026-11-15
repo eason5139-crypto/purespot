@@ -12,29 +12,34 @@ import {
   Sparkles,
   Utensils,
   Award,
+  PawPrint,
 } from "lucide-react";
+import { BentoWoodBoxSvg } from "@/components/ui/CraftEmblems";
 
 export const metadata: Metadata = {
-  title: "毛孩生活工作室",
-  description: "用毛孩便當組裝台、成分放大鏡、旅前打包桌與探索任務，讓照顧毛孩成為溫暖有趣的日常。",
+  title: "日台飼育道具室",
+  description:
+    "集合曲木旬食組配盤、成分微距放大鏡、旅前整理桌與探索任務手冊，協助飼主清晰掌握照護細節。",
 };
 
 const tools = [
   {
     href: "/shop#bento-builder",
     number: "04",
-    title: "毛孩便當 DIY 組裝台",
-    subtitle: "主食打底 ＋ 營養加菜 ＋ 飯後小確幸",
-    description: "像在巷口挑便當配菜一樣，幫挑嘴主子搖出一盒專屬大餐，一鍵整盒飛進菜籃。",
+    title: "曲木旬食配餐盒",
+    subtitle: "主食基底 ＋ 原肉佐餐 ＋ 日常器物",
+    description:
+      "自由配搭三格日常餐盤，即時核算營養平衡比並一鍵封裝納入購物籃。",
     icon: Utensils,
     color: "bg-[#f4e5d2]",
   },
   {
     href: "/community#id-card-studio",
     number: "05",
-    title: "台灣毛孩榮譽里民證",
-    subtitle: "巷口里長伯核發 · 專屬身分證",
-    description: "幫家裡那位沙發馬鈴薯或罐罐鑑賞家印一張里民證，蓋上紅章分享給親友。",
+    title: "里民手形銘牌印製",
+    subtitle: "活版印刷工藝 · 火漆封蠟印記",
+    description:
+      "為毛孩鑄造專屬街坊識別銘牌，自選年度稱號與紅章，即時留存或分享。",
     icon: Award,
     color: "bg-[#f3dfd8]",
   },
@@ -42,8 +47,9 @@ const tools = [
     href: "/care/compass",
     number: "06",
     title: "選物羅盤",
-    subtitle: "三分鐘找到有理由的提案",
-    description: "說出毛孩近況，查看三種量身推薦；比較後直接放進菜籃。",
+    subtitle: "三分鐘推論適配提案",
+    description:
+      "依居家情境與體質目標，條列三組具備營養邏輯的選物提案與比對清單。",
     icon: Compass,
     color: "bg-[#e7efe6]",
   },
@@ -51,17 +57,19 @@ const tools = [
     href: "/care/selection",
     number: "07",
     title: "選物實驗室",
-    subtitle: "分層比對適合的食物與用品",
-    description: "從毛孩資料出發，清楚對照蛋白質來源、顆粒與照護重點。",
+    subtitle: "分層比對飲食與居家器具",
+    description:
+      "從毛孩檔案出發，有條理對照蛋白質來源、顆粒尺寸與養護重點。",
     icon: Compass,
     color: "bg-[#efe2cc]",
   },
   {
     href: "/care/refill",
     number: "08",
-    title: "補貨天氣預報",
-    subtitle: "不怕半夜發現飼料見底",
-    description: "把家中存量換算成剩餘天數，提早安排下一袋新鮮口糧。",
+    title: "存糧週期預報",
+    subtitle: "換算剩餘天數與補貨時程",
+    description:
+      "依照每日建議攝取克數換算存糧可食天數，從容規劃下一次新鮮補貨。",
     icon: CloudSun,
     color: "bg-[#f5ebd9]",
   },
@@ -69,8 +77,9 @@ const tools = [
     href: "/care/transition",
     number: "09",
     title: "七日換糧陪跑",
-    subtitle: "台灣換季玻璃肚救星",
-    description: "看見每天的新舊食物比例，也記下毛孩便便與食慾反應。",
+    subtitle: "循序漸進的飲食銜接表",
+    description:
+      "逐日標示新舊配方混合比例，並同步紀錄消化狀態與進食意願反應。",
     icon: Shuffle,
     color: "bg-[#e2ebdf]",
   },
@@ -78,8 +87,9 @@ const tools = [
     href: "/health",
     number: "10",
     title: "日常照護手札",
-    subtitle: "毛孩專屬健康與份量紀錄",
-    description: "查看毛孩基本資料、每日熱量份量估算與照護提醒。",
+    subtitle: "基本資料與份量紀錄表",
+    description:
+      "掌握體重變化、熱量需求估算與過往定期配排程的集中總覽頁面。",
     icon: HeartPulse,
     color: "bg-[#efe4dc]",
   },
@@ -92,31 +102,34 @@ export default function CarePage() {
       className="min-h-screen bg-[#f8f4ed] text-[#302b26]"
     >
       <section className="overflow-hidden border-b border-[#dfd3c3] bg-gradient-to-br from-[#f3e7d7] via-[#f8f2e8] to-[#ebe4d8] text-[#302b26]">
-        <div className="page-shell grid gap-8 py-14 lg:grid-cols-[.95fr_1.05fr] lg:items-center sm:py-20">
+        <div className="page-shell grid gap-8 py-14 sm:py-20 lg:grid-cols-[.95fr_1.05fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#d6c2ac] bg-white/85 px-3.5 py-1.5 text-xs font-bold text-[#935941] shadow-xs">
-              🐾 台灣在地毛孩生活工作室 · 邊玩邊懂照顧
+              <PawPrint size={13} />
+              PURESPOT WORKSHOP ・ 日台飼育道具室
             </span>
-            <h1 className="editorial-title mt-5 text-4xl leading-tight sm:text-6xl text-[#2d251e]">
-              照顧毛孩的每一天，
+            <h1 className="editorial-title mt-5 text-4xl leading-tight text-[#2d251e] sm:text-6xl">
+              照顧毛孩的日常，
               <br />
-              <span className="text-[#935941]">本來就該這麼好玩。</span>
+              <span className="text-[#935941]">也能成為有秩序的手作樂趣。</span>
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-8 text-[#5c4f43] sm:text-base">
-              不想看密密麻麻的化學名詞？來這裡用「成分白話放大鏡」看懂飼料、幫毛孩搖一盒「專屬配菜便當」，或花三分鐘解鎖互動小任務！
+              將繁複的檢驗報表與克數試算整理成直覺的生活道具。無論是用放大鏡檢視原料、組合曲木旬食木盒，或盤點外出整理清單，都能在這裡清晰完成。
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/shop#bento-builder"
                 className="btn-tactile inline-flex min-h-11 items-center gap-2 rounded-full bg-[#935941] px-6 text-sm font-bold text-white"
               >
-                🍱 搖一盒毛孩便當 <ArrowUpRight size={16} />
+                <BentoWoodBoxSvg size={20} />
+                <span>搭配曲木旬食木盒</span>
+                <ArrowUpRight size={16} />
               </Link>
               <Link
                 href="/care/compass"
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-[#302b26] bg-white px-5 text-sm font-bold text-[#302b26] hover:bg-[#f4ebe0]"
               >
-                打開選物羅盤 <ArrowUpRight size={16} />
+                開啟選物羅盤 <ArrowUpRight size={16} />
               </Link>
             </div>
           </div>
@@ -138,8 +151,9 @@ export default function CarePage() {
             <div className="absolute -bottom-2 right-2 flex size-32 rotate-[6deg] items-center justify-center rounded-[2rem] border-2 border-[#302b26]/10 bg-[#f1d6a8] text-[#935941] shadow-xl">
               <ScanSearch size={64} strokeWidth={1.3} />
             </div>
-            <span className="washi-tape absolute left-2 top-4 rounded-xl px-4 py-2 text-xs font-bold text-[#7c5338] shadow-sm">
-              ✨ 點擊任一工具馬上動手玩 ↗
+            <span className="washi-tape absolute left-2 top-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-[#7c5338] shadow-sm">
+              <Sparkles size={13} />
+              選擇以下道具立即操作
             </span>
           </div>
         </div>
@@ -149,35 +163,35 @@ export default function CarePage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold tracking-[.15em] text-[#935941]">
-              互動小工具 · 動手玩看看
+              CORE TOOLS · 焦點飼育道具
             </p>
             <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">
-              今天，想先玩哪個角落？
+              從最迫切的需求開始檢視
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-7 text-[#675e53]">
-            每個角落都能實際點擊互動、帶著專屬建議或可愛成果離開。
+            每個入口皆可依據家中毛孩檔案即時演算，並保留清晰依據供日後複查。
           </p>
         </div>
 
         <div className="mt-8 grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
           <Link
             href="/care/ingredients"
-            className="group relative flex min-h-[400px] flex-col justify-between overflow-hidden rounded-[2rem] border border-[#d9cbb8] bg-[#e9dfd1] p-7 sm:p-10 shadow-sm transition-transform hover:-translate-y-1"
+            className="group relative flex min-h-[400px] flex-col justify-between overflow-hidden rounded-[2rem] border border-[#d9cbb8] bg-[#e9dfd1] p-7 shadow-sm transition-transform hover:-translate-y-1 sm:p-10"
           >
             <div className="relative z-10">
-              <span className="rounded-full bg-white/90 px-4 py-1.5 text-xs font-bold text-[#935941]">
-                01 / 成分白話放大鏡
+              <span className="rounded-full bg-white/90 px-4 py-1.5 font-mono text-xs font-bold text-[#935941]">
+                01 / 成分溯源放大鏡
               </span>
-              <h3 className="editorial-title mt-6 text-4xl sm:text-5xl text-[#2d251e]">
+              <h3 className="editorial-title mt-6 text-4xl text-[#2d251e] sm:text-5xl">
                 成分放大鏡
               </h3>
               <p className="mt-4 max-w-xs text-sm leading-7 text-[#5c4f43]">
-                點開配方、過敏原與檢驗批次，把兩袋飼料擺在一起比一比，用白話文看懂毛孩吃進什麼。
+                並排檢視兩款配方的原料排序、過敏原標記與檢驗批次，將專業成分表翻譯成清晰的白話說明。
               </p>
             </div>
             <span className="btn-tactile relative z-10 inline-flex w-fit items-center gap-2 rounded-full bg-[#935941] px-5 py-3 text-sm font-bold text-white transition-all group-hover:gap-3">
-              拿放大鏡照看看 <ArrowUpRight size={17} />
+              開啟成分對照 <ArrowUpRight size={17} />
             </span>
             <ScanSearch
               className="pointer-events-none absolute -bottom-14 -right-12 size-80 rotate-[-13deg] text-[#b89f84]/35 transition-transform duration-500 group-hover:scale-110"
@@ -188,19 +202,21 @@ export default function CarePage() {
           <div className="grid gap-4">
             <Link
               href="/care/packing"
-              className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-[2rem] border border-[#decbb0] bg-[#f2e2c6] p-6 sm:p-8 shadow-sm transition-transform hover:-translate-y-1"
+              className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-[2rem] border border-[#decbb0] bg-[#f2e2c6] p-6 shadow-sm transition-transform hover:-translate-y-1 sm:p-8"
             >
               <Luggage
                 className="absolute -right-8 -top-6 size-44 rotate-[14deg] text-[#b6986c]/30 transition-transform duration-500 group-hover:rotate-[4deg]"
                 strokeWidth={0.8}
               />
-              <span className="relative text-xs font-bold text-[#875e36]">
-                02 / 週末帶毛孩出門玩
+              <span className="relative font-mono text-xs font-bold text-[#875e36]">
+                02 / 外出裝備盤點
               </span>
               <div className="relative">
-                <h3 className="editorial-title text-3xl text-[#2d251e]">旅前打包桌</h3>
+                <h3 className="editorial-title text-3xl text-[#2d251e]">
+                  旅前整理桌
+                </h3>
                 <p className="mt-2 max-w-xs text-sm leading-6 text-[#5c4f43]">
-                  要帶毛孩去露營或環島？勾選清單、儲存分享，缺的隨手補齊。
+                  規劃散步、露營或返鄉攜行清單，逐項核對並補齊缺少的生活器具。
                 </p>
                 <ArrowUpRight className="mt-2 text-[#935941]" />
               </div>
@@ -208,19 +224,21 @@ export default function CarePage() {
 
             <Link
               href="/care/missions"
-              className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-[2rem] border border-[#c8d6c5] bg-[#dfece0] p-6 sm:p-8 shadow-sm transition-transform hover:-translate-y-1"
+              className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-[2rem] border border-[#c8d6c5] bg-[#dfece0] p-6 shadow-sm transition-transform hover:-translate-y-1 sm:p-8"
             >
               <Sparkles
                 className="absolute -right-3 -top-7 size-40 text-[#6e9175]/25 transition-transform duration-500 group-hover:rotate-12"
                 strokeWidth={0.8}
               />
-              <span className="relative text-xs font-bold text-[#3f6246]">
-                03 / 闖關蓋印章
+              <span className="relative font-mono text-xs font-bold text-[#3f6246]">
+                03 / 集章學習手冊
               </span>
               <div className="relative">
-                <h3 className="editorial-title text-3xl text-[#2d251e]">毛孩探索任務</h3>
+                <h3 className="editorial-title text-3xl text-[#2d251e]">
+                  毛孩探索任務
+                </h3>
                 <p className="mt-2 max-w-xs text-sm leading-6 text-[#495e4d]">
-                  三個輕鬆小挑戰，邊玩邊學台灣照護冷知識，收下紀念印章。
+                  透過三個貼近台灣氣候的照護小問答，累積實用飼養知識並收集印記。
                 </p>
                 <ArrowUpRight className="mt-2 text-[#3f6246]" />
               </div>
@@ -233,36 +251,45 @@ export default function CarePage() {
         <div className="page-shell flex flex-wrap items-center justify-between gap-5 py-10">
           <div>
             <p className="text-xs font-bold tracking-[.15em] text-[#935941]">
-              街坊鄰居一起聊
+              COMMUNITY CRAFT PASS
             </p>
             <h2 className="editorial-title mt-2 text-3xl">
-              逛完工作室，去印張毛孩里民證吧！
+              走訪完道具室，為毛孩印製里民手形銘牌
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-7 text-[#5c4f43]">
-              到街坊毛孩牆幫主子拍張拍立得、給別人家毛孩「摸摸頭 👋」，還能免費印製台灣毛孩榮譽里民證。
+              前往街坊生活誌製作專屬的活版印刷銘牌並壓蓋火漆封蠟印章，與鄰近家庭交流飲食筆記。
             </p>
           </div>
           <Link
             href="/community#id-card-studio"
             className="btn-tactile inline-flex min-h-11 items-center gap-2 rounded-full bg-[#935941] px-5 text-sm font-bold text-white"
           >
-            🪪 前往里民證印製所 <ArrowUpRight size={16} />
+            <Award size={16} />
+            前往手形銘牌印製所 <ArrowUpRight size={16} />
           </Link>
         </div>
       </section>
 
       <section className="page-shell pt-14">
         <p className="text-xs font-bold tracking-[.15em] text-[#935941]">
-          更多暖心照護角落
+          TOOL DIRECTORY
         </p>
         <h2 className="editorial-title mt-2 text-3xl sm:text-4xl">
-          日常照顧百寶袋
+          完整飼育道具目錄
         </h2>
       </section>
 
-      <section className="page-shell grid gap-4 py-8 sm:grid-cols-2 lg:grid-cols-3 sm:py-10">
+      <section className="page-shell grid gap-4 py-8 sm:grid-cols-2 sm:py-10 lg:grid-cols-3">
         {tools.map(
-          ({ href, number, title, subtitle, description, icon: Icon, color }) => (
+          ({
+            href,
+            number,
+            title,
+            subtitle,
+            description,
+            icon: Icon,
+            color,
+          }) => (
             <Link
               key={href}
               href={href}
@@ -278,7 +305,7 @@ export default function CarePage() {
               </div>
               <div className="mt-6">
                 <p className="text-xs font-bold text-[#84624c]">{subtitle}</p>
-                <h2 className="editorial-title mt-1.5 text-2xl sm:text-3xl text-[#2d251e]">
+                <h2 className="editorial-title mt-1.5 text-2xl text-[#2d251e] sm:text-3xl">
                   {title}
                 </h2>
                 <div className="mt-3 flex items-end justify-between gap-4">
@@ -294,7 +321,7 @@ export default function CarePage() {
       </section>
 
       <p className="page-shell pb-14 text-xs leading-6 text-[#756a5e]">
-        份量、日期與商品適配均為依已輸入資料的日常估算；毛孩若有特殊疾病、處方飲食或持續不適時，請先與家庭獸醫師討論喔！
+        份量、存糧天數與商品適配皆依已建檔之資料進行日常估算；若毛孩正面臨特殊醫療狀況、處方飲食或持續不適，請務必優先諮詢專業獸醫師。
       </p>
     </main>
   );

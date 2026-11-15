@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Mail,
   Phone,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -253,10 +254,12 @@ export default function AdminMembersPage() {
               className="w-full max-w-md rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 shadow-2xl relative"
             >
               <button
+                type="button"
+                aria-label="關閉視窗"
                 onClick={() => setIsModalOpen(false)}
-                className="absolute right-4 top-4 text-[#8a7f75] hover:text-[#302b26]"
+                className="absolute right-4 top-4 rounded-lg p-1 text-[#8a7f75] transition-colors hover:bg-[#f4eee6] hover:text-[#302b26]"
               >
-                ✕
+                <X size={16} />
               </button>
 
               <div className="flex items-center gap-2 mb-4 text-[#5B93C5]">

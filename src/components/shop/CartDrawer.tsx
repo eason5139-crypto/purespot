@@ -18,6 +18,9 @@ import {
   ArrowRight,
   Gift,
   HeartHandshake,
+  MessageSquare,
+  Check,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -28,6 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SampleSachetSvg } from "@/components/ui/CraftEmblems";
 import { useCartStore } from "@/store/useCartStore";
 import { usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -39,15 +43,33 @@ import { money } from "@/lib/utils";
 import { triggerPawBurst } from "@/lib/flyToCart";
 
 const FREE_SAMPLES = [
-  { id: "sample-catnip", label: "🌿 阿里山日曬貓薄荷體驗包", tag: "貓咪最愛" },
-  { id: "sample-salmon", label: "🐟 鮮切鮭魚原肉凍乾 5g", tag: "犬貓通用" },
-  { id: "sample-timothy", label: "🐰 手工提摩西磨牙小草餅", tag: "小寵必備" },
+  {
+    id: "sample-catnip",
+    variant: "catnip" as const,
+    label: "阿里山日曬貓薄荷體驗包",
+    origin: "嘉義高海拔栽種",
+    tag: "貓咪適配",
+  },
+  {
+    id: "sample-salmon",
+    variant: "salmon" as const,
+    label: "挪威鮮切鮭魚原肉凍乾 5g",
+    origin: "單一野生魚源",
+    tag: "犬貓適用",
+  },
+  {
+    id: "sample-timothy",
+    variant: "timothy" as const,
+    label: "手工提摩西一割磨牙草餅",
+    origin: "低溫慢焙壓製",
+    tag: "小寵適用",
+  },
 ] as const;
 
 const BLESSING_CARDS = [
-  "祝主子大口乾飯、每天呼嚕嚕！",
-  "謝謝你把牠照顧得這麼好 🐾",
-  "台灣換季乖乖吃飯，肚肚不鬧脾氣！",
+  "願每一餐日常，都成為健康長久的陪伴。",
+  "謝謝您為家人細心挑選看得見來源的飲食。",
+  "順應台灣四時節氣，安心度過每一次換季。",
 ] as const;
 
 export function CartDrawer() {
@@ -75,35 +97,48 @@ export function CartDrawer() {
   const [copied, setCopied] = useState(false);
   const [splitSent, setSplitSent] = useState(false);
 
-  // 台灣人情味：店長免費招待試吃包 & 手寫祝福小卡
-  const [selectedSampleId, setSelectedSampleId] = useState<string>(FREE_SAMPLES[1].id);
+  // 隨箱職人試食小包與活版印刷封蠟小卡
+  const [selectedSampleId, setSelectedSampleId] = useState<string>(
+    FREE_SAMPLES[1].id,
+  );
   const [includeCard, setIncludeCard] = useState<boolean>(true);
   const [cardMessage, setCardMessage] = useState<string>(BLESSING_CARDS[0]);
 
   useEffect(() => {
     try {
       const savedSample = localStorage.getItem("purespot-free-sample");
-      if (savedSample) setSelectedSampleId(savedSample);
+      if (savedSample && FREE_SAMPLES.some((s) => s.id === savedSample)) {
+        setSelectedSampleId(savedSample);
+      }
       const savedCard = localStorage.getItem("purespot-blessing-card");
-      if (savedCard) setCardMessage(savedCard);
+      if (savedCard && BLESSING_CARDS.includes(savedCard as typeof BLESSING_CARDS[number])) {
+        setCardMessage(savedCard);
+      }
     } catch {
-      // ignore storage errors
+      // 忽略本機儲存異常
     }
   }, []);
 
-  const handleSelectSample = (id: string, label: string, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSelectSample = (
+    id: string,
+    label: string,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
     setSelectedSampleId(id);
     try {
       localStorage.setItem("purespot-free-sample", id);
     } catch {
-      // ignore
+      // 忽略儲存異常
     }
     triggerPawBurst(e.currentTarget);
-    toast.success(`店長已幫您備註隨箱附贈：${label}`);
+    toast.success(`已備註隨箱附贈試食小包：${label}`);
   };
 
   const totals = cartTotals(items);
-  const familySubtotal = sharedItems.reduce((acc, i) => acc + (getProduct(i.productId)?.priceNt ?? i.priceNt) * i.quantity, 0);
+  const familySubtotal = sharedItems.reduce(
+    (acc, i) => acc + (getProduct(i.productId)?.priceNt ?? i.priceNt) * i.quantity,
+    0,
+  );
   const familyShipping = familySubtotal >= 999 ? 0 : 80;
   const familyTotal = familySubtotal + familyShipping;
 
@@ -129,15 +164,17 @@ export function CartDrawer() {
   }
 
   const handleCopyInvite = () => {
-    navigator.clipboard.writeText(`【PURESPOT 家庭清單】${groupName}\n邀請碼：${inviteCode}\n目前清單只保存在此裝置。`);
+    navigator.clipboard.writeText(
+      `【PURESPOT 家庭清單】${groupName}\n邀請碼：${inviteCode}\n目前清單僅保存於此裝置。`,
+    );
     setCopied(true);
-    toast.success("已複製家庭清單資訊");
+    toast.success("已複製家庭清單邀請碼");
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleSendLinePaySplit = () => {
     setSplitSent(true);
-    toast.success("拆帳金額已整理，尚未送出請款。");
+    toast.success("拆帳明細已整理完成");
     setTimeout(() => {
       setShowSplitModal(false);
       setSplitSent(false);
@@ -153,7 +190,14 @@ export function CartDrawer() {
     let added = 0;
     for (const item of items) {
       const product = getProduct(item.productId);
-      if (!product || sharedItems.some((shared) => shared.productId === item.productId && shared.petId === item.petId)) continue;
+      if (
+        !product ||
+        sharedItems.some(
+          (shared) =>
+            shared.productId === item.productId && shared.petId === item.petId,
+        )
+      )
+        continue;
       addSharedItem({
         productId: item.productId,
         petId: item.petId || activePetId,
@@ -162,15 +206,18 @@ export function CartDrawer() {
         priceNt: product.priceNt,
         quantity: item.quantity,
         addedBy: "我",
-        memberAvatar: "🧑",
+        memberAvatar: "主",
         note: "",
       });
       added++;
     }
-    toast.info(added ? `已將 ${added} 項商品加入家庭清單` : "家庭清單已有這些商品");
+    toast.info(
+      added ? `已將 ${added} 項選物加入家庭清單` : "家庭清單已有相同商品",
+    );
   }
 
-  const selectedSample = FREE_SAMPLES.find((s) => s.id === selectedSampleId) ?? FREE_SAMPLES[1];
+  const selectedSample =
+    FREE_SAMPLES.find((s) => s.id === selectedSampleId) ?? FREE_SAMPLES[1];
 
   return (
     <Dialog open onOpenChange={close}>
@@ -178,16 +225,16 @@ export function CartDrawer() {
         <DialogTitle className="flex items-center justify-between pr-8 text-xl font-semibold text-[#302b26]">
           <div className="flex items-center gap-2.5">
             <ShoppingBag className="text-[#935941]" size={22} />
-            <span>毛孩菜籃</span>
+            <span className="editorial-title font-bold">選物購物籃</span>
           </div>
 
-          {/* 模式切換按鈕：個人 vs 家庭共管 */}
-          <div className="flex items-center rounded-xl bg-[#f5ede3] p-1 border border-[#e8ded3]">
+          {/* 模式切換：個人 vs 家庭清單 */}
+          <div className="flex items-center rounded-xl border border-[#e8ded3] bg-[#f5ede3] p-1">
             <button
               onClick={() => setCartMode("PERSONAL")}
               className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                 cartMode === "PERSONAL"
-                  ? "bg-[#935941] text-white font-semibold shadow-sm"
+                  ? "bg-[#935941] font-semibold text-white shadow-sm"
                   : "text-[#675e53] hover:text-[#302b26]"
               }`}
             >
@@ -197,29 +244,31 @@ export function CartDrawer() {
               onClick={() => setCartMode("FAMILY")}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                 cartMode === "FAMILY"
-                  ? "bg-[#935941] text-white font-semibold shadow-sm"
+                  ? "bg-[#935941] font-semibold text-white shadow-sm"
                   : "text-[#675e53] hover:text-[#302b26]"
               }`}
             >
               <Users size={12} />
-              家庭清單 ({sharedItems.reduce((n, i) => n + i.quantity, 0)})
+              家庭 ({sharedItems.reduce((n, i) => n + i.quantity, 0)})
             </button>
           </div>
         </DialogTitle>
         <DialogDescription className="sr-only">
-          查看並調整購物車內的商品、店長免費試吃包、配送方式或家庭協同購物清單。
+          檢視並調整購物籃內的商品、隨箱職人試食小包與配送方式。
         </DialogDescription>
 
         {cartMode === "FAMILY" ? (
           <>
-            {/* 家庭群組資訊列與成員頭像 */}
+            {/* 家庭群組資訊列與成員徽章 */}
             <div className="mt-4 rounded-xl border border-[#e8ded3] bg-[#fcfaf7] p-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-[#935941] tracking-wider">
-                    FAMILY LIST · 家庭清單
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#935941]">
+                    FAMILY LIST ・ 家庭共管清單
                   </span>
-                  <p className="text-sm font-semibold text-[#302b26]">{groupName}</p>
+                  <p className="text-sm font-semibold text-[#302b26]">
+                    {groupName}
+                  </p>
                 </div>
                 <Button
                   size="sm"
@@ -232,7 +281,6 @@ export function CartDrawer() {
                 </Button>
               </div>
 
-              {/* 成員列表 */}
               <div className="mt-3 flex items-center gap-2 border-t border-[#e8ded3] pt-2.5">
                 <span className="text-xs text-[#8a7f75]">共管成員：</span>
                 <div className="flex items-center -space-x-1.5">
@@ -240,43 +288,63 @@ export function CartDrawer() {
                     <div
                       key={m.id}
                       title={`${m.name} (${m.relationship})`}
-                      className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-[#f0e9df] text-xs shadow-sm"
+                      className="flex size-7 items-center justify-center rounded-full border-2 border-white bg-[#f0e2d0] font-serif text-xs font-bold text-[#7c4d38] shadow-sm"
                     >
-                      {m.avatar}
+                      {/^[A-Za-z0-9\u4e00-\u9fff]$/.test(m.avatar)
+                        ? m.avatar
+                        : m.name.slice(0, 1) || "主"}
                     </div>
                   ))}
                 </div>
-                <span className="text-[11px] text-[#935941] font-medium ml-1">保存在此裝置</span>
+                <span className="ml-1 text-[11px] font-medium text-[#935941]">
+                  保存於此裝置
+                </span>
               </div>
             </div>
 
-            {/* 免運進度條 */}
-            <div className="my-3 rounded-lg border border-[#e8ded3] bg-[#f7f2ea] p-2.5 text-xs text-[#675e53] flex items-center justify-between">
+            {/* 免運門檻提示 */}
+            <div className="my-3 flex items-center justify-between rounded-lg border border-[#e8ded3] bg-[#f7f2ea] p-2.5 text-xs text-[#675e53]">
               <span className="flex items-center gap-1.5">
                 <Truck size={14} className="text-[#935941]" />
                 家庭整單滿 $999 免運
               </span>
-              <span className="font-mono text-[#935941] font-semibold">
-                {familySubtotal >= 999 ? "已達免運門檻 🎉" : `還差 $${999 - familySubtotal} 免運`}
+              <span className="font-mono font-semibold text-[#935941]">
+                {familySubtotal >= 999
+                  ? "已達免運門檻"
+                  : `還差 $${999 - familySubtotal} 免運`}
               </span>
             </div>
 
             {/* 協同清單 */}
             {sharedItems.length === 0 ? (
               <div className="py-12 text-center text-sm text-[#8a7f75]">
-                <Users size={36} className="mx-auto mb-2 opacity-40 text-[#935941]" />
-                家庭協同購物車目前是空的。
-                <p className="mt-1 text-xs text-[#8a7f75]">先在柑仔選物店挑商品，再加入這份清單。</p>
+                <Users
+                  size={36}
+                  className="mx-auto mb-2 text-[#935941] opacity-40"
+                />
+                家庭協同清單目前尚未加入品項。
+                <p className="mt-1 text-xs text-[#8a7f75]">
+                  請於選物本舖挑選適配商品後匯入此清單。
+                </p>
               </div>
             ) : (
-              <div className="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
+              <div className="max-h-[48vh] space-y-4 overflow-y-auto pr-1">
                 {sharedItems.map((item) => (
-                  <div key={item.id} className="rounded-xl border border-[#e8ded3] bg-white p-3.5 space-y-2.5 shadow-sm">
+                  <div
+                    key={item.id}
+                    className="space-y-2.5 rounded-xl border border-[#e8ded3] bg-white p-3.5 shadow-sm"
+                  >
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 font-medium text-[#935941]">
-                        <span>{item.memberAvatar}</span>
+                        <span className="flex size-5 items-center justify-center rounded-full bg-[#f2e5d4] font-serif text-[10px] font-bold text-[#7c4d38]">
+                          {/^[A-Za-z0-9\u4e00-\u9fff]$/.test(item.memberAvatar)
+                            ? item.memberAvatar
+                            : item.addedBy.slice(0, 1) || "主"}
+                        </span>
                         <span>{item.addedBy} 加購</span>
-                        <span className="text-[10px] text-[#8a7f75]">· {item.addedAt}</span>
+                        <span className="text-[10px] text-[#8a7f75]">
+                          · {item.addedAt}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
@@ -289,15 +357,23 @@ export function CartDrawer() {
                     </div>
 
                     {item.note && (
-                      <p className="rounded-md bg-[#fdf6ea] border border-[#e2a84c]/20 px-2.5 py-1 text-xs text-[#8a5a14] italic">
-                        💬 「{item.note}」
+                      <p className="flex items-center gap-1.5 rounded-md border border-[#e2a84c]/25 bg-[#fdf6ea] px-2.5 py-1 text-xs italic text-[#8a5a14]">
+                        <MessageSquare size={11} className="shrink-0" />
+                        <span>「{item.note}」</span>
                       </p>
                     )}
 
                     <div className="flex items-center justify-between pt-1">
                       <div>
-                        <p className="text-sm font-medium text-[#302b26]">{getProduct(item.productId)?.name ?? item.name}</p>
-                        <p className="text-xs font-mono text-[#8a7f75]">{money(getProduct(item.productId)?.priceNt ?? item.priceNt)} / 份</p>
+                        <p className="text-sm font-medium text-[#302b26]">
+                          {getProduct(item.productId)?.name ?? item.name}
+                        </p>
+                        <p className="font-mono text-xs text-[#8a7f75]">
+                          {money(
+                            getProduct(item.productId)?.priceNt ?? item.priceNt,
+                          )}{" "}
+                          / 份
+                        </p>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -305,20 +381,29 @@ export function CartDrawer() {
                           <button
                             className="p-1 hover:bg-[#ede5da] disabled:opacity-30"
                             disabled={item.quantity <= 1}
-                            onClick={() => updateSharedQty(item.id, item.quantity - 1)}
+                            onClick={() =>
+                              updateSharedQty(item.id, item.quantity - 1)
+                            }
                           >
                             <Minus size={12} />
                           </button>
-                          <span className="w-7 text-center font-mono text-xs">{item.quantity}</span>
+                          <span className="w-7 text-center font-mono text-xs">
+                            {item.quantity}
+                          </span>
                           <button
                             className="p-1 hover:bg-[#ede5da]"
-                            onClick={() => updateSharedQty(item.id, item.quantity + 1)}
+                            onClick={() =>
+                              updateSharedQty(item.id, item.quantity + 1)
+                            }
                           >
                             <Plus size={12} />
                           </button>
                         </div>
                         <span className="font-mono text-sm font-semibold text-[#302b26]">
-                          {money((getProduct(item.productId)?.priceNt ?? item.priceNt) * item.quantity)}
+                          {money(
+                            (getProduct(item.productId)?.priceNt ??
+                              item.priceNt) * item.quantity,
+                          )}
                         </span>
                       </div>
                     </div>
@@ -328,24 +413,32 @@ export function CartDrawer() {
             )}
 
             {items.length > 0 && (
-              <Button variant="secondary" className="mt-4 w-full" onClick={addPersonalItemsToFamily}>
-                將個人購物袋加入家庭清單
+              <Button
+                variant="secondary"
+                className="mt-4 w-full"
+                onClick={addPersonalItemsToFamily}
+              >
+                將個人購物籃同步至家庭清單
               </Button>
             )}
 
             {/* 家庭金額結算 */}
-            <div className="mt-4 border-t border-[#e8ded3] pt-3 space-y-2 text-xs text-[#675e53]">
+            <div className="mt-4 space-y-2 border-t border-[#e8ded3] pt-3 text-xs text-[#675e53]">
               <div className="flex justify-between">
                 <span>品項小計</span>
                 <span className="font-mono">{money(familySubtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span>物流運費</span>
-                <span className="font-mono">{familyShipping === 0 ? "免運" : money(familyShipping)}</span>
+                <span className="font-mono">
+                  {familyShipping === 0 ? "免運" : money(familyShipping)}
+                </span>
               </div>
-              <div className="flex justify-between text-base font-semibold text-[#302b26] border-t border-[#e8ded3] pt-2">
+              <div className="flex justify-between border-t border-[#e8ded3] pt-2 text-base font-semibold text-[#302b26]">
                 <span>家庭總結算</span>
-                <span className="font-mono text-[#935941] font-bold">{money(familyTotal)}</span>
+                <span className="font-mono font-bold text-[#935941]">
+                  {money(familyTotal)}
+                </span>
               </div>
             </div>
 
@@ -369,30 +462,41 @@ export function CartDrawer() {
           </>
         ) : items.length === 0 ? (
           <div className="py-20 text-center text-sm text-[#8a7f75]">
-            <ShoppingBag size={42} className="mx-auto mb-3 opacity-30 text-[#935941]" />
-            目前菜籃內還沒有商品喔！
-            <p className="mt-1 text-xs text-[#8a7f75]">去柑仔選物店搖一盒毛孩便當，或挑選適合的口糧吧。</p>
+            <ShoppingBag
+              size={42}
+              className="mx-auto mb-3 text-[#935941] opacity-30"
+            />
+            購物籃目前尚未放入選物。
+            <p className="mt-1 text-xs text-[#8a7f75]">
+              前往選物本舖搭配曲木旬食盒，或依毛孩體質挑選主糧。
+            </p>
             <div className="mt-4">
-              <Button variant="secondary" size="sm" onClick={() => close(false)}>
-                前往選物店逛逛
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => close(false)}
+              >
+                前往選物本舖
               </Button>
             </div>
           </div>
         ) : (
           <>
             {/* 免運提示 */}
-            <div className="my-3 rounded-lg border border-[#e8ded3] bg-[#f7f2ea] p-2.5 text-xs text-[#675e53] flex items-center justify-between">
+            <div className="my-3 flex items-center justify-between rounded-lg border border-[#e8ded3] bg-[#f7f2ea] p-2.5 text-xs text-[#675e53]">
               <span className="flex items-center gap-1.5">
                 <Truck size={14} className="text-[#935941]" />
-                全循環商品滿 $699；單次或混合滿 $999 免運
+                全循環滿 $699；單次或混合滿 $999 免運
               </span>
-              <span className="font-mono text-[#935941] font-semibold">
-                {totals.subtotalNt >= 699 ? "已達免運門檻 🎉" : `差 $${699 - totals.subtotalNt}`}
+              <span className="font-mono font-semibold text-[#935941]">
+                {totals.subtotalNt >= 699
+                  ? "已達免運門檻"
+                  : `差 $${699 - totals.subtotalNt}`}
               </span>
             </div>
 
-            {/* 個人商品列表與台灣人情味款待區 */}
-            <div className="space-y-4 max-h-[48vh] overflow-y-auto pr-1">
+            {/* 個人商品列表與隨箱職人試食禮 */}
+            <div className="max-h-[48vh] space-y-4 overflow-y-auto pr-1">
               {items.map((item) => {
                 const p = getProduct(item.productId);
                 const pet = pets.find((pet) => pet.id === item.petId);
@@ -401,7 +505,7 @@ export function CartDrawer() {
                 return (
                   <div key={item.key} className="border-b border-[#e8ded3] pb-4">
                     <div className="flex gap-3">
-                      <div className="relative size-16 overflow-hidden rounded-xl bg-[#ebe5da] shrink-0">
+                      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-[#ebe5da]">
                         <Image
                           src={p.image}
                           alt={p.name}
@@ -412,15 +516,21 @@ export function CartDrawer() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-semibold text-[#935941]">
-                          給 {pet?.name ?? "毛孩"} 的點心與口糧
+                          給 {pet?.name ?? "毛孩"} 的日常選物
                         </p>
-                        <p className="mt-0.5 text-sm font-medium text-[#302b26] truncate">{p.name}</p>
+                        <p className="mt-0.5 truncate text-sm font-medium text-[#302b26]">
+                          {p.name}
+                        </p>
                         <p className="text-xs text-[#8a7f75]">
-                          {p.kind === "SUPPLIES" ? "單件" : `${p.bagGrams / 1000}kg`} · {money(unitPrice(p, item.mode))}
+                          {p.kind === "SUPPLIES"
+                            ? "單件"
+                            : `${p.bagGrams / 1000}kg`}{" "}
+                          · {money(unitPrice(p, item.mode))}
                         </p>
                         {item.mode === "AUTOSHIP" && (
-                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#4e6752] font-semibold">
-                            <Repeat2 size={11} />每 {item.intervalDays} 天配送 · 9 折優惠
+                          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#4e6752]">
+                            <Repeat2 size={11} />每 {item.intervalDays} 天配送 ·
+                            9 折優惠
                           </span>
                         )}
                       </div>
@@ -443,7 +553,9 @@ export function CartDrawer() {
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-7 text-center font-mono text-xs">{item.quantity}</span>
+                        <span className="w-7 text-center font-mono text-xs">
+                          {item.quantity}
+                        </span>
                         <button
                           className="p-1 hover:bg-[#ede5da]"
                           onClick={() => change(item.key, item.quantity + 1)}
@@ -456,7 +568,10 @@ export function CartDrawer() {
                       </strong>
                     </div>
                     {!fit?.safe && (
-                      <p role="alert" className="mt-2 text-xs text-[#8a5a14] bg-[#fdf6ea] border border-[#e2a84c]/20 rounded-md p-1.5">
+                      <p
+                        role="alert"
+                        className="mt-2 rounded-md border border-[#e2a84c]/20 bg-[#fdf6ea] p-1.5 text-xs text-[#8a5a14]"
+                      >
                         {fit?.label ?? "毛孩資料不符"}，請確認後再結帳。
                       </p>
                     )}
@@ -464,19 +579,19 @@ export function CartDrawer() {
                 );
               })}
 
-              {/* 台灣人情味：店長免費招待試吃包 3 選 1 */}
-              <div className="rounded-2xl border-2 border-dashed border-[#c9964c]/60 bg-[#fdf8ef] p-3.5">
+              {/* 隨箱職人試食小包（免費擇一） */}
+              <div className="craft-letterpress rounded-2xl p-3.5">
                 <div className="flex items-center justify-between">
                   <p className="flex items-center gap-1.5 text-xs font-bold text-[#935941]">
-                    <Gift size={14} className="text-[#c9964c]" />
-                    店長偷偷塞進箱子的小心意（免費 3 選 1）
+                    <Gift size={14} className="text-[#b5813a]" />
+                    隨箱職人試食小包（免費擇一）
                   </p>
-                  <span className="rounded-full bg-[#4e6752]/12 px-2 py-0.5 text-[10px] font-bold text-[#4e6752]">
-                    免費招待 $0
+                  <span className="craft-brass-pill rounded-full px-2 py-0.5 text-[10px] font-bold">
+                    隨箱贈禮 $0
                   </span>
                 </div>
                 <p className="mt-1 text-[11px] text-[#756759]">
-                  台灣買菜都要送把蔥！挑一包想讓主子嚐鮮的小點心：
+                  台灣在地分裝試食體驗，請選擇一款隨包裹附贈的風味樣品：
                 </p>
                 <div className="mt-2.5 grid gap-1.5">
                   {FREE_SAMPLES.map((sample) => {
@@ -485,16 +600,25 @@ export function CartDrawer() {
                       <button
                         key={sample.id}
                         type="button"
-                        onClick={(e) => handleSelectSample(sample.id, sample.label, e)}
-                        className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-all ${
+                        onClick={(e) =>
+                          handleSelectSample(sample.id, sample.label, e)
+                        }
+                        className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-xs transition-all ${
                           active
-                            ? "border-[#935941] bg-[#935941]/10 font-bold text-[#302b26] shadow-xs"
+                            ? "border-[#935941] bg-[#fdf5ea] font-bold text-[#302b26] shadow-2xs"
                             : "border-[#e4d9ca] bg-white text-[#675e53] hover:border-[#935941]/50"
                         }`}
                       >
-                        <span className="truncate">{sample.label}</span>
-                        <span className="ml-2 shrink-0 rounded-full bg-[#f4ebe0] px-2 py-0.5 text-[10px] font-semibold text-[#84624c]">
-                          {active ? "✓ 已放進箱子" : sample.tag}
+                        <SampleSachetSvg variant={sample.variant} size={28} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate">{sample.label}</p>
+                          <p className="text-[10px] font-normal text-[#8a7a6b]">
+                            {sample.origin}
+                          </p>
+                        </div>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#f4ebe0] px-2 py-0.5 text-[10px] font-semibold text-[#84624c]">
+                          {active && <Check size={10} />}
+                          {active ? "已選取" : sample.tag}
                         </span>
                       </button>
                     );
@@ -502,12 +626,12 @@ export function CartDrawer() {
                 </div>
               </div>
 
-              {/* 附上手寫溫度祝福小卡 */}
+              {/* 活版印刷封蠟隨箱小卡 */}
               <div className="rounded-2xl border border-[#e4d9ca] bg-[#faf5ed] p-3.5">
                 <label className="flex cursor-pointer items-center justify-between text-xs font-bold text-[#302b26]">
                   <span className="flex items-center gap-1.5">
                     <HeartHandshake size={14} className="text-[#935941]" />
-                    隨箱附上手寫溫度祝福小卡（免費）
+                    附隨箱活版印刷封蠟問候卡（免費）
                   </span>
                   <input
                     type="checkbox"
@@ -526,23 +650,26 @@ export function CartDrawer() {
                           onClick={() => {
                             setCardMessage(msg);
                             try {
-                              localStorage.setItem("purespot-blessing-card", msg);
+                              localStorage.setItem(
+                                "purespot-blessing-card",
+                                msg,
+                              );
                             } catch {
-                              // ignore
+                              // 忽略儲存異常
                             }
                           }}
                           className={`rounded-full px-2.5 py-1 text-[11px] transition-all ${
                             cardMessage === msg
                               ? "bg-[#935941] font-semibold text-white"
-                              : "bg-white border border-[#dfd3c3] text-[#675e53] hover:border-[#935941]"
+                              : "border border-[#dfd3c3] bg-white text-[#675e53] hover:border-[#935941]"
                           }`}
                         >
                           {msg}
                         </button>
                       ))}
                     </div>
-                    <p className="rounded-lg bg-white/80 px-2.5 py-1.5 text-[11px] text-[#756759] italic">
-                      💌 小卡預覽：「{cardMessage}」
+                    <p className="rounded-lg border border-[#e6d8c8] bg-white/90 px-2.5 py-1.5 font-serif text-[11px] italic text-[#6d5948]">
+                      小卡印文預覽：「{cardMessage}」
                     </p>
                   </div>
                 )}
@@ -550,28 +677,34 @@ export function CartDrawer() {
             </div>
 
             {/* 個人金額統計 */}
-            <div className="mt-4 border-t border-[#e8ded3] pt-3 space-y-2 text-xs text-[#675e53]">
+            <div className="mt-4 space-y-2 border-t border-[#e8ded3] pt-3 text-xs text-[#675e53]">
               <div className="flex justify-between">
                 <span>小計</span>
                 <span className="font-mono">{money(totals.subtotalNt)}</span>
               </div>
-              <div className="flex justify-between text-[#4e6752] font-medium">
-                <span className="truncate max-w-[210px]">店長招待：{selectedSample.label}</span>
-                <span className="font-mono">免費 $0</span>
+              <div className="flex justify-between font-medium text-[#4e6752]">
+                <span className="max-w-[210px] truncate">
+                  隨箱試食小包：{selectedSample.label}
+                </span>
+                <span className="font-mono">隨箱贈禮 $0</span>
               </div>
               <div className="flex justify-between">
                 <span>運費</span>
-                <span className="font-mono">{totals.shippingNt ? money(totals.shippingNt) : "免運"}</span>
+                <span className="font-mono">
+                  {totals.shippingNt ? money(totals.shippingNt) : "免運"}
+                </span>
               </div>
               {totals.savingsNt > 0 && (
-                <div className="flex justify-between text-[#4e6752] font-medium">
+                <div className="flex justify-between font-medium text-[#4e6752]">
                   <span>循環補貨已省</span>
                   <span className="font-mono">{money(totals.savingsNt)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-base font-semibold text-[#302b26] border-t border-[#e8ded3] pt-2">
+              <div className="flex justify-between border-t border-[#e8ded3] pt-2 text-base font-semibold text-[#302b26]">
                 <span>本次結帳總計</span>
-                <span className="font-mono text-[#935941] font-bold">{money(totals.totalNt)}</span>
+                <span className="font-mono font-bold text-[#935941]">
+                  {money(totals.totalNt)}
+                </span>
               </div>
             </div>
 
@@ -583,7 +716,7 @@ export function CartDrawer() {
                 onClick={() => handleGoToCheckout("personal")}
                 disabled={invalid}
               >
-                帶著店長招待前往結帳
+                確認品項與隨箱小禮，前往結帳
                 <ArrowRight size={15} />
               </Button>
             </div>
@@ -593,23 +726,27 @@ export function CartDrawer() {
         {/* 邀請家庭成員彈窗 */}
         <AnimatePresence>
           {showInviteModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-sm rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 shadow-2xl text-center"
+                className="w-full max-w-sm rounded-2xl border border-[#e8ded3] bg-[#faf7f2] p-6 text-center shadow-2xl"
               >
                 <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#935941]/10 text-[#935941]">
                   <UserPlus size={24} />
                 </div>
-                <h3 className="mt-3 text-lg font-bold text-[#302b26]">邀請毛孩共管成員</h3>
+                <h3 className="mt-3 text-lg font-bold text-[#302b26]">
+                  邀請毛孩共管成員
+                </h3>
                 <p className="mt-1 text-xs text-[#675e53]">
                   將伴侶、家人或同住室友加入，共同照顧毛孩並同步購物清單。
                 </p>
 
                 <div className="mt-5 rounded-xl border border-[#e8ded3] bg-white p-3">
-                  <span className="text-[10px] text-[#8a7f75]">專屬共管邀請碼</span>
+                  <span className="text-[10px] text-[#8a7f75]">
+                    專屬共管邀請碼
+                  </span>
                   <p className="mt-1 font-mono text-xl font-bold tracking-widest text-[#935941]">
                     {inviteCode}
                   </p>
@@ -623,12 +760,9 @@ export function CartDrawer() {
                   >
                     關閉
                   </Button>
-                  <Button
-                    className="flex-1 gap-1.5"
-                    onClick={handleCopyInvite}
-                  >
+                  <Button className="flex-1 gap-1.5" onClick={handleCopyInvite}>
                     {copied ? <CheckCircle2 size={15} /> : <Copy size={15} />}
-                    {copied ? "已複製！" : "複製邀請"}
+                    {copied ? "已複製" : "複製邀請"}
                   </Button>
                 </div>
               </motion.div>
@@ -639,7 +773,7 @@ export function CartDrawer() {
         {/* 智慧拆帳分攤彈窗 */}
         <AnimatePresence>
           {showSplitModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -649,41 +783,64 @@ export function CartDrawer() {
                 <div className="flex items-center justify-between border-b border-[#e8ded3] pb-3">
                   <div className="flex items-center gap-2">
                     <Sparkles className="text-[#935941]" size={18} />
-                    <h3 className="text-base font-bold text-[#302b26]">智慧拆帳分攤 (LINE Pay)</h3>
+                    <h3 className="text-base font-bold text-[#302b26]">
+                      智慧拆帳分攤 (LINE Pay)
+                    </h3>
                   </div>
                   <button
+                    type="button"
+                    aria-label="關閉視窗"
                     onClick={() => setShowSplitModal(false)}
-                    className="text-[#8a7f75] hover:text-[#302b26] text-sm"
+                    className="rounded-lg p-1 text-[#8a7f75] hover:bg-[#ede4d8] hover:text-[#302b26]"
                   >
-                    ✕
+                    <X size={16} />
                   </button>
                 </div>
 
-                <p className="mt-3 text-xs text-[#675e53] leading-relaxed">
-                  系統已自動按各成員加購之品項精確分攤，一鍵發送 LINE Pay 分帳請求至家庭群組。
+                <p className="mt-3 text-xs leading-relaxed text-[#675e53]">
+                  系統已自動按各成員加購之品項精確分攤，一鍵整理 LINE Pay
+                  分帳明細至家庭群組。
                 </p>
 
                 <div className="mt-4 space-y-3">
                   {familyMembers.map((m) => {
-                    const memberItems = sharedItems.filter((i) => i.addedBy === m.name);
-                    const memberSum = memberItems.reduce((acc, i) => acc + i.priceNt * i.quantity, 0);
+                    const memberItems = sharedItems.filter(
+                      (i) => i.addedBy === m.name,
+                    );
+                    const memberSum = memberItems.reduce(
+                      (acc, i) => acc + i.priceNt * i.quantity,
+                      0,
+                    );
                     return (
-                      <div key={m.id} className="rounded-xl border border-[#e8ded3] bg-white p-3 text-xs shadow-sm">
+                      <div
+                        key={m.id}
+                        className="rounded-xl border border-[#e8ded3] bg-white p-3 text-xs shadow-sm"
+                      >
                         <div className="flex items-center justify-between font-medium">
                           <span className="flex items-center gap-1.5 text-[#302b26]">
-                            <span>{m.avatar}</span>
+                            <span className="flex size-5 items-center justify-center rounded-full bg-[#f2e5d4] font-serif text-[10px] font-bold text-[#7c4d38]">
+                              {/^[A-Za-z0-9\u4e00-\u9fff]$/.test(m.avatar)
+                                ? m.avatar
+                                : m.name.slice(0, 1) || "主"}
+                            </span>
                             <span>{m.name}</span>
-                            <span className="text-[10px] text-[#8a7f75]">({m.relationship})</span>
+                            <span className="text-[10px] text-[#8a7f75]">
+                              ({m.relationship})
+                            </span>
                           </span>
-                          <span className="font-mono text-[#935941] font-semibold">
+                          <span className="font-mono font-semibold text-[#935941]">
                             {money(memberSum)}
                           </span>
                         </div>
-                        <div className="mt-1 text-[#675e53] text-[11px] pl-6 space-y-0.5">
+                        <div className="mt-1 space-y-0.5 pl-6 text-[11px] text-[#675e53]">
                           {memberItems.map((item) => (
                             <div key={item.id} className="flex justify-between">
-                              <span className="truncate max-w-[200px]">{item.name} × {item.quantity}</span>
-                              <span className="font-mono text-[#8a7f75]">{money(item.priceNt * item.quantity)}</span>
+                              <span className="max-w-[200px] truncate">
+                                {item.name} × {item.quantity}
+                              </span>
+                              <span className="font-mono text-[#8a7f75]">
+                                {money(item.priceNt * item.quantity)}
+                              </span>
                             </div>
                           ))}
                           {memberItems.length === 0 && (
@@ -697,7 +854,9 @@ export function CartDrawer() {
 
                 <div className="mt-5 flex items-center justify-between border-t border-[#e8ded3] pt-3 text-xs">
                   <span className="text-[#675e53]">總計（含免運折抵）：</span>
-                  <span className="font-mono text-base font-bold text-[#935941]">{money(familyTotal)}</span>
+                  <span className="font-mono text-base font-bold text-[#935941]">
+                    {money(familyTotal)}
+                  </span>
                 </div>
 
                 <div className="mt-4 flex gap-2">
@@ -709,12 +868,12 @@ export function CartDrawer() {
                     取消
                   </Button>
                   <Button
-                    className="flex-1 gap-1.5 text-xs bg-[#00C300] hover:bg-[#00B000] text-white font-semibold"
+                    className="flex-1 gap-1.5 bg-[#4e6752] text-xs font-semibold text-white hover:bg-[#3f5542]"
                     onClick={handleSendLinePaySplit}
                     disabled={splitSent}
                   >
                     <Send size={13} />
-                    {splitSent ? "已發送分帳請求！" : "發送 LINE Pay 分帳請求"}
+                    {splitSent ? "已發送分帳明細" : "發送 LINE Pay 分帳明細"}
                   </Button>
                 </div>
               </motion.div>

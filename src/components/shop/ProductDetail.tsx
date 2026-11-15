@@ -14,10 +14,11 @@ import {
   ShoppingBag,
   Heart,
   Sparkles,
-  Coins,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NutritionalTrendChart } from "@/components/analytics/NutritionalTrendChart";
+import { MacroKibbleViewer } from "@/components/shop/MacroKibbleViewer";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -31,7 +32,6 @@ import { petLabels, supportsFoodCalculator } from "@/lib/types";
 export function ProductDetail({ product }: { product: Product }) {
   const images = [product.image, ...(product.gallery ?? [])].filter(Boolean);
   const [activeImage, setActiveImage] = useState(images[0] ?? product.image);
-  const [showCoinScale, setShowCoinScale] = useState(true);
 
   const pet = useActivePet();
   const fit = matchProduct(product, pet);
@@ -62,7 +62,7 @@ export function ProductDetail({ product }: { product: Product }) {
         image: activeImage,
         label: product.name,
       });
-      toast.success(`已幫 ${pet.name} 把「${product.name}」放進菜籃！`);
+      toast.success(`已為 ${pet.name} 將「${product.name}」納入購物籃`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法加入商品");
     }
@@ -71,7 +71,7 @@ export function ProductDetail({ product }: { product: Product }) {
   function handleFavorite(event: React.MouseEvent<HTMLButtonElement>) {
     triggerPawBurst(event.currentTarget);
     toggleFavorite(product.id);
-    toast.success(isFavorite ? "已移除收藏" : "已收進毛孩願望口袋 ♥");
+    toast.success(isFavorite ? "已從願望清單移除" : "已收入毛孩願望清單");
   }
 
   return (
@@ -85,7 +85,7 @@ export function ProductDetail({ product }: { product: Product }) {
           className="mb-8 flex items-center gap-2 text-xs font-medium text-[#7c746c]"
         >
           <Link className="hover:text-[#935941]" href="/shop">
-            柑仔選物店
+            選物本舖
           </Link>
           <ChevronRight aria-hidden="true" size={13} />
           <span className="font-bold text-[#433c35]">{product.name}</span>
@@ -100,10 +100,10 @@ export function ProductDetail({ product }: { product: Product }) {
                   alt={`${product.name}商品形象照`}
                   fill
                   priority
-                  className="object-contain p-8 md:p-12 transition-transform duration-500 hover:scale-105"
+                  className="object-contain p-8 transition-transform duration-500 hover:scale-105 md:p-12"
                   sizes="(max-width: 1024px) 100vw, 55vw"
                 />
-                <span className="absolute left-4 top-4 rounded-full border border-[#dfd0be] bg-[#fffcf7]/95 px-3.5 py-1.5 text-[11px] font-bold tracking-wider text-[#935941] shadow-2xs">
+                <span className="craft-tag absolute left-4 top-4 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wider text-[#935941]">
                   PURESPOT 台灣嚴選
                 </span>
               </div>
@@ -136,67 +136,9 @@ export function ProductDetail({ product }: { product: Product }) {
               </div>
             )}
 
-            {/* 互動比例尺與實測感受卡 */}
-            <div className="mt-6 rounded-2xl border-2 border-[#dfd0be] bg-[#fffcf7] p-5 shadow-2xs">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ece0d1] pb-3">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#935941]">
-                  <Coins size={15} />
-                  {isSupply ? "居家擺放與耐玩實測" : "台灣 1 元硬幣 (20mm) 實體比例對照"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowCoinScale((v) => !v)}
-                  className="rounded-full bg-[#f4ece1] px-3 py-1 text-[11px] font-bold text-[#6e5d4f] hover:bg-[#e8dac8]"
-                >
-                  {showCoinScale ? "切換看適口性指標" : "切換看硬幣比例尺"}
-                </button>
-              </div>
-
-              {showCoinScale ? (
-                <div className="mt-4 flex flex-wrap items-center gap-5">
-                  <div className="flex items-center gap-3 rounded-xl bg-[#faf4eb] px-4 py-3 border border-[#e6d7c5]">
-                    <div className="flex flex-col items-center">
-                      <span className="flex size-10 items-center justify-center rounded-full border-2 border-[#b8926a] bg-[#ead3b3] font-mono text-xs font-bold text-[#5c4228] shadow-inner">
-                        台幣$1
-                      </span>
-                      <span className="mt-1 text-[10px] text-[#7c6d5f]">20mm</span>
-                    </div>
-                    <span className="text-xs font-bold text-[#935941]">VS</span>
-                    <div className="flex flex-col items-center">
-                      <span className="flex size-5 items-center justify-center rounded-full bg-[#7c4f38] shadow-xs" />
-                      <span className="mt-1 text-[10px] text-[#7c6d5f]">
-                        {isSupply ? "溫潤手感" : "約 9mm 顆粒"}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="flex-1 text-xs leading-6 text-[#5f5246]">
-                    {isSupply
-                      ? "針對台灣公寓與透天居家空間設計，邊角圓潤不刮手，毛孩自己玩也安心。"
-                      : "專為毛孩口腔設計的適中厚薄度，咬下去「卡滋」酥脆不費力，幼年與熟齡毛孩都能輕鬆入口。"}
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-2.5 text-xs">
-                  {[
-                    { label: "開袋自然香氣", pct: 94, color: "bg-[#935941]" },
-                    { label: "挑嘴主子清盤率", pct: 91, color: "bg-[#4e6752]" },
-                    { label: "台灣潮濕保存友善度（附密封夾鏈）", pct: 96, color: "bg-[#c98835]" },
-                  ].map((bar) => (
-                    <div key={bar.label}>
-                      <div className="mb-1 flex justify-between font-semibold text-[#4e4238]">
-                        <span>{bar.label}</span>
-                        <span className="font-mono text-[#935941]">{bar.pct}%</span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-[#efe5d8]">
-                        <div
-                          className={`h-full rounded-full ${bar.color}`}
-                          style={{ width: `${bar.pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* 互動式食材剖面與微距檢視器 */}
+            <div className="mt-6">
+              <MacroKibbleViewer product={product} />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
@@ -215,7 +157,9 @@ export function ProductDetail({ product }: { product: Product }) {
                   href={`/care/ingredients?product=${encodeURIComponent(product.slug)}`}
                   className="btn-tactile inline-flex min-h-11 items-center gap-2 bg-[#4e6752] px-5 text-xs font-bold text-white !shadow-[0_4px_0_#344737]"
                 >
-                  🔍 打開成分白話放大鏡 <ArrowRight size={15} />
+                  <Search size={15} />
+                  開啟成分放大鏡對比
+                  <ArrowRight size={15} />
                 </Link>
               )}
             </div>
@@ -224,8 +168,8 @@ export function ProductDetail({ product }: { product: Product }) {
           <div className="lg:pt-2">
             <p className="editorial-kicker">
               {isSupply
-                ? "LIVING WITH CARE · 質感日常好物"
-                : "FOOD WITH INTENTION · 安心主食選物"}{" "}
+                ? "LIVING WITH CARE · 質感生活道具"
+                : "FOOD WITH INTENTION · 溯源主食選物"}{" "}
               · {petLabels[product.type]}專屬
             </p>
             <h1 className="editorial-title mt-3 font-serif text-[clamp(2.4rem,4.6vw,4.2rem)] font-bold leading-[1.1] tracking-[-.04em] text-[#302b26]">
@@ -253,7 +197,7 @@ export function ProductDetail({ product }: { product: Product }) {
                 </div>
               </div>
               <p className="mt-2 text-xs text-[#8a7f75]">
-                滿 $699（定期配）或 $999（單次購買）享免運送到家，購物袋內還可免費挑 1 包試吃小禮！
+                定期配滿 $699 或單次選購滿 $999 享免運宅配，購物籃內可免費挑選隨箱職人試食小包。
               </p>
             </div>
 
@@ -265,7 +209,11 @@ export function ProductDetail({ product }: { product: Product }) {
               }`}
               role="status"
             >
-              <ShieldCheck className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
+              <ShieldCheck
+                className="mt-0.5 shrink-0"
+                size={18}
+                aria-hidden="true"
+              />
               <span>{fit.label}</span>
             </div>
             {!fit.sameSpecies && (
@@ -288,7 +236,7 @@ export function ProductDetail({ product }: { product: Product }) {
                 className="btn-tactile inline-flex min-h-14 items-center justify-center gap-2 bg-[#935941] px-5 text-sm font-bold text-white hover:bg-[#7d4934] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <ShoppingBag size={18} />
-                幫 {pet.name} 放進菜籃（飛入！）
+                為 {pet.name} 納入購物籃
               </motion.button>
               {canCalculate ? (
                 <button
@@ -306,7 +254,7 @@ export function ProductDetail({ product }: { product: Product }) {
                   onClick={() => openCart(true)}
                   className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[#d5c3af] bg-[#fffcf7] px-5 text-sm font-bold text-[#4e443a] shadow-[0_3px_0_#d5c3af] hover:bg-[#f4ece1]"
                 >
-                  打開菜籃查看 ({product.stock} 件現貨)
+                  開啟購物籃查看 ({product.stock} 件現貨)
                 </button>
               )}
             </div>
@@ -323,7 +271,7 @@ export function ProductDetail({ product }: { product: Product }) {
                   fill={isFavorite ? "currentColor" : "none"}
                   className={isFavorite ? "text-[#c85a48]" : ""}
                 />
-                {isFavorite ? "已收進願望口袋" : "收進毛孩願望口袋"}
+                {isFavorite ? "已收入願望清單" : "收入毛孩願望清單"}
               </button>
               {product.autoshipEligible && (
                 <Link
@@ -331,7 +279,7 @@ export function ProductDetail({ product }: { product: Product }) {
                   className="inline-flex items-center gap-1.5 text-sm font-bold text-[#4e6752] underline underline-offset-4"
                 >
                   <Repeat2 size={16} />
-                  了解定期配 9 折優惠 <ArrowRight size={15} />
+                  了解定期配 9 折方案 <ArrowRight size={15} />
                 </Link>
               )}
             </div>
@@ -374,7 +322,7 @@ export function ProductDetail({ product }: { product: Product }) {
             )}
             <p className="mt-4 text-xs leading-6 text-[#8a7f75]">
               商品與圖片為展示資料，正式資訊請以實品標示為準。
-              {!isSupply && "特殊飲食需求請先詢問獸醫師。"}
+              {!isSupply && "特殊飲食需求請先諮詢獸醫師。"}
             </p>
           </div>
         </div>
@@ -385,7 +333,7 @@ export function ProductDetail({ product }: { product: Product }) {
         >
           <div>
             <p className="editorial-kicker">
-              {isSupply ? "MADE FOR EVERYDAY" : "INSIDE THE BAG · 袋子裡的真相"}
+              {isSupply ? "MADE FOR EVERYDAY" : "INSIDE THE BAG · 袋內完整真相"}
             </p>
             <h2
               id="ingredients-title"
@@ -394,9 +342,9 @@ export function ProductDetail({ product }: { product: Product }) {
               {isSupply ? "陪伴生活，\n用心挑選。" : "每一口，\n都看得見來源。"}
             </h2>
           </div>
-          <div className="rounded-2xl border border-[#dfd0be] bg-[#fffcf7] p-6 sm:p-8">
+          <div className="craft-letterpress rounded-2xl p-6 sm:p-8">
             <p className="mb-3 text-xs font-bold tracking-wider text-[#935941]">
-              {isSupply ? "商品設計重點" : "完整原料清單（無隱藏成分）"}
+              {isSupply ? "商品設計重點" : "完整原料清單（無隱藏添加）"}
             </p>
             <p className="text-base leading-8 text-[#4e433a]">
               {isSupply ? product.description : product.ingredients.join("、")}

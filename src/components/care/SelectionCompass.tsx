@@ -48,10 +48,10 @@ type Response = {
 };
 
 const scenarioOptions = [
-  { value: "DAILY", label: "日常選物", emoji: "✦" },
-  { value: "TRIP", label: "準備出門", emoji: "↗" },
-  { value: "NEW_PET", label: "迎接毛孩", emoji: "♡" },
-  { value: "REFILL", label: "快要補貨", emoji: "◷" },
+  { value: "DAILY", label: "日常選物", code: "01" },
+  { value: "TRIP", label: "準備出門", code: "02" },
+  { value: "NEW_PET", label: "迎接毛孩", code: "03" },
+  { value: "REFILL", label: "快要補貨", code: "04" },
 ] as const;
 
 export function SelectionCompass() {
@@ -212,7 +212,7 @@ export function SelectionCompass() {
                     }
                     className={`min-h-12 rounded-2xl border px-3 text-left text-sm transition-colors ${intent.scenario === option.value ? "border-[#315f86] bg-[#315f86] text-white" : "border-[#d4d8d7] bg-[#fbfaf6] hover:border-[#6ca1c6]"}`}
                   >
-                    <span className="mr-2 text-lg">{option.emoji}</span>
+                    <span className="mr-2 font-mono text-xs font-bold opacity-80">{option.code}</span>
                     {option.label}
                   </button>
                 ))}

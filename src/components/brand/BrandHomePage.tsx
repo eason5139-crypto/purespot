@@ -17,6 +17,7 @@ import {
   Repeat2,
   Calculator,
 } from "lucide-react";
+import { SpeciesMedallion } from "@/components/ui/CraftEmblems";
 import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/store/useUiStore";
 
@@ -92,21 +93,19 @@ const mediaLogos = [
 
 const productSeries = [
   {
-    type: "CAT",
+    type: "CAT" as const,
     label: "貓咪系列",
-    emoji: "🐱",
     desc: "無穀主食凍乾・原肉主食罐・機能保健補充",
     color: "from-[#fbf8f3] to-[#f4ece1]",
-    border: "border-[#e8ded3]",
+    border: "border-[#dfd0be]",
     img: "/images/salmon-cat.png",
   },
   {
-    type: "DOG",
+    type: "DOG" as const,
     label: "狗狗系列",
-    emoji: "🐶",
     desc: "高蛋白天然乾糧・全齡主食罐・關節機能配方",
     color: "from-[#fbf8f3] to-[#f4ece1]",
-    border: "border-[#e8ded3]",
+    border: "border-[#dfd0be]",
     img: "/images/chicken-dog.png",
   },
 ];
@@ -329,10 +328,10 @@ export function BrandHomePage() {
                 className={`relative overflow-hidden rounded-3xl border ${series.border} bg-gradient-to-br ${series.color} p-8 group`}
               >
                 <div className="relative z-10">
-                  <span className="text-4xl">{series.emoji}</span>
+                  <SpeciesMedallion type={series.type} size="lg" />
                   <h3 className="mt-4 text-2xl font-bold text-[#302b26]">{series.label}</h3>
                   <p className="mt-2 text-[#675e53] text-sm">{series.desc}</p>
-                  <Button asChild className="mt-6 gap-2 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
+                  <Button asChild className="mt-6 gap-2 bg-[#935941] text-white hover:bg-[#7a4733]">
                     <Link href={`/shop?type=${series.type}`}>
                       瀏覽系列
                       <ArrowRight size={16} />
@@ -358,10 +357,10 @@ export function BrandHomePage() {
           >
             <h2 className="text-4xl font-bold text-[#302b26]">今天，開始給牠<br />真正知道的食物</h2>
             <p className="mt-4 text-[#675e53] max-w-md mx-auto">
-              輸入毛孩資料，讓 AI 推薦最適合的主食，計算每日份量，一鍵加入定期配計畫。
+              輸入毛孩資料，計算每日理想熱量份量，從適性配方中挑選最適合的主食與定期配計畫。
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-              <Button asChild size="lg" className="gap-2 text-base px-8 bg-[#5B93C5] text-white hover:bg-[#376F9F]">
+              <Button asChild size="lg" className="gap-2 text-base px-8 bg-[#935941] text-white hover:bg-[#7a4733]">
                 <Link href="/shop">
                   立即選購
                   <ArrowRight size={18} />

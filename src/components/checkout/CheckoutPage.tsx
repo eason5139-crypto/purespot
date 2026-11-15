@@ -16,6 +16,7 @@ import {
   Users,
   Landmark,
   Smartphone,
+  MessageSquare,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
@@ -202,13 +203,13 @@ function CheckoutContent() {
       <div className="mb-6 flex items-center justify-between">
         <Link
           href="/shop"
-          className="flex items-center gap-1.5 text-sm text-[#675e53] hover:text-[#5B93C5] transition-colors"
+          className="flex items-center gap-1.5 text-sm text-[#675e53] hover:text-[#935941] transition-colors"
         >
           <ArrowLeft size={16} />
           返回商城
         </Link>
         {isFamilyMode && (
-          <span className="flex items-center gap-1.5 rounded-full border border-[#5B93C5]/30 bg-[#5B93C5]/10 px-3 py-1 text-xs font-medium text-[#5B93C5]">
+          <span className="flex items-center gap-1.5 rounded-full border border-[#935941]/30 bg-[#935941]/10 px-3 py-1 text-xs font-medium text-[#935941]">
             <Users size={13} />
             正在進行：{groupName} 一鍵合併買單
           </span>
@@ -218,7 +219,7 @@ function CheckoutContent() {
       <h1 className="text-3xl font-bold text-[#302b26] mb-8">
         {isFamilyMode ? "家庭結帳" : "結帳"}
       </h1>
-      <p className="mb-8 rounded-xl border border-[#bcd5e9] bg-[#eaf3fa] px-4 py-3 text-sm text-[#315F86]">
+      <p className="mb-8 rounded-xl border border-[#dfd0be] bg-[#faf4eb] px-4 py-3 text-sm text-[#4e6752]">
         送出後，訂單將同步至會員帳戶與公司後台。
       </p>
 
@@ -229,14 +230,14 @@ function CheckoutContent() {
             <div
               className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-all ${
                 s.id === step
-                  ? "bg-[#5B93C5]/10 text-[#5B93C5] font-semibold"
+                  ? "bg-[#935941]/10 text-[#935941] font-semibold"
                   : i < stepIndex
-                  ? "text-[#315F86] font-medium"
+                  ? "text-[#4e6752] font-medium"
                   : "text-[#8a7f75]"
               }`}
             >
               {i < stepIndex ? (
-                <CheckCircle2 size={16} className="text-[#315F86]" />
+                <CheckCircle2 size={16} className="text-[#4e6752]" />
               ) : (
                 <s.icon size={16} />
               )}
@@ -264,32 +265,39 @@ function CheckoutContent() {
 
               {isFamilyMode ? (
                 <div className="space-y-3">
-                  {sharedItems.map((item) => (
-                    <div key={item.id} className="panel p-5 flex items-center gap-4 bg-white">
-                      <div className="flex size-12 items-center justify-center rounded-xl bg-[#f0e9df] text-xl shrink-0">
-                        {item.memberAvatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-[#5B93C5]">
-                            {item.addedBy} 加購
-                          </span>
-                          {item.note && (
-                            <span className="truncate text-xs text-[#8a5a14] bg-[#fdf6ea] px-2 py-0.5 rounded">
-                              💬 {item.note}
-                            </span>
-                          )}
+                  {sharedItems.map((item) => {
+                    const normalizedAvatar =
+                      item.memberAvatar && !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(item.memberAvatar)
+                        ? item.memberAvatar.slice(0, 1)
+                        : item.addedBy.slice(0, 1) || "主";
+                    return (
+                      <div key={item.id} className="panel p-5 flex items-center gap-4 bg-white">
+                        <div className="flex size-12 items-center justify-center rounded-xl border border-[#dfd0be] bg-[#faf4eb] text-sm font-bold text-[#935941] shrink-0">
+                          {normalizedAvatar}
                         </div>
-                        <p className="mt-1 font-medium text-[#302b26] truncate">{getProduct(item.productId)?.name ?? item.name}</p>
-                        <p className="text-xs text-[#8a7f75] mt-0.5">
-                          數量 {item.quantity} · {money(getProduct(item.productId)?.priceNt ?? item.priceNt)} / 份
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-[#935941]">
+                              {item.addedBy} 加購
+                            </span>
+                            {item.note && (
+                              <span className="inline-flex items-center gap-1 truncate text-xs text-[#8a5a14] bg-[#fdf6ea] px-2 py-0.5 rounded">
+                                <MessageSquare size={11} className="shrink-0" />
+                                {item.note}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 font-medium text-[#302b26] truncate">{getProduct(item.productId)?.name ?? item.name}</p>
+                          <p className="text-xs text-[#8a7f75] mt-0.5">
+                            數量 {item.quantity} · {money(getProduct(item.productId)?.priceNt ?? item.priceNt)} / 份
+                          </p>
+                        </div>
+                        <span className="font-mono font-semibold text-[#935941]">
+                          {money((getProduct(item.productId)?.priceNt ?? item.priceNt) * item.quantity)}
+                        </span>
                       </div>
-                      <span className="font-mono font-semibold text-[#5B93C5]">
-                        {money((getProduct(item.productId)?.priceNt ?? item.priceNt) * item.quantity)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -305,7 +313,7 @@ function CheckoutContent() {
                           <p className="font-medium text-[#302b26]">{product.name}</p>
                           <p className="text-xs text-[#8a7f75] mt-0.5">{product.bagGrams}g · 數量 {item.quantity}</p>
                         </div>
-                        <span className="font-mono font-semibold text-[#5B93C5]">
+                        <span className="font-mono font-semibold text-[#935941]">
                           {money(product.priceNt * item.quantity)}
                         </span>
                       </div>
@@ -325,19 +333,19 @@ function CheckoutContent() {
                 </div>
                 <div className="flex justify-between text-[#675e53]">
                   <span>物流運費</span>
-                  <span className={shipping === 0 ? "text-[#315F86] font-medium" : "font-mono"}>
+                  <span className={shipping === 0 ? "text-[#4e6752] font-medium" : "font-mono"}>
                     {shipping === 0 ? "免運費 (滿額優惠)" : money(shipping)}
                   </span>
                 </div>
                 <div className="border-t border-[#e8ded3] pt-3 flex justify-between font-semibold text-[#302b26]">
                   <span>訂單總計</span>
-                  <span className="font-mono text-[#5B93C5] font-bold text-lg">{money(total)}</span>
+                  <span className="font-mono text-[#935941] font-bold text-lg">{money(total)}</span>
                 </div>
               </div>
 
               {isFamilyMode && (
                 <div className="mt-4 rounded-xl border border-[#e8ded3] bg-[#f7f2ea] p-3 text-xs text-[#675e53]">
-                  <p className="font-semibold text-[#5B93C5] mb-1">主購人一鍵買單優惠</p>
+                  <p className="font-semibold text-[#935941] mb-1">主購人一鍵買單優惠</p>
                   <p>家庭商品可一起檢視總額，確認品項後由主購人送出訂單。</p>
                 </div>
               )}
@@ -366,7 +374,7 @@ function CheckoutContent() {
               </div>
             </div>
             <div className="space-y-4">
-              {savedAddresses.length > 0 && <div className="rounded-xl bg-[#f3f8fb] p-4"><p className="mb-3 text-xs font-semibold text-[#315F86]">使用已儲存的收件地址</p><div className="grid gap-2 sm:grid-cols-2">{savedAddresses.map((item) => <button type="button" key={item.id} aria-pressed={selectedAddressId === item.id} onClick={() => { setSelectedAddressId(item.id); setAddress({ name: item.name, phone: item.phone, postalCode: item.postalCode, city: item.city, district: item.district, address: item.address, note: item.note }); }} className={`rounded-xl border p-3 text-left text-xs ${selectedAddressId === item.id ? "border-[#5B93C5] bg-white text-[#315F86]" : "border-[#d9e5ed] text-[#687985]"}`}><strong className="block">{item.label}{item.isDefault ? " · 預設" : ""}</strong><span className="mt-1 block truncate">{item.name} · {item.city}{item.district}{item.address}</span></button>)}</div></div>}
+              {savedAddresses.length > 0 && <div className="rounded-xl border border-[#dfd0be] bg-[#faf4eb] p-4"><p className="mb-3 text-xs font-semibold text-[#935941]">使用已儲存的收件地址</p><div className="grid gap-2 sm:grid-cols-2">{savedAddresses.map((item) => <button type="button" key={item.id} aria-pressed={selectedAddressId === item.id} onClick={() => { setSelectedAddressId(item.id); setAddress({ name: item.name, phone: item.phone, postalCode: item.postalCode, city: item.city, district: item.district, address: item.address, note: item.note }); }} className={`rounded-xl border p-3 text-left text-xs transition-colors ${selectedAddressId === item.id ? "border-[#935941] bg-white text-[#935941]" : "border-[#dfd0be] text-[#675e53] hover:border-[#935941]/50"}`}><strong className="block">{item.label}{item.isDefault ? " · 預設" : ""}</strong><span className="mt-1 block truncate">{item.name} · {item.city}{item.district}{item.address}</span></button>)}</div></div>}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="shipping-name" className="field-label">收件人姓名 *</label>
@@ -479,14 +487,14 @@ function CheckoutContent() {
                   onClick={() => { if (method.id !== selectedPayment) { setSelectedPayment(method.id); setPaymentReady(method.id === "transfer" || method.id === "cvs"); } }}
                   className={`w-full panel p-5 flex items-center gap-4 text-left transition-all ${
                     selectedPayment === method.id
-                      ? "border-[#5B93C5] bg-[#fbf8f4] ring-1 ring-[#5B93C5]"
+                      ? "border-[#935941] bg-[#fbf8f4] ring-1 ring-[#935941]"
                       : "bg-white hover:border-[#d9cfc3]"
                   }`}
                 >
                   <div
                     className={`flex size-10 items-center justify-center rounded-xl ${
                       selectedPayment === method.id
-                        ? "bg-[#5B93C5]/10 text-[#5B93C5]"
+                        ? "bg-[#935941]/10 text-[#935941]"
                         : "bg-[#f5ede3] text-[#675e53]"
                     }`}
                   >
@@ -503,7 +511,7 @@ function CheckoutContent() {
                     <p className="text-xs text-[#8a7f75] mt-0.5">{method.desc}</p>
                   </div>
                   {selectedPayment === method.id && (
-                    <CheckCircle2 size={20} className="text-[#5B93C5] shrink-0" />
+                    <CheckCircle2 size={20} className="text-[#935941] shrink-0" />
                   )}
                 </button>
               ))}
@@ -523,7 +531,7 @@ function CheckoutContent() {
               </p>
               <div className="border-t border-[#e8ded3] mt-3 pt-3 flex justify-between text-sm">
                 <span className="text-[#675e53]">訂單總額</span>
-                <span className="font-mono font-semibold text-[#5B93C5]">{money(total)}</span>
+                <span className="font-mono font-semibold text-[#935941]">{money(total)}</span>
               </div>
             </div>
 
@@ -543,9 +551,9 @@ function CheckoutContent() {
             {submitError && <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{submitError}</p>}
             <AnimatePresence>
               {submitting && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="status" className="mt-5 flex items-center gap-4 rounded-2xl border border-[#bcd5e9] bg-white p-5 shadow-sm">
-                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} className="flex size-11 items-center justify-center rounded-full border-2 border-[#bcd5e9] border-t-[#315F86] text-[#315F86]">{selectedPayment === "linepay" ? <Smartphone size={17} /> : <CreditCard size={17} />}</motion.span>
-                  <span><strong className="block text-sm text-[#253b4d]">正在建立訂單</strong><span className="mt-1 block text-xs text-[#657788]">請稍候，訂單即將同步到會員與後台</span></span>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} role="status" className="mt-5 flex items-center gap-4 rounded-2xl border border-[#dfd0be] bg-white p-5 shadow-sm">
+                  <motion.span animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} className="flex size-11 items-center justify-center rounded-full border-2 border-[#dfd0be] border-t-[#935941] text-[#935941]">{selectedPayment === "linepay" ? <Smartphone size={17} /> : <CreditCard size={17} />}</motion.span>
+                  <span><strong className="block text-sm text-[#302b26]">正在建立訂單</strong><span className="mt-1 block text-xs text-[#675e53]">請稍候，訂單即將同步到會員與後台</span></span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -564,7 +572,7 @@ function CheckoutContent() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", delay: 0.1 }}
-              className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#e8f1f8] text-[#315F86] mb-6"
+              className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#eef5ef] text-[#4e6752] mb-6"
             >
               <CheckCircle2 size={40} />
             </motion.div>
@@ -579,7 +587,7 @@ function CheckoutContent() {
                 <p className="font-mono text-[#302b26] font-semibold text-sm">{orderId}</p>
                 <button
                   onClick={() => void navigator.clipboard.writeText(orderId)}
-                  className="flex items-center gap-1 text-xs text-[#675e53] hover:text-[#5B93C5]"
+                  className="flex items-center gap-1 text-xs text-[#675e53] hover:text-[#935941]"
                 >
                   <Copy size={12} />
                   複製
@@ -592,7 +600,7 @@ function CheckoutContent() {
                 </div>
                 <div>
                   <p className="text-xs text-[#8a7f75]">結算金額</p>
-                  <p className="font-mono text-[#5B93C5] font-semibold mt-1">{money(confirmedTotal ?? total)}</p>
+                  <p className="font-mono text-[#935941] font-semibold mt-1">{money(confirmedTotal ?? total)}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-[#8a7f75]">配送地址</p>
@@ -622,7 +630,7 @@ export function CheckoutPage() {
     <Suspense
       fallback={
         <div className="py-24 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
         </div>
       }
     >

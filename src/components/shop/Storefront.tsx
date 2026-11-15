@@ -15,6 +15,7 @@ import {
   Heart,
   Utensils,
   Sparkles,
+  Compass,
 } from "lucide-react";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -122,10 +123,10 @@ export function Storefront({ content }: { content: SiteContent }) {
               <PawPrint size={15} />
             </span>
             <span>
-              哩賀！歡迎光臨 <strong>{pet.name}</strong> 的專屬柑仔選物店
+              PURESPOT 選物本舖 · 依 <strong>{pet.name}</strong> 體質與節氣選食
             </span>
             <span className="hidden text-xs text-[#8a7a6b] sm:inline">
-              · 已啟動過敏原與物種安心雷達
+              · 已啟動過敏原與物種安心過濾
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -134,7 +135,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               className="inline-flex items-center gap-1.5 rounded-full bg-[#fdf3e7] px-3 py-1 text-xs font-bold text-[#935941] hover:bg-[#f8e5ce]"
             >
               <Utensils size={13} />
-              去包今日便當
+              曲木旬食組配
             </a>
             <button
               onClick={() => edit(true)}
@@ -201,11 +202,11 @@ export function Storefront({ content }: { content: SiteContent }) {
               <div>
                 <SavedPetPicker className="mb-5" />
                 <div className="flex items-center justify-between">
-                  <span className="editorial-kicker">🍚 今日主子飯量小算盤</span>
+                  <span className="editorial-kicker">DAILY PORTION · 今日建議攝取份量</span>
                   <Calculator size={19} className="text-[#935941]" />
                 </div>
                 <h2 className="mt-2 text-lg font-bold text-[#302b26]">
-                  {pet.name} 的剛剛好份量
+                  {pet.name} 的均衡每日克數
                 </h2>
                 <p className="mt-1 text-xs text-[#75695e]">
                   {pet.weightKg} 公斤 · {pet.ageMonths < 12 ? "幼年成長期" : "成齡階段"} ·{" "}
@@ -268,7 +269,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               <SavedPetPicker className="mb-5" />
               <div>
                 <p className="text-xs font-bold tracking-wider text-[#4e6752]">
-                  🐰 小寵物的療癒日常
+                  SMALL PETS ・ 草食與小寵居家選物
                 </p>
                 <h2 className="editorial-title mt-3 text-3xl font-bold leading-tight text-[#2f4233]">
                   {pet.name} 的日常，
@@ -305,15 +306,16 @@ export function Storefront({ content }: { content: SiteContent }) {
           className="group mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-[#dfd0be] bg-[#fffcf7] px-6 py-5 text-[#302b26] shadow-xs transition-all hover:-translate-y-0.5 hover:border-[#935941]"
         >
           <span>
-            <strong className="editorial-title text-xl font-bold text-[#935941]">
-              🧭 選擇困難？想替 {pet.name} 安排得更剛好？
+            <strong className="editorial-title inline-flex items-center gap-2 text-xl font-bold text-[#935941]">
+              <Compass size={19} />
+              尚未決定品項？交給選物羅盤替 {pet.name} 評估
             </strong>
             <span className="mt-1 block text-xs text-[#6e5f52]">
-              選物羅盤、成分放大鏡、存糧天氣預報與 7 日換糧陪跑，四個互動工具免費玩！
+              選物羅盤、成分微距放大鏡、存糧週期預報與 7 日換糧陪跑，四組實用道具一次開啟。
             </span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-[#f5ebe0] px-4 py-2 text-xs font-bold text-[#935941]">
-            走進照顧工作室{" "}
+            進入飼育道具室{" "}
             <ArrowUpRight
               size={16}
               className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"
@@ -365,7 +367,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         >
           <div className="grid gap-8 lg:grid-cols-[minmax(270px,.78fr)_minmax(0,1.22fr)] lg:gap-14">
             <div>
-              <p className="editorial-kicker">柑仔店分類貨架 / 依喜好慢慢挑</p>
+              <p className="editorial-kicker">WORKSHOP SHELVES ・ 工藝分類貨架</p>
               <h2
                 id="category-heading"
                 className="editorial-title mt-3 max-w-md text-3xl font-bold leading-[1.2] sm:text-5xl"
@@ -387,7 +389,7 @@ export function Storefront({ content }: { content: SiteContent }) {
                     className="object-cover transition-transform duration-700 hover:scale-[1.03]"
                   />
                   <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#2a211b]/80 to-transparent px-5 pb-4 pt-16 text-xs font-semibold tracking-wider text-[#fffaf2]">
-                    🐾 台灣毛孩家庭的溫暖角落
+                    台灣居家毛孩日常選物圖錄
                   </span>
                 </div>
               </div>
@@ -512,7 +514,7 @@ export function Storefront({ content }: { content: SiteContent }) {
         <section id="products" className="scroll-mt-32">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="eyebrow mb-1.5">🐾 點卡片右下角可「翻背面看白話文」</div>
+              <div className="eyebrow mb-1.5">CRAFT SPEC ・ 點擊卡片右下角可「翻閱溯源手記」</div>
               <h2 className="editorial-title text-2xl font-bold sm:text-3xl">
                 {productCategory === "all"
                   ? species === "personal"
@@ -549,7 +551,7 @@ export function Storefront({ content }: { content: SiteContent }) {
               aria-label="適用動物"
             >
               {[
-                { id: "personal", label: `✨ ${pet.name}專屬推薦` },
+                { id: "personal", label: `${pet.name} 體質適配` },
                 { id: "all", label: "全部選物" },
                 ...(["CAT", "DOG", "HAMSTER", "RABBIT"] as const).map((id) => ({
                   id,
@@ -699,16 +701,16 @@ export function Storefront({ content }: { content: SiteContent }) {
         <section className="mt-14">
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <div className="eyebrow mb-1.5">📸 街坊鄰居的真實開箱</div>
+              <div className="eyebrow mb-1.5">COMMUNITY LOGS ・ 台灣飼主真實生活紀錄</div>
               <h2 className="editorial-title text-2xl font-bold sm:text-3xl">
-                毛孩的開飯日常
+                毛孩的日常圖錄
               </h2>
             </div>
             <Link
               href="/community"
               className="text-sm font-bold text-[#935941] hover:underline"
             >
-              去街坊毛孩牆逛逛 →
+              瀏覽街坊生活誌 →
             </Link>
           </div>
           <div className="grid gap-5 md:grid-cols-2">
