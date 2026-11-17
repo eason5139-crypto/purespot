@@ -37,10 +37,13 @@ import { usePetContextStore } from "@/store/usePetContextStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { getProduct } from "@/lib/catalog";
+import { useAuthStore } from "@/store/useAuthStore";
 import { cartTotals, unitPrice } from "@/lib/cart";
 import { matchProduct } from "@/lib/matching";
 import { money } from "@/lib/utils";
 import { triggerPawBurst } from "@/lib/flyToCart";
+import { GiftCardPreview } from "./GiftCardPreview";
+import { defaultGiftCard, giftCardStorageKey, type GiftCard } from "@/lib/giftCard";
 
 const FREE_SAMPLES = [
   {
@@ -77,7 +80,9 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.removeItem);
-  const pets = usePetContextStore((s) => s.allPets);
+  const ownPets = usePetContextStore((s) => s.allPets);
+  const familyPets = useFamilyStore((s) => s.familyPets);
+  const pets = [...ownPets, ...familyPets.filter((pet) => !ownPets.some((own) => own.cloudId === pet.cloudId))];
   const activePetId = usePetContextStore((s) => s.activePetId);
   const close = useUiStore((s) => s.setCartOpen);
 
@@ -91,6 +96,8 @@ export function CartDrawer() {
   const updateSharedQty = useFamilyStore((s) => s.updateQuantity);
   const inviteCode = useFamilyStore((s) => s.inviteCode);
   const groupName = useFamilyStore((s) => s.groupName);
+  const familyRole = useFamilyStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSplitModal, setShowSplitModal] = useState(false);
@@ -103,6 +110,10 @@ export function CartDrawer() {
   );
   const [includeCard, setIncludeCard] = useState<boolean>(true);
   const [cardMessage, setCardMessage] = useState<string>(BLESSING_CARDS[0]);
+  const [cardRecipient, setCardRecipient] = useState(defaultGiftCard.recipient);
+  const [cardSignature, setCardSignature] = useState(defaultGiftCard.signature);
+  const [cardFont, setCardFont] = useState<GiftCard["font"]>(defaultGiftCard.font);
+  const [cardTone, setCardTone] = useState<GiftCard["tone"]>(defaultGiftCard.tone);
 
   useEffect(() => {
     try {
@@ -114,10 +125,26 @@ export function CartDrawer() {
       if (savedCard && BLESSING_CARDS.includes(savedCard as typeof BLESSING_CARDS[number])) {
         setCardMessage(savedCard);
       }
+      const gift = localStorage.getItem(giftCardStorageKey);
+      if (gift) {
+        const parsed = JSON.parse(gift) as Partial<GiftCard>;
+        if (typeof parsed.included === "boolean") setIncludeCard(parsed.included);
+        if (typeof parsed.message === "string") setCardMessage(parsed.message.slice(0, 120));
+        if (typeof parsed.recipient === "string") setCardRecipient(parsed.recipient.slice(0, 30));
+        if (typeof parsed.signature === "string") setCardSignature(parsed.signature.slice(0, 30));
+        if (parsed.font === "serif" || parsed.font === "sans") setCardFont(parsed.font);
+        if (parsed.tone === "clay" || parsed.tone === "blue") setCardTone(parsed.tone);
+      }
     } catch {
       // 忽略本機儲存異常
     }
   }, []);
+
+  useEffect(() => { if (user) void useFamilyStore.getState().loadCloud(); }, [user?.id]);
+
+  useEffect(() => {
+    try { localStorage.setItem(giftCardStorageKey, JSON.stringify({ included: includeCard, recipient: cardRecipient, message: cardMessage, signature: cardSignature, font: cardFont, tone: cardTone } satisfies GiftCard)); } catch { /* 本機儲存不可用時仍可預覽 */ }
+  }, [includeCard, cardRecipient, cardMessage, cardSignature, cardFont, cardTone]);
 
   const handleSelectSample = (
     id: string,
@@ -165,7 +192,7 @@ export function CartDrawer() {
 
   const handleCopyInvite = () => {
     navigator.clipboard.writeText(
-      `【PURESPOT 家庭清單】${groupName}\n邀請碼：${inviteCode}\n目前清單僅保存於此裝置。`,
+      `【PURESPOT 家庭清單】${groupName}\n邀請碼：${inviteCode}\n請先建立會員帳戶，再到「我的帳戶／家庭共買」輸入邀請碼。`,
     );
     setCopied(true);
     toast.success("已複製家庭清單邀請碼");
@@ -187,6 +214,7 @@ export function CartDrawer() {
   };
 
   function addPersonalItemsToFamily() {
+    if (!user) { toast.info("登入後就能共用家庭清單"); useUiStore.getState().setAuthOpen(true); return; }
     let added = 0;
     for (const item of items) {
       const product = getProduct(item.productId);
@@ -198,9 +226,11 @@ export function CartDrawer() {
         )
       )
         continue;
+      const savedPetId = pets.find((pet) => pet.id === item.petId)?.cloudId;
+      if (!savedPetId) { toast.info("請先將毛孩儲存到會員帳戶，再加入家庭清單"); continue; }
       addSharedItem({
         productId: item.productId,
-        petId: item.petId || activePetId,
+        petId: savedPetId,
         name: product.name,
         image: product.image,
         priceNt: product.priceNt,
@@ -454,8 +484,9 @@ export function CartDrawer() {
               <Button
                 className="gap-1 text-xs"
                 onClick={() => handleGoToCheckout("family")}
+                disabled={!sharedItems.length || familyRole !== "OWNER"}
               >
-                家庭清單結帳
+                {familyRole === "MEMBER" ? "等待主帳戶確認" : "家庭清單結帳"}
                 <ArrowRight size={13} />
               </Button>
             </div>
@@ -668,9 +699,10 @@ export function CartDrawer() {
                         </button>
                       ))}
                     </div>
-                    <p className="rounded-lg border border-[#e6d8c8] bg-white/90 px-2.5 py-1.5 font-serif text-[11px] italic text-[#6d5948]">
-                      小卡印文預覽：「{cardMessage}」
-                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2"><label className="text-[11px] text-[#675e53]">收卡稱呼<input className="input mt-1" maxLength={30} value={cardRecipient} onChange={(e) => setCardRecipient(e.target.value)} /></label><label className="text-[11px] text-[#675e53]">落款<input className="input mt-1" maxLength={30} value={cardSignature} onChange={(e) => setCardSignature(e.target.value)} /></label></div>
+                    <label className="block text-[11px] text-[#675e53]">小卡文字<textarea className="input mt-1 min-h-20" maxLength={120} value={cardMessage} onChange={(e) => setCardMessage(e.target.value)} /></label>
+                    <div className="flex flex-wrap gap-2 text-[11px]"><label>字體<select className="ml-1 rounded-lg border border-[#dfd3c3] bg-white p-1" value={cardFont} onChange={(e) => setCardFont(e.target.value as GiftCard["font"])}><option value="serif">溫柔襯線</option><option value="sans">清爽黑體</option></select></label><label>顏色<select className="ml-1 rounded-lg border border-[#dfd3c3] bg-white p-1" value={cardTone} onChange={(e) => setCardTone(e.target.value as GiftCard["tone"])}><option value="clay">陶土暖棕</option><option value="blue">品牌晴藍</option></select></label></div>
+                    <GiftCardPreview card={{ included: includeCard, recipient: cardRecipient, message: cardMessage, signature: cardSignature, font: cardFont, tone: cardTone }} />
                   </div>
                 )}
               </div>

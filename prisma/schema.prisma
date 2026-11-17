@@ -68,6 +68,14 @@ model User {
   careReminders CareReminder[]
   supportRequests SupportRequest[]
   sessions Session[]
+  emailVerifiedAt DateTime?
+  demoConfirmedAt DateTime?
+  pointEntries PointEntry[]
+  redemptions RewardRedemption[]
+  familyMembership FamilyMemberRecord?
+  notifications MemberNotification[]
+  accountTokens AccountToken[]
+  growthMoments GrowthMoment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -105,6 +113,7 @@ model Pet {
   favorites Favorite[]
   careRecords CareRecord[]
   careReminders CareReminder[]
+  growthMoments GrowthMoment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([userId])
@@ -255,12 +264,137 @@ model Order {
   paymentReference String? @unique
   expiresAt DateTime
   items OrderItem[]
+  discountNt Int @default(0)
+  giftCard Json?
+  familyGroupId String?
+  redemption RewardRedemption?
   supportRequests SupportRequest[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
   @@index([status, expiresAt])
+}
+
+model MembershipConfig {
+  id String @id @default("main")
+  silverSpendNt Int @default(3000)
+  goldSpendNt Int @default(12000)
+  pointsPerHundred Int @default(1)
+  updatedAt DateTime @updatedAt
+}
+
+model PointEntry {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceKey String @unique
+  title String
+  points Int
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+
+model MemberMission {
+  id String @id
+  title String
+  badgeTitle String
+  points Int
+  isActive Boolean @default(true)
+}
+
+model Reward {
+  id String @id @default(uuid())
+  title String
+  pointsCost Int
+  discountNt Int
+  isActive Boolean @default(true)
+  redemptions RewardRedemption[]
+  createdAt DateTime @default(now())
+}
+
+model RewardRedemption {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId String
+  reward Reward @relation(fields: [rewardId], references: [id])
+  code String @unique
+  pointsCost Int
+  discountNt Int
+  orderId String? @unique
+  order Order? @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+  @@index([userId, orderId])
+}
+
+model MemberNotification {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title String
+  body String
+  href String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, readAt, createdAt])
+}
+
+model AccountToken {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind String
+  codeHash String
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, kind, expiresAt])
+}
+
+model FamilyGroup {
+  id String @id @default(uuid())
+  name String
+  inviteCode String @unique
+  members FamilyMemberRecord[]
+  items FamilyListItem[]
+  createdAt DateTime @default(now())
+}
+
+model FamilyMemberRecord {
+  userId String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId String
+  group FamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role String @default("MEMBER")
+  joinedAt DateTime @default(now())
+  @@index([groupId, role])
+}
+
+model FamilyListItem {
+  id String @id @default(uuid())
+  groupId String
+  group FamilyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  productId String
+  petId String?
+  quantity Int @default(1)
+  note String @default("")
+  addedById String
+  createdAt DateTime @default(now())
+  @@index([groupId, createdAt])
+}
+
+model GrowthMoment {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId String
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+  careRecordId String? @unique
+  title String
+  note String @default("")
+  createdAt DateTime @default(now())
+  @@index([userId, petId, createdAt])
 }
 model OrderItem {
   id String @id @default(uuid())

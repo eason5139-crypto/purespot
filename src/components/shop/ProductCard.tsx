@@ -256,9 +256,6 @@ export function ProductCard({ product }: { product: Product }) {
         >
           {product.name}
         </Link>
-        <p className="mt-1 line-clamp-2 text-sm text-[#70665d]">
-          {product.subtitle}
-        </p>
         <div className="my-4 mt-auto flex items-baseline gap-2 pt-3">
           <strong className="font-mono text-2xl font-bold text-[#302b26]">
             {money(product.priceNt)}

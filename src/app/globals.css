@@ -264,3 +264,10 @@ summary {
     scroll-behavior: auto !important;
   }
 }
+/* 前台保留必要說明，隱藏標題上方的裝飾性副標。 */
+.public-site .eyebrow,
+.public-site .editorial-kicker,
+.public-site .warm-eyebrow,
+.public-site :is(p, span, div)[class*="tracking-"]:has(+ :is(h1, h2, h3)) {
+  display: none;
+}

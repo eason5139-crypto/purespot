@@ -63,7 +63,7 @@ export function AccountCare() {
 
   const filteredRecords = records.filter((record) => record.petId === petId);
   const filteredReminders = reminders.filter((reminder) => reminder.petId === petId && !reminder.completedAt);
-  return <section className="space-y-6"><header><p className="text-xs font-semibold tracking-[.18em] text-[#5B93C5]">CARE JOURNAL</p><h2 className="editorial-title mt-2 text-3xl text-[#263746]">毛孩照顧紀錄</h2><p className="mt-2 text-sm leading-6 text-[#687985]">將體重、飲食與生活觀察留在同一處，並安排下一次要記得的事。</p></header>
+  return <section className="space-y-6"><header><h2 className="editorial-title text-3xl text-[#263746]">毛孩照顧紀錄</h2><p className="mt-2 text-sm leading-6 text-[#687985]">將體重、飲食與生活觀察留在同一處，並安排下一次要記得的事。</p></header>
     {error && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
     <div className="flex flex-wrap gap-2">{pets.map((pet) => <button type="button" key={pet.id} onClick={() => setPetId(pet.cloudId!)} aria-pressed={petId === pet.cloudId} className={`rounded-full px-4 py-2 text-sm font-semibold ${petId === pet.cloudId ? "bg-[#315F86] text-white" : "bg-white text-[#315F86]"}`}>{pet.name}</button>)}</div>
     {pets.length === 0 && <p className="rounded-2xl bg-white p-6 text-sm text-[#687985]">毛孩檔案同步後，就能開始記錄。</p>}

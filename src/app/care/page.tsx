@@ -304,7 +304,6 @@ export default function CarePage() {
                 </div>
               </div>
               <div className="mt-6">
-                <p className="text-xs font-bold text-[#84624c]">{subtitle}</p>
                 <h2 className="editorial-title mt-1.5 text-2xl text-[#2d251e] sm:text-3xl">
                   {title}
                 </h2>

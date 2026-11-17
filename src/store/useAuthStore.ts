@@ -4,6 +4,7 @@ import { usePetContextStore } from "./usePetContextStore";
 import { useCartStore } from "./useCartStore";
 import { useCareStore } from "./useCareStore";
 import { useFavoritesStore } from "./useFavoritesStore";
+import { useFamilyStore } from "./useFamilyStore";
 
 export interface AuthUser {
   id: string;
@@ -54,6 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       const data = (await res.json()) as { user: AuthUser | null };
       set({ user: data.user });
+      if (data.user) void useFamilyStore.getState().loadCloud();
     } catch {
       set({ user: null });
     } finally {
@@ -64,6 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email, password) => {
     const { user } = await postAuth({ action: "login", email, password });
     set({ user });
+    void useFamilyStore.getState().loadCloud();
   },
 
   register: async (email, password, name) => {
@@ -74,6 +77,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       name,
     });
     set({ user });
+    void useFamilyStore.getState().loadCloud();
   },
 
   logout: async () => {
@@ -82,6 +86,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     useCartStore.getState().clear();
     useCareStore.getState().resetCare();
     useFavoritesStore.getState().clear();
+    useFamilyStore.getState().resetFamily();
     set({ user: null });
   },
 }));

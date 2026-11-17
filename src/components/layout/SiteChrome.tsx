@@ -33,7 +33,7 @@ export function SiteChrome({
   if (isBackoffice) return <>{children}</>;
 
   return (
-    <>
+    <div className="public-site">
       <Navbar announcement={displayContent.announcement} />
       {children}
       <footer
@@ -95,6 +95,6 @@ export function SiteChrome({
       <OverlayHub />
       <FlyToCartLayer />
       <SitePromotions promotions={displayContent.promotions} path={path} />
-    </>
+    </div>
   );
 }

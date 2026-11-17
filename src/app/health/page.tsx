@@ -315,7 +315,7 @@ export default function HealthPage() {
               目前最適配商品
             </div>
             <p className="mt-2 text-sm font-semibold text-[#302b26]">
-              {matchedProduct.name} ({matchedProduct.subtitle})
+              {matchedProduct.name}
             </p>
             <p className="mt-1 text-xs text-[#8a7f75]">
               粗蛋白保證值 {matchedProduct.proteinMin}% · 熱量{" "}

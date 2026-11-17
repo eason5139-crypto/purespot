@@ -29,6 +29,7 @@ import { money } from "@/lib/utils";
 import { getProduct } from "@/lib/catalog";
 import type { SavedAddress } from "@/lib/accountTypes";
 import { PaymentExperience } from "./PaymentExperience";
+import { defaultGiftCard, giftCardStorageKey, type GiftCard } from "@/lib/giftCard";
 
 type Step = "cart" | "address" | "payment" | "confirm";
 
@@ -69,7 +70,9 @@ function CheckoutContent() {
 
   const personalItems = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clear);
-  const pets = usePetContextStore((s) => s.allPets);
+  const ownPets = usePetContextStore((s) => s.allPets);
+  const familyPets = useFamilyStore((s) => s.familyPets);
+  const pets = [...ownPets, ...familyPets.filter((pet) => !ownPets.some((own) => own.cloudId === pet.cloudId))];
   const activePetId = usePetContextStore((s) => s.activePetId);
   const openAuth = useUiStore((s) => s.setAuthOpen);
   const requestKey = useRef<string | null>(null);
@@ -78,6 +81,8 @@ function CheckoutContent() {
   const clearSharedItems = useFamilyStore((s) => s.clearSharedItems);
   const familyMembers = useFamilyStore((s) => s.members);
   const groupName = useFamilyStore((s) => s.groupName);
+  const familyGroupId = useFamilyStore((s) => s.groupId);
+  const familyRole = useFamilyStore((s) => s.role);
 
   const user = useAuthStore((s) => s.user);
 
@@ -99,6 +104,14 @@ function CheckoutContent() {
   const [orderId, setOrderId] = useState("");
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [giftCard, setGiftCard] = useState<GiftCard>(defaultGiftCard);
+  const [discountCode, setDiscountCode] = useState("");
+  const [availableCodes, setAvailableCodes] = useState<{ code: string; discountNt: number; reward: { title: string } }[]>([]);
+
+  useEffect(() => {
+    try { const stored = localStorage.getItem(giftCardStorageKey); if (stored) setGiftCard({ ...defaultGiftCard, ...JSON.parse(stored) }); } catch { /* 保留預設 */ }
+  }, []);
+  useEffect(() => { if (user) { void useFamilyStore.getState().loadCloud(); void fetch("/api/account/membership", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => { if (data?.redemptions) setAvailableCodes(data.redemptions); }).catch(() => {}); } }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -122,7 +135,8 @@ function CheckoutContent() {
     : cartTotals(personalItems).subtotalNt;
 
   const shipping = isFamilyMode ? (subtotal >= 999 ? 0 : 80) : cartTotals(personalItems).shippingNt;
-  const total = subtotal + shipping;
+  const selectedDiscount = availableCodes.find((entry) => entry.code === discountCode)?.discountNt ?? 0;
+  const total = Math.max(0, subtotal + shipping - selectedDiscount);
   const stepIndex = steps.findIndex((s) => s.id === step);
 
   const hasItems = isFamilyMode ? sharedItems.length > 0 : personalItems.length > 0;
@@ -133,6 +147,7 @@ function CheckoutContent() {
       openAuth(true);
       return;
     }
+    if (isFamilyMode && (familyRole !== "OWNER" || !familyGroupId)) { setSubmitError("家庭訂單須由主帳戶確認"); return; }
     setSubmitError("");
     setSubmitting(true);
     const started = Date.now();
@@ -140,7 +155,7 @@ function CheckoutContent() {
       const items = isFamilyMode
         ? sharedItems.map((item) => ({
             productId: item.productId,
-            pet: pets.find((pet) => pet.id === item.petId) ?? pets.find((pet) => pet.id === activePetId)!,
+            pet: pets.find((pet) => pet.id === item.petId || pet.cloudId === item.petId) ?? pets.find((pet) => pet.id === activePetId)!,
             quantity: item.quantity,
             intervalDays: null,
           }))
@@ -158,6 +173,9 @@ function CheckoutContent() {
         body: JSON.stringify({
           idempotencyKey: requestKey.current,
           paymentMethod: selectedPayment,
+          discountCode: discountCode || undefined,
+          familyGroupId: isFamilyMode ? familyGroupId : undefined,
+          giftCard,
           items,
           shippingAddress: {
             name: address.name,
@@ -337,6 +355,7 @@ function CheckoutContent() {
                     {shipping === 0 ? "免運費 (滿額優惠)" : money(shipping)}
                   </span>
                 </div>
+                {selectedDiscount > 0 && <div className="flex justify-between text-[#4e6752]"><span>會員優惠折抵</span><span>-{money(selectedDiscount)}</span></div>}
                 <div className="border-t border-[#e8ded3] pt-3 flex justify-between font-semibold text-[#302b26]">
                   <span>訂單總計</span>
                   <span className="font-mono text-[#935941] font-bold text-lg">{money(total)}</span>
@@ -517,6 +536,8 @@ function CheckoutContent() {
               ))}
             </div>
 
+            {availableCodes.length > 0 && <label className="mb-5 block rounded-2xl border border-[#e1d7cc] bg-white p-4 text-sm font-semibold text-[#302b26]">使用會員優惠<select className="input mt-2" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)}><option value="">這次不使用</option>{availableCodes.map((entry) => <option key={entry.code} value={entry.code}>{entry.reward.title} · {entry.code}</option>)}</select></label>}
+            {giftCard.included && <div className="mb-5 rounded-2xl border border-[#e1d7cc] bg-[#fff9ef] p-4 text-sm"><strong className="text-[#935941]">隨箱問候卡</strong><p className="mt-1 text-[#675e53]">致 {giftCard.recipient}：{giftCard.message}</p><p className="mt-1 text-right text-xs text-[#675e53]">{giftCard.signature}</p></div>}
             <PaymentExperience method={selectedPayment} total={total} onReadyChange={setPaymentReady} />
 
             {/* 收件資訊確認 */}

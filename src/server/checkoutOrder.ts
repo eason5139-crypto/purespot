@@ -24,6 +24,12 @@ export const checkoutOrderSchema = z.object({
     postalCode: z.string().regex(/^\d{3}(\d{2,3})?$/),
     address: z.string().trim().min(5).max(200),
   }),
+  discountCode: z.string().trim().max(40).optional(),
+  familyGroupId: z.string().uuid().optional(),
+  giftCard: z.object({
+    included: z.boolean(), recipient: z.string().trim().max(30), message: z.string().trim().max(120),
+    signature: z.string().trim().max(30), font: z.enum(["serif", "sans"]), tone: z.enum(["clay", "blue"]),
+  }).optional(),
 }).strict();
 
 type CheckoutOrderInput = z.infer<typeof checkoutOrderSchema>;
@@ -40,13 +46,17 @@ export function cloudPetId(userId: string, pet: ActivePet) {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
-export async function syncCheckoutPets(userId: string, pets: ActivePet[]) {
+export async function syncCheckoutPets(userId: string, pets: ActivePet[], familyGroupId?: string) {
   for (const pet of pets) {
     const id = cloudPetId(userId, pet);
     const birthday = new Date();
     birthday.setUTCMonth(birthday.getUTCMonth() - pet.ageMonths);
     const existingPet = await db.pet.findUnique({ where: { id }, select: { userId: true, weightKg: true } });
-    if (existingPet && existingPet.userId !== userId) throw new ApiError(403, "毛孩資料無法使用");
+    if (existingPet && existingPet.userId !== userId) {
+      const shared = familyGroupId && await db.familyMemberRecord.findFirst({ where: { userId: existingPet.userId, groupId: familyGroupId } });
+      if (!shared) throw new ApiError(403, "毛孩資料無法使用");
+      continue;
+    }
     if (!existingPet && await db.pet.count({ where: { userId } }) >= 20)
       throw new ApiError(400, "每個帳戶最多建立 20 隻毛孩");
     const data = {
@@ -81,6 +91,13 @@ export async function createCheckoutOrder(userId: string, input: CheckoutOrderIn
   }
 
   const productIds = [...new Set(input.items.map((item) => item.productId))];
+  if (input.familyGroupId && !existing) {
+    const owner = await db.familyMemberRecord.findFirst({ where: { userId, groupId: input.familyGroupId, role: "OWNER" } });
+    if (!owner) throw new ApiError(403, "家庭訂單須由主帳戶確認");
+    const list = await db.familyListItem.findMany({ where: { groupId: input.familyGroupId } });
+    if (list.length !== input.items.length || !input.items.every((item) => list.some((entry) => entry.productId === item.productId && entry.quantity === item.quantity && entry.petId === (item.pet.cloudId || item.pet.id))))
+      throw new ApiError(409, "家庭清單已更新，請重新整理後結帳");
+  }
   const variants = await db.productVariant.findMany({
     where: { productId: { in: productIds } },
     include: { product: true },
@@ -96,7 +113,7 @@ export async function createCheckoutOrder(userId: string, input: CheckoutOrderIn
   }
 
   const pets = [...new Map(input.items.map((item) => [item.pet.id, item.pet])).values()];
-  await syncCheckoutPets(userId, pets);
+  await syncCheckoutPets(userId, pets, input.familyGroupId);
 
   return createOrder(userId, {
     idempotencyKey: input.idempotencyKey,
@@ -107,5 +124,9 @@ export async function createCheckoutOrder(userId: string, input: CheckoutOrderIn
       intervalDays: item.intervalDays,
     })),
     shippingAddress: input.shippingAddress,
-  }, `CHECKOUT:${input.paymentMethod}:${input.idempotencyKey}`);
+  }, `CHECKOUT:${input.paymentMethod}:${input.idempotencyKey}`, {
+    discountCode: input.discountCode,
+    familyGroupId: input.familyGroupId,
+    giftCard: input.giftCard,
+  });
 }

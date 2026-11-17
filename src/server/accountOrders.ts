@@ -2,7 +2,7 @@ import "server-only";
 import { checkoutPaymentMethod } from "./checkoutOrder";
 
 type OrderRecord = {
-  id: string; status: string; subtotalNt: number; shippingNt: number; totalNt: number;
+  id: string; status: string; subtotalNt: number; shippingNt: number; discountNt: number; totalNt: number; giftCard: unknown; familyGroupId: string | null;
   createdAt: Date; updatedAt: Date; paymentReference: string | null; shippingAddress: unknown;
   items: { id: string; productName: string; quantity: number; unitPriceNt: number; petId: string; pet: { name: string }; variant: { productId: string; product: { slug: string; imageUrl: string } } }[];
   supportRequests: { id: string; kind: string; status: string; message: string; response: string | null; createdAt: Date }[];
@@ -15,7 +15,7 @@ export const accountOrderInclude = {
 
 export function formatAccountOrder(order: OrderRecord) {
   return {
-    id: order.id, status: order.status, subtotalNt: order.subtotalNt, shippingNt: order.shippingNt, totalNt: order.totalNt,
+    id: order.id, status: order.status, subtotalNt: order.subtotalNt, shippingNt: order.shippingNt, discountNt: order.discountNt, totalNt: order.totalNt, giftCard: order.giftCard, familyGroupId: order.familyGroupId,
     createdAt: order.createdAt, updatedAt: order.updatedAt, paymentMethod: checkoutPaymentMethod(order.paymentReference),
     shippingAddress: order.shippingAddress,
     items: order.items.map((item) => ({ id: item.id, productName: item.productName, quantity: item.quantity, unitPriceNt: item.unitPriceNt, petId: item.petId, petName: item.pet.name, productId: item.variant.productId, slug: item.variant.product.slug, image: item.variant.product.imageUrl })),

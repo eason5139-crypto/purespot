@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, Boxes, ExternalLink, FilePenLine, Images, LayoutDashboard,
-  LogOut, Megaphone, Menu, MessageCircle, Package, ShoppingCart, Headset, Users, X,
+  LogOut, Megaphone, Menu, MessageCircle, Package, ShoppingCart, Headset, Users, X, Award,
 } from "lucide-react";
 
 const groups = [
@@ -25,6 +25,7 @@ const groups = [
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
     { href: "/admin/support", label: "售後需求", icon: Headset },
     { href: "/admin/members", label: "會員管理", icon: Users },
+    { href: "/admin/membership", label: "會員規則與優惠", icon: Award },
   ] },
   { title: "社群", links: [
     { href: "/admin/community", label: "內容審核", icon: MessageCircle },

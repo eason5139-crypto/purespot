@@ -24,9 +24,6 @@ export function CareHeader({
           <ArrowLeft size={15} />
           全部照顧工具
         </Link>
-        <p className="mt-7 text-xs font-semibold tracking-[.22em] text-[#b8d8ed]">
-          {eyebrow}
-        </p>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
           <div>
             <h1 className="editorial-title text-4xl sm:text-6xl">{title}</h1>

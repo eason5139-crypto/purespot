@@ -4,7 +4,9 @@ export type SavedAddress = {
 };
 
 export type AccountOrder = {
-  id: string; status: string; subtotalNt: number; shippingNt: number; totalNt: number;
+  id: string; status: string; subtotalNt: number; shippingNt: number; discountNt: number; totalNt: number;
+  giftCard?: { included: boolean; recipient: string; message: string; signature: string; font: string; tone: string } | null;
+  familyGroupId?: string | null;
   createdAt: string; updatedAt: string; paymentMethod: string | null;
   shippingAddress: { name?: string; phone?: string; postalCode?: string; address?: string };
   items: { id: string; productName: string; quantity: number; unitPriceNt: number; petId: string; petName: string; productId: string; slug: string; image: string }[];

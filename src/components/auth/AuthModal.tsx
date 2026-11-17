@@ -17,17 +17,22 @@ export function AuthModal() {
   const close = useUiStore((s) => s.setAuthOpen);
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "confirm" | "recover">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [demoCode, setDemoCode] = useState("");
+  const [enteredCode, setEnteredCode] = useState("");
+  const [recoveryRequested, setRecoveryRequested] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const lock = useRef(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "confirm" || mode === "recover") return;
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
@@ -38,6 +43,9 @@ export function AuthModal() {
         toast.success("歡迎回來！");
       } else {
         await register(email, password, name);
+        const response = await fetch("/api/account/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "begin" }) });
+        const data = await response.json() as { code?: string };
+        if (response.ok && data.code) { setDemoCode(data.code); setMode("confirm"); toast.success("帳戶已建立，請完成站內確認"); return; }
         toast.success("帳戶已建立，歡迎加入 PURESPOT！");
       }
       close(false);
@@ -47,6 +55,30 @@ export function AuthModal() {
       setBusy(false);
       lock.current = false;
     }
+  }
+
+  async function confirmAccount(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/account/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "confirm", code: enteredCode }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "確認失敗");
+      toast.success("帳戶確認完成"); close(false);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "確認失敗"); }
+    finally { setBusy(false); }
+  }
+
+  async function recoverAccount(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/auth/recovery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(recoveryRequested ? { action: "reset", email, code: enteredCode, newPassword: password } : { action: "request", email }) });
+      const data = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(data.error || "無法處理，請稍後重試");
+      setRecoveryMessage(data.message || "申請已送出");
+      if (recoveryRequested) { setMode("login"); setPassword(""); setRecoveryRequested(false); toast.success("密碼已更新"); }
+      else setRecoveryRequested(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "操作失敗"); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -62,7 +94,7 @@ export function AuthModal() {
                 setError("");
               }}
               className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
-                mode === m
+                  mode === m
                   ? "bg-[#5B93C5] text-white shadow-sm"
                   : "text-[#675e53] hover:text-[#302b26]"
               }`}
@@ -80,15 +112,12 @@ export function AuthModal() {
             exit={{ opacity: 0, y: -6 }}
           >
             <DialogTitle className="sr-only">
-              {mode === "login" ? "會員登入" : "建立帳戶"}
+              {mode === "login" ? "會員登入" : mode === "register" ? "建立帳戶" : mode === "confirm" ? "帳戶確認" : "重設密碼"}
             </DialogTitle>
             <DialogDescription className="mb-5 text-sm text-[#8a7f75]">
-              {mode === "login"
-                ? "登入後，毛孩資料與訂單紀錄都安全保存在雲端。"
-                : "建立帳戶，讓每一份為毛孩的選擇都被記住。"}
+              {mode === "login" ? "登入後查看訂單、毛孩檔案與家庭清單。" : mode === "register" ? "建立帳戶，保存你與毛孩的日常。" : mode === "confirm" ? "輸入本站提供的一次性確認碼。" : "先申請重設，再輸入管理員提供的確認碼。"}
             </DialogDescription>
-
-            <form onSubmit={(e) => void submit(e)} className="space-y-4">
+            {mode === "confirm" ? <form onSubmit={(e) => void confirmAccount(e)} className="space-y-4"><p className="rounded-xl border border-[#b7d3e7] bg-[#f1f7fa] p-3 text-sm text-[#315F86]">站內確認碼：<strong className="ml-2 font-mono text-lg tracking-widest">{demoCode}</strong><span className="mt-1 block text-xs">目前顯示於本裝置，尚未寄送電子郵件。</span></p><label className="field-label">確認碼<input className="input" inputMode="numeric" maxLength={8} value={enteredCode} onChange={(e) => setEnteredCode(e.target.value)} required /></label>{error && <p role="alert" className="text-sm text-rose-600">{error}</p>}<Button type="submit" className="w-full" disabled={busy || enteredCode.length !== 8}>完成確認</Button><button type="button" className="w-full text-xs text-[#5B93C5]" onClick={() => close(false)}>稍後再確認</button></form> : mode === "recover" ? <form onSubmit={(e) => void recoverAccount(e)} className="space-y-4"><label className="field-label">電子信箱<input className="input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>{recoveryRequested && <><label className="field-label">一次性確認碼<input className="input" inputMode="numeric" maxLength={8} value={enteredCode} onChange={(e) => setEnteredCode(e.target.value)} required /></label><label className="field-label">新密碼<input className="input" type="password" autoComplete="new-password" minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} required /></label></>}{recoveryMessage && <p className="rounded-xl bg-[#f1f7fa] p-3 text-xs text-[#315F86]">{recoveryMessage}</p>}{error && <p role="alert" className="text-sm text-rose-600">{error}</p>}<Button type="submit" className="w-full" disabled={busy}>{recoveryRequested ? "設定新密碼" : "申請重設"}</Button><button type="button" className="w-full text-xs text-[#5B93C5]" onClick={() => setMode("login")}>返回登入</button></form> : <form onSubmit={(e) => void submit(e)} className="space-y-4">
               {mode === "register" && (
                 <label className="field-label">
                   暱稱
@@ -115,6 +144,7 @@ export function AuthModal() {
                   required
                 />
               </label>
+              {mode === "login" && <button type="button" className="block text-right text-xs font-semibold text-[#5B93C5] hover:underline" onClick={() => { setMode("recover"); setError(""); }}>忘記密碼？</button>}
 
               <label className="field-label">
                 密碼
@@ -204,7 +234,7 @@ export function AuthModal() {
                   </>
                 )}
               </p>
-            </form>
+            </form>}
           </motion.div>
         </AnimatePresence>
       </DialogContent>

@@ -144,7 +144,7 @@ export function UgcFeedModal() {
             </div>
             <h4 className="text-xl font-semibold text-[#302b26]">{product.name}</h4>
             <p className="mt-2 text-sm text-[#8a7f75]">
-              {product.bagGrams / 1000} 公斤 · {product.subtitle}
+              {product.bagGrams / 1000} 公斤
             </p>
             <p className="my-5 font-mono text-3xl font-bold text-[#5B93C5]">{money(product.priceNt)}</p>
             <div

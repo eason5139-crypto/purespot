@@ -32,12 +32,14 @@ export async function createOrder(
   userId: string,
   input: z.infer<typeof orderInputSchema>,
   paymentReference: string,
+  options?: { discountCode?: string; familyGroupId?: string; giftCard?: { included: boolean; recipient: string; message: string; signature: string; font: "serif" | "sans"; tone: "clay" | "blue" } },
 ) {
   const requestHash = createHash("sha256")
     .update(
       JSON.stringify({
         items: input.items,
         shippingAddress: input.shippingAddress,
+        options,
       }),
     )
     .digest("hex");
@@ -58,8 +60,15 @@ export async function createOrder(
         include: { product: true },
       });
       const pets = await tx.pet.findMany({
-        where: { id: { in: input.items.map((i) => i.petId) }, userId },
+        where: { id: { in: input.items.map((i) => i.petId) }, ...(options?.familyGroupId ? { user: { familyMembership: { groupId: options.familyGroupId } } } : { userId }) },
       });
+      if (options?.familyGroupId) {
+        const owner = await tx.familyMemberRecord.findFirst({ where: { userId, groupId: options.familyGroupId, role: "OWNER" } });
+        if (!owner) throw new ApiError(403, "家庭訂單須由主帳戶確認");
+        const shared = await tx.familyListItem.findMany({ where: { groupId: options.familyGroupId } });
+        if (shared.length !== input.items.length || !input.items.every((item) => shared.some((entry) => entry.productId === variants.find((variant) => variant.id === item.variantId)?.productId && entry.petId === item.petId && entry.quantity === item.quantity)))
+          throw new ApiError(409, "家庭清單已更新，請重新整理後結帳");
+      }
       const demand = new Map<string, number>();
       const keys = new Set<string>();
       const lines = input.items.map((item) => {
@@ -113,6 +122,10 @@ export async function createOrder(
       );
       const threshold = lines.every((i) => i.isAutoship) ? 699 : 999;
       const shippingNt = subtotalNt >= threshold ? 0 : 80;
+      const redemption = options?.discountCode ? await tx.rewardRedemption.findFirst({ where: { code: options.discountCode.toUpperCase(), userId, orderId: null } }) : null;
+      if (options?.discountCode && !redemption) throw new ApiError(400, "優惠代碼無效或已使用");
+      if (redemption && redemption.discountNt > subtotalNt) throw new ApiError(400, "本次商品金額低於優惠折抵額");
+      const discountNt = redemption?.discountNt ?? 0;
       for (const [variantId, quantity] of demand) {
         const reserved = await tx.productVariant.updateMany({
           where: { id: variantId, stock: { gte: quantity } },
@@ -124,14 +137,17 @@ export async function createOrder(
           await tx.favorite.updateMany({ where: { productId: variant.productId, watchRestock: true }, data: { savedOutOfStock: true } });
         }
       }
-      return tx.order.create({
+      const order = await tx.order.create({
         data: {
           userId,
           idempotencyKey: input.idempotencyKey,
           requestHash,
           subtotalNt,
           shippingNt,
-          totalNt: subtotalNt + shippingNt,
+          totalNt: subtotalNt + shippingNt - discountNt,
+          discountNt,
+          familyGroupId: options?.familyGroupId,
+          ...(options?.giftCard ? { giftCard: options.giftCard } : {}),
           shippingAddress: input.shippingAddress,
           paymentReference,
           status: "PAID",
@@ -139,6 +155,9 @@ export async function createOrder(
           items: { create: lines },
         },
       });
+      if (redemption) await tx.rewardRedemption.update({ where: { id: redemption.id }, data: { orderId: order.id } });
+      if (options?.familyGroupId) await tx.familyListItem.deleteMany({ where: { groupId: options.familyGroupId } });
+      return order;
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
