@@ -40,6 +40,7 @@ import {
   WaxSealStamp,
 } from "@/components/ui/CraftEmblems";
 import { MacroKibbleViewer } from "@/components/shop/MacroKibbleViewer";
+import { FeedingClockSimulator } from "@/components/shop/FeedingClockSimulator";
 
 const reveal = {
   initial: { opacity: 0, y: 20 },
@@ -55,9 +56,30 @@ const MOOD_OPTIONS = [
     tag: "進食興致低落",
     title: "挑嘴食慾・慢焙原肉香氣",
     petNote:
-      "優先以單一動物性原肉與低溫鎖香工藝喚醒嗅覺，不依賴人工誘食噴油。",
-    tip: "建議先以高鮮肉比重或凍乾佐餐打底，觀察開袋後前 3 分鐘進食意願。",
-    keywords: ["鮭魚", "凍乾", "鮮肉", "肉", "草餅"],
+      "優先以 -40°C 凍乾原肉與高含肉量鮮食罐喚醒嗅覺，不依賴人工誘食噴油。",
+    tip: "以酥鬆凍乾主食搭配綿密鮮肉罐拌食，開袋後前 3 分鐘適口性明顯提升。",
+    preferredPrimaryIds: [
+      "salmon-freeze-cat",
+      "duck-freeze-cat",
+      "turkey-freeze-cat",
+      "chicken-freeze-dog",
+      "beef-freeze-dog",
+      "lamb-air-dog",
+    ],
+    preferredCategories: ["凍乾主食", "風乾主食"],
+    preferredCompanionIds: [
+      "tuna-pumpkin-cat",
+      "turkey-carrot-dog",
+      "lamb-pea-dog",
+      "salmon-spinach-cat",
+    ],
+    metrics: [
+      { label: "原肉開袋香氣", score: 98 },
+      { label: "適口引導指數", score: 96 },
+      { label: "動物蛋白純度", score: 94 },
+      { label: "自然補水協同", score: 89 },
+    ],
+    keywords: ["凍乾", "酥", "香", "草餅"],
   },
   {
     id: "tummy" as const,
@@ -65,9 +87,29 @@ const MOOD_OPTIONS = [
     tag: "換季排便不穩定",
     title: "敏弱腸胃・單一純淨配方",
     petNote:
-      "簡化蛋白與澱粉來源種類，降低不明副產物與過敏原引發的消化負擔。",
-    tip: "已同步避開檔案中的過敏原，建議搭配 7 日漸進換糧節奏觀察便型。",
-    keywords: ["低敏", "腸", "益生", "單一", "草"],
+      "採用單一新型態動物蛋白與南瓜／地瓜溫和膳食纖維，降低過敏原引發的消化負擔。",
+    tip: "已自動排除檔案中的過敏原，建議以溫和機能主食搭配鮮食餐包循序換糧。",
+    preferredPrimaryIds: [
+      "gentle-salmon-cat",
+      "duck-pumpkin-cat",
+      "light-turkey-dog",
+      "senior-duck-cat",
+      "whitefish-air-dog",
+    ],
+    preferredCategories: ["機能配方", "主食乾糧"],
+    preferredCompanionIds: [
+      "turkey-zucchini-cat",
+      "whitefish-carrot-dog",
+      "duck-oat-dog",
+      "chicken-pumpkin-cat",
+    ],
+    metrics: [
+      { label: "消化溫和指數", score: 97 },
+      { label: "單一肉源純淨度", score: 96 },
+      { label: "過敏原安全避忌", score: 99 },
+      { label: "腸道纖維平衡", score: 92 },
+    ],
+    keywords: ["溫和", "輕盈", "南瓜", "地瓜", "低敏"],
   },
   {
     id: "coat" as const,
@@ -75,9 +117,28 @@ const MOOD_OPTIONS = [
     tag: "理毛頻繁與毛質乾澀",
     title: "豐盈毛質・深海脂酸養護",
     petNote:
-      "透過均衡 Omega-3 與天然膳食纖維，兼顧皮膚保水度與腸道排毛代謝。",
-    tip: "海島潮濕氣候下，建議搭配定期梳毛與充足飲水維持皮毛自然光澤。",
-    keywords: ["鮭魚", "魚", "化毛", "牧草", "梳"],
+      "透過冷壓深海魚油 Omega-3 與高保水菠菜鮮肉罐，兼顧皮膚屏障保水度與排毛代謝。",
+    tip: "海島潮濕換季期，建議以深海魚肉主食搭配日常保水湯罐或護掌梳理道具。",
+    preferredPrimaryIds: [
+      "salmon-cat",
+      "whitefish-air-dog",
+      "kitten-whitefish-cat",
+      "gentle-salmon-cat",
+    ],
+    preferredCategories: ["主食乾糧", "風乾主食"],
+    preferredCompanionIds: [
+      "salmon-spinach-cat",
+      "dog-paw-balm",
+      "rabbit-groom-set",
+      "cat-water-fountain",
+    ],
+    metrics: [
+      { label: "Omega-3 脂酸比", score: 97 },
+      { label: "毛鱗片保水光澤", score: 94 },
+      { label: "換季化毛順暢度", score: 92 },
+      { label: "皮膚屏障穩定度", score: 95 },
+    ],
+    keywords: ["鮭魚", "白魚", "魚油", "菠菜", "梳"],
   },
   {
     id: "energy" as const,
@@ -85,9 +146,32 @@ const MOOD_OPTIONS = [
     tag: "體力充沛好動日常",
     title: "充沛體能・高蛋白質補給",
     petNote:
-      "提高優質動物蛋白與可利用代謝能比重，滿足探索奔跑後的肌肉修復需求。",
-    tip: "餐後適度安排耐啃咬器物或嗅聞互動，幫助維持穩定的作息節奏。",
-    keywords: ["雞", "牛", "玩具", "咬", "跑"],
+      "以高密度低溫風乾肉片補足運動後所需支鏈胺基酸，並搭配藏食嗅聞道具釋放精力。",
+    tip: "高蛋白主食滿足肌肉修復，餐後搭配嗅聞墊或解謎藏食盤可延長專注互動時間。",
+    preferredPrimaryIds: [
+      "duck-air-cat",
+      "lamb-air-dog",
+      "chicken-dog",
+      "chicken-air-cat",
+      "beef-air-dog",
+      "beef-dog",
+      "chicken-cat",
+    ],
+    preferredCategories: ["風乾主食", "主食乾糧"],
+    preferredCompanionIds: [
+      "cat-puzzle-feeder",
+      "dog-snuffle-mat",
+      "dog-slow-bowl",
+      "rabbit-forage-mat",
+      "hamster-forage-box",
+    ],
+    metrics: [
+      { label: "動物蛋白質密度", score: 98 },
+      { label: "可利用代謝熱量", score: 95 },
+      { label: "肌肉修復支撐力", score: 94 },
+      { label: "嗅聞放電滿足度", score: 96 },
+    ],
+    keywords: ["風乾", "鴨", "羊", "雞", "牛"],
   },
 ] as const;
 
@@ -156,6 +240,8 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
   const [seasonTab, setSeasonTab] = useState<string>("humid");
   const [fortuneIdx, setFortuneIdx] = useState<number>(0);
   const [stampCount, setStampCount] = useState<number>(128);
+  const [humidity, setHumidity] = useState<number>(82);
+  const [roomTemp, setRoomTemp] = useState<number>(28);
 
   const currentMood =
     MOOD_OPTIONS.find((m) => m.id === selectedMoodId) ?? MOOD_OPTIONS[0];
@@ -165,36 +251,118 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
   const safeForPet = products.filter(
     (p) => p.stock > 0 && matchProduct(p, pet).safe,
   );
-  const moodMatchedProduct =
-    safeForPet.find((p) =>
-      currentMood.keywords.some((kw) =>
-        `${p.name}${p.subtitle}${p.category}${p.ingredients.join("")}`.includes(
-          kw,
-        ),
-      ),
-    ) ??
-    safeForPet[0] ??
-    products.find((p) => p.stock > 0);
+
+  // 為 4 個照護狀態各自精準分配不重複的「主食基底 ＋ 協同佐餐／器物」雙件處方組
+  const usedPrimaryIds = new Set<string>();
+  const usedCompanionIds = new Set<string>();
+  const moodPairMap: Record<
+    string,
+    {
+      primary: (typeof products)[number] | undefined;
+      companion: (typeof products)[number] | undefined;
+    }
+  > = {};
+
+  for (const mood of MOOD_OPTIONS) {
+    const primary =
+      mood.preferredPrimaryIds
+        .map((pid) =>
+          safeForPet.find((p) => p.id === pid && !usedPrimaryIds.has(p.id)),
+        )
+        .find(Boolean) ??
+      safeForPet.find(
+        (p) =>
+          !usedPrimaryIds.has(p.id) &&
+          p.kind !== "SUPPLIES" &&
+          (mood.preferredCategories as readonly string[]).includes(p.category),
+      ) ??
+      safeForPet.find(
+        (p) =>
+          !usedPrimaryIds.has(p.id) &&
+          p.kind !== "SUPPLIES" &&
+          mood.keywords.some((kw) =>
+            `${p.name}${p.subtitle}${p.category}${p.ingredients.join("")}`.includes(
+              kw,
+            ),
+          ),
+      ) ??
+      safeForPet.find((p) => !usedPrimaryIds.has(p.id)) ??
+      safeForPet[0] ??
+      products.find((p) => p.stock > 0);
+
+    if (primary) usedPrimaryIds.add(primary.id);
+
+    const companion =
+      mood.preferredCompanionIds
+        .map((cid) =>
+          safeForPet.find(
+            (p) =>
+              p.id === cid &&
+              p.id !== primary?.id &&
+              !usedCompanionIds.has(p.id),
+          ),
+        )
+        .find(Boolean) ??
+      safeForPet.find(
+        (p) =>
+          p.id !== primary?.id &&
+          !usedCompanionIds.has(p.id) &&
+          (p.category === "主食罐頭" ||
+            p.category === "鮮食餐包" ||
+            p.kind === "SUPPLIES"),
+      ) ??
+      safeForPet.find((p) => p.id !== primary?.id);
+
+    if (companion) usedCompanionIds.add(companion.id);
+
+    moodPairMap[mood.id] = { primary, companion };
+  }
+
+  const currentPair = moodPairMap[currentMood.id];
+  const moodMatchedProduct = currentPair?.primary;
+  const companionProduct = currentPair?.companion;
 
   const nutritionResult =
     moodMatchedProduct &&
-    moodMatchedProduct.kind !== "SUPPLIES" &&
-    supportsFoodCalculator(pet.type) &&
-    moodMatchedProduct.kcalPer100g > 0
+      moodMatchedProduct.kind !== "SUPPLIES" &&
+      supportsFoodCalculator(pet.type) &&
+      moodMatchedProduct.kcalPer100g > 0
       ? calculatePetNutrition(
-          {
-            petType: pet.type,
-            weightKg: pet.weightKg,
-            ageMonths: pet.ageMonths,
-            isNeutered: pet.isNeutered,
-            activityLevel: pet.activityLevel,
-            isWeightLossGoal: pet.goal === "WEIGHT_LOSS",
-            foodKcalPer100g: moodMatchedProduct.kcalPer100g,
-          },
-          moodMatchedProduct.bagGrams,
-          moodMatchedProduct.priceNt,
-        )
+        {
+          petType: pet.type,
+          weightKg: pet.weightKg,
+          ageMonths: pet.ageMonths,
+          isNeutered: pet.isNeutered,
+          activityLevel: pet.activityLevel,
+          isWeightLossGoal: pet.goal === "WEIGHT_LOSS",
+          foodKcalPer100g: moodMatchedProduct.kcalPer100g,
+        },
+        moodMatchedProduct.bagGrams,
+        moodMatchedProduct.priceNt,
+      )
       : null;
+
+  // 海島溫濕度儲糧防潮物理計算
+  const crispRetentionPct = Math.max(
+    42,
+    Math.min(
+      99,
+      Math.round(100 - Math.max(0, humidity - 52) * 0.85 - Math.max(0, roomTemp - 22) * 1.15),
+    ),
+  );
+  const optimalFreshDays = Math.max(
+    16,
+    Math.min(
+      45,
+      Math.round(45 - Math.max(0, humidity - 55) * 0.45 - Math.max(0, roomTemp - 22) * 0.7),
+    ),
+  );
+  const oxidationRiskLabel =
+    humidity >= 80 || roomTemp >= 30
+      ? "高濕熱警戒・建議連袋入密封桶並優先選小包裝定期配"
+      : humidity >= 70 || roomTemp >= 26
+        ? "中度海島潮氣・每次取食務必擠出空氣壓緊雙軌夾鏈"
+        : "乾爽穩定・維持陰涼避光保存即可";
 
   const promotions = displayContent.promotions.filter((item) => item.enabled);
   const benefits = [
@@ -225,6 +393,40 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
       toast.success(`已為 ${pet.name} 將「${productName}」納入購物籃`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "無法加入購物籃");
+    }
+  }
+
+  function handleAddPrescriptionCombo(
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    const btnEl = event.currentTarget;
+    const targets = [moodMatchedProduct, companionProduct].filter(
+      (x): x is NonNullable<typeof x> => Boolean(x),
+    );
+    let added = 0;
+    targets.forEach((prod, idx) => {
+      try {
+        addItem({
+          productId: prod.id,
+          petId: pet.id,
+          quantity: 1,
+          mode: "ONCE",
+          intervalDays: null,
+        });
+        added++;
+        triggerFlyToCart(btnEl, {
+          image: prod.image,
+          label: prod.name,
+          delayMs: idx * 140,
+        });
+      } catch {
+        // skip if out of stock
+      }
+    });
+    if (added > 0) {
+      toast.success(
+        `已為 ${pet.name} 將「${currentMood.title}」雙件照護處方組納入購物籃`,
+      );
     }
   }
 
@@ -433,11 +635,10 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                       key={item.id}
                       type="button"
                       onClick={() => setActivePet(item.id)}
-                      className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
-                        item.id === pet.id
+                      className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${item.id === pet.id
                           ? "bg-[#935941] text-white shadow-xs scale-105"
                           : "bg-[#f4ece1] text-[#6e5d4f] hover:bg-[#eadbc9]"
-                      }`}
+                        }`}
                     >
                       {item.name} ({petLabels[item.type]})
                     </button>
@@ -460,18 +661,16 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setSelectedMoodId(mood.id)}
-                      className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition-all ${
-                        active
+                      className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition-all ${active
                           ? "border-[#935941] bg-[#fdf5ea] shadow-[0_3px_0_#935941]"
                           : "border-[#e6d9c8] bg-[#faf6f0] hover:border-[#c8b299] hover:bg-[#fffaf2]"
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`flex size-12 shrink-0 items-center justify-center rounded-xl border transition-colors ${
-                          active
+                        className={`flex size-12 shrink-0 items-center justify-center rounded-xl border transition-colors ${active
                             ? "border-[#dfc5a8] bg-white shadow-2xs"
                             : "border-[#ebe0d1] bg-[#fffcf7]"
-                        }`}
+                          }`}
                       >
                         <MoodCraftEmblem variant={mood.id} size={40} />
                       </div>
@@ -491,7 +690,7 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                 })}
               </div>
 
-              {/* 動態處方箋建議卡 */}
+              {/* 動態雙件處方組建議卡（主食基底 ＋ 協同佐餐／器物） */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${pet.id}-${currentMood.id}`}
@@ -503,81 +702,179 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                 >
                   <div className="rounded-xl border border-[#ece0d1] bg-white px-3.5 py-2.5 text-xs leading-5 text-[#66503e] shadow-2xs">
                     <span className="font-mono text-[10px] font-bold text-[#935941]">
-                      NUTRITION NOTE ·{" "}
+                      {currentMood.spec} ·{" "}
                     </span>
                     {currentMood.petNote}
                   </div>
 
-                  {moodMatchedProduct && (
-                    <div className="mt-3.5 flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <Link
-                        href={`/products/${moodMatchedProduct.slug}`}
-                        className="group relative size-24 shrink-0 overflow-hidden rounded-2xl border border-[#e2d3c1] bg-white p-2 shadow-2xs"
-                      >
-                        <Image
-                          src={moodMatchedProduct.image}
-                          alt={moodMatchedProduct.name}
-                          fill
-                          sizes="96px"
-                          className="object-contain p-1.5 transition-transform duration-300 group-hover:scale-110"
-                        />
-                      </Link>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2eb] px-2.5 py-0.5 text-[11px] font-bold text-[#4e6752]">
-                            <Check size={11} />
-                            {pet.name} 檔案適配
-                          </span>
-                          <span className="text-xs text-[#8a7a6b]">
-                            {moodMatchedProduct.category}
+                  {/* 四維動態營養工藝指標條 */}
+                  <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-[#e5d6c4] bg-[#fffdf9] p-3 sm:grid-cols-4">
+                    {currentMood.metrics.map((m) => (
+                      <div key={m.label}>
+                        <div className="flex items-center justify-between text-[10px] font-bold text-[#5e4f41]">
+                          <span className="truncate">{m.label}</span>
+                          <span className="font-mono text-[#935941]">
+                            {m.score}%
                           </span>
                         </div>
-                        <Link
-                          href={`/products/${moodMatchedProduct.slug}`}
-                          className="editorial-title mt-1 block text-xl font-bold text-[#302b26] hover:text-[#935941]"
-                        >
-                          {moodMatchedProduct.name}
-                        </Link>
-                        <p className="mt-1 text-xs leading-5 text-[#6b5d51]">
-                          {currentMood.tip}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-baseline gap-3">
-                          <strong className="font-mono text-lg font-bold text-[#935941]">
-                            {money(moodMatchedProduct.priceNt)}
-                          </strong>
-                          {nutritionResult && (
-                            <span className="rounded-md border border-[#e3d3c1] bg-[#fffaf0] px-2 py-0.5 text-[11px] font-semibold text-[#5b4d40]">
-                              建議每日{" "}
-                              <strong>
-                                {decimal(nutritionResult.dailyGrams, 0)}g
-                              </strong>
-                              （約{" "}
-                              {money(nutritionResult.autoshipDailyCostNt)}/日）
-                            </span>
-                          )}
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#efe4d4]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${m.score}%` }}
+                            transition={{ duration: 0.45, ease: "easeOut" }}
+                            className="h-full rounded-full bg-[#935941]"
+                          />
                         </div>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
+
+                  {/* 雙件處方組：壹・主食基底 ＋ 貳・協同佐餐／器物 */}
+                  <div className="mt-3.5 grid gap-3 sm:grid-cols-2">
+                    {moodMatchedProduct && (
+                      <div className="flex flex-col justify-between rounded-2xl border border-[#dfd0be] bg-white p-3.5 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <Link
+                            href={`/products/${moodMatchedProduct.slug}`}
+                            className="group relative size-20 shrink-0 overflow-hidden rounded-xl border border-[#e6d8c8] bg-[#faf5ee] p-1.5"
+                          >
+                            <Image
+                              src={moodMatchedProduct.image}
+                              alt={moodMatchedProduct.name}
+                              fill
+                              sizes="80px"
+                              className="object-contain p-1 transition-transform duration-300 group-hover:scale-110"
+                            />
+                          </Link>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="rounded bg-[#935941] px-2 py-0.5 font-mono text-[10px] font-bold text-white">
+                                壹 · 主食基底
+                              </span>
+                              <span className="rounded bg-[#eef2eb] px-2 py-0.5 text-[10px] font-bold text-[#4e6752]">
+                                {moodMatchedProduct.category}
+                              </span>
+                            </div>
+                            <Link
+                              href={`/products/${moodMatchedProduct.slug}`}
+                              className="editorial-title mt-1.5 block truncate text-base font-bold text-[#302b26] hover:text-[#935941]"
+                            >
+                              {moodMatchedProduct.name}
+                            </Link>
+                            <p className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-[#6b5d51]">
+                              {moodMatchedProduct.subtitle}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between border-t border-[#f0e6d8] pt-2.5">
+                          <div>
+                            <strong className="font-mono text-base font-bold text-[#935941]">
+                              {money(moodMatchedProduct.priceNt)}
+                            </strong>
+                            {nutritionResult && (
+                              <span className="ml-1.5 font-mono text-[10px] font-semibold text-[#6b5d50]">
+                                約 {decimal(nutritionResult.dailyGrams, 0)}g/日
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) =>
+                              handleQuickAddToCart(
+                                e,
+                                moodMatchedProduct.id,
+                                moodMatchedProduct.name,
+                                moodMatchedProduct.image,
+                              )
+                            }
+                            className="rounded-lg border border-[#d8c4ae] bg-[#fffaf2] px-2.5 py-1 text-[11px] font-bold text-[#935941] transition-colors hover:bg-[#935941] hover:text-white"
+                          >
+                            + 單件加購
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {companionProduct && (
+                      <div className="flex flex-col justify-between rounded-2xl border border-[#d6e0d6] bg-white p-3.5 shadow-2xs">
+                        <div className="flex items-start gap-3">
+                          <Link
+                            href={`/products/${companionProduct.slug}`}
+                            className="group relative size-20 shrink-0 overflow-hidden rounded-xl border border-[#dce6dc] bg-[#f4f8f4] p-1.5"
+                          >
+                            <Image
+                              src={companionProduct.image}
+                              alt={companionProduct.name}
+                              fill
+                              sizes="80px"
+                              className="object-contain p-1 transition-transform duration-300 group-hover:scale-110"
+                            />
+                          </Link>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="rounded bg-[#4e6752] px-2 py-0.5 font-mono text-[10px] font-bold text-white">
+                                貳 · 協同搭配
+                              </span>
+                              <span className="rounded bg-[#f4efe8] px-2 py-0.5 text-[10px] font-bold text-[#6e5e50]">
+                                {companionProduct.category}
+                              </span>
+                            </div>
+                            <Link
+                              href={`/products/${companionProduct.slug}`}
+                              className="editorial-title mt-1.5 block truncate text-base font-bold text-[#302b26] hover:text-[#4e6752]"
+                            >
+                              {companionProduct.name}
+                            </Link>
+                            <p className="mt-0.5 line-clamp-2 text-[11px] leading-4 text-[#6b5d51]">
+                              {companionProduct.subtitle}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between border-t border-[#e8efe8] pt-2.5">
+                          <strong className="font-mono text-base font-bold text-[#4e6752]">
+                            {money(companionProduct.priceNt)}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={(e) =>
+                              handleQuickAddToCart(
+                                e,
+                                companionProduct.id,
+                                companionProduct.name,
+                                companionProduct.image,
+                              )
+                            }
+                            className="rounded-lg border border-[#b8ceb9] bg-[#f3f8f4] px-2.5 py-1 text-[11px] font-bold text-[#3d5c43] transition-colors hover:bg-[#4e6752] hover:text-white"
+                          >
+                            + 單件加購
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-2.5 text-[11px] text-[#6b5d51]">
+                    職人配餐建議：{currentMood.tip}
+                  </p>
 
                   {moodMatchedProduct && (
-                    <div className="mt-4 flex flex-wrap gap-2 border-t border-[#e6d8c7] pt-3.5">
+                    <div className="mt-3.5 flex flex-wrap gap-2 border-t border-[#e6d8c7] pt-3.5">
                       <motion.button
                         type="button"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.94 }}
-                        onClick={(e) =>
-                          handleQuickAddToCart(
-                            e,
-                            moodMatchedProduct.id,
-                            moodMatchedProduct.name,
-                            moodMatchedProduct.image,
-                          )
-                        }
+                        onClick={handleAddPrescriptionCombo}
                         className="btn-tactile inline-flex flex-1 items-center justify-center gap-2 bg-[#935941] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#7d4934]"
                       >
                         <ShoppingBag size={15} />
-                        為 {pet.name} 納入購物籃
+                        一鍵將「{currentMood.title.split("・")[0]}」雙件處方組飛入購物籃 (
+                        {money(
+                          moodMatchedProduct.priceNt +
+                          (companionProduct?.priceNt ?? 0),
+                        )}
+                        )
                       </motion.button>
                       {moodMatchedProduct.kind !== "SUPPLIES" &&
                         supportsFoodCalculator(pet.type) && (
@@ -601,35 +898,40 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
         </div>
       </section>
 
-      {/* 全新互動體驗：日台工藝食材剖面與微距檢視室 */}
+      {/* 全新互動體驗：日台工藝食材剖面與微距檢視室 ＋ 一日餵食時鐘餐碗模擬器 */}
       <section className="border-b border-[#e2d4c4] bg-[#fffdf9] py-14 sm:py-18">
-        <div className="page-shell grid items-center gap-8 lg:grid-cols-[0.78fr_1.22fr]">
-          <motion.div {...reveal}>
-            <span className="editorial-kicker">
-              MACRO CRAFT LOUPE ・ 顆粒結構解剖室
-            </span>
-            <h2 className="editorial-title mt-3 text-3xl font-bold leading-tight text-[#2c2520] sm:text-4xl">
-              把看不見的烘焙層次，
-              <br />
-              <span className="text-[#935941]">用滑桿推開給你看。</span>
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-[#675b4f]">
-              我們將「{moodMatchedProduct?.name ?? "主食乾糧"}
-              」切開，以立體三層透視結構與台灣壹圓硬幣 20mm
-              實寸對照，讓你清楚確認酥脆度、鮮肉比重與微營養包埋位置。
-            </p>
-            <div className="mt-6 flex items-center gap-4">
-              <WaxSealStamp text="安心溯源" subtext="PURESPOT" size={82} />
-              <div className="text-xs leading-6 text-[#695c50]">
-                <p className="font-bold text-[#302b26]">
-                  目前檢視：{moodMatchedProduct?.name ?? "精選無穀主食"}
-                </p>
-                <p>切換右側分頁可對照 20mm 實寸比例與適口性數據</p>
+        <div className="page-shell space-y-12">
+          <div className="grid items-center gap-8 lg:grid-cols-[0.78fr_1.22fr]">
+            <motion.div {...reveal}>
+              <span className="editorial-kicker">
+                MACRO CRAFT LOUPE ・ 顆粒結構解剖室
+              </span>
+              <h2 className="editorial-title mt-3 text-3xl font-bold leading-tight text-[#2c2520] sm:text-4xl">
+                把看不見的烘焙層次，
+                <br />
+                <span className="text-[#935941]">用滑桿推開給你看。</span>
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-[#675b4f]">
+                我們將「{moodMatchedProduct?.name ?? "主食乾糧"}
+                」切開，以立體三層透視結構與台灣壹圓硬幣 20mm
+                實寸對照，讓你清楚確認酥脆度、鮮肉比重與微營養包埋位置。
+              </p>
+              <div className="mt-6 flex items-center gap-4">
+                <WaxSealStamp text="安心溯源" subtext="PURESPOT" size={82} />
+                <div className="text-xs leading-6 text-[#695c50]">
+                  <p className="font-bold text-[#302b26]">
+                    目前檢視：{moodMatchedProduct?.name ?? "精選無穀主食"}
+                  </p>
+                  <p>切換上方四大照護重心，此處微距剖面亦會同步切換對應配方</p>
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <MacroKibbleViewer product={moodMatchedProduct} />
+            <MacroKibbleViewer product={moodMatchedProduct} />
+          </div>
+
+          {/* 原創互動道具：一日餵食時鐘與陶瓷餐碗克數模擬器 */}
+          <FeedingClockSimulator />
         </div>
       </section>
 
@@ -695,16 +997,16 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
         </section>
       )}
 
-      {/* 台灣節氣與潮濕氣候・職人照顧手記 */}
+      {/* 台灣節氣與潮濕氣候・職人照顧手記 ＋ 海島溫濕度儲糧防潮互動調校儀 */}
       <section className="border-b border-[#e2d4c4] bg-[#fffdf9] py-16 sm:py-22">
         <div className="page-shell">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <span className="editorial-kicker">
-                ISLAND CLIMATE GUIDE ・ 台灣節氣照顧手記
+                ISLAND CLIMATE GUIDE & HYGROMETER ・ 台灣節氣與儲糧防潮調校儀
               </span>
               <h2 className="editorial-title mt-2 text-3xl font-bold sm:text-4xl">
-                順應海島氣候的居家照護節奏
+                順應海島溫濕度的居家照護與儲糧模擬
               </h2>
             </div>
             <div
@@ -721,12 +1023,23 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    onClick={() => setSeasonTab(s.id)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all ${
-                      active
+                    onClick={() => {
+                      setSeasonTab(s.id);
+                      if (s.id === "humid") {
+                        setHumidity(86);
+                        setRoomTemp(26);
+                      } else if (s.id === "summer") {
+                        setHumidity(78);
+                        setRoomTemp(33);
+                      } else {
+                        setHumidity(64);
+                        setRoomTemp(22);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-all ${active
                         ? "border-[#4e6752] bg-[#4e6752] text-white shadow-[0_3px_0_#354838]"
                         : "border-[#dfd0be] bg-[#faf6f0] text-[#5e5246] hover:border-[#935941]"
-                    }`}
+                      }`}
                   >
                     <Icon size={14} />
                     {s.badge}
@@ -743,7 +1056,7 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
-              className="mt-7 grid items-center gap-8 rounded-[2rem] border-2 border-[#e0d2c0] bg-[#f7f0e4] p-6 sm:p-10 lg:grid-cols-[1.15fr_0.85fr]"
+              className="mt-7 grid items-start gap-8 rounded-[2rem] border-2 border-[#e0d2c0] bg-[#f7f0e4] p-6 sm:p-10 lg:grid-cols-[1.05fr_0.95fr]"
             >
               <div>
                 <span className="craft-tag inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-[#4e6752]">
@@ -755,6 +1068,21 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                 <p className="mt-3 text-sm leading-7 text-[#5e5246] sm:text-base">
                   {currentSeason.desc}
                 </p>
+
+                <div className="mt-5 space-y-2.5">
+                  {currentSeason.points.map((pt) => (
+                    <div
+                      key={pt}
+                      className="flex items-center gap-3 rounded-xl border border-[#e5d8c7] bg-[#fffdf9] px-3.5 py-2.5 text-xs font-semibold text-[#3f362e]"
+                    >
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#4e6752] text-white">
+                        <Check size={12} />
+                      </span>
+                      <span>{pt}</span>
+                    </div>
+                  ))}
+                </div>
+
                 <Link
                   href={currentSeason.ctaHref}
                   className="btn-tactile mt-6 inline-flex items-center gap-2 bg-[#935941] px-5 py-3 text-xs font-bold text-white hover:bg-[#7d4934]"
@@ -763,21 +1091,104 @@ export function WarmBrandHomePage({ content }: { content: SiteContent }) {
                   <ArrowRight size={15} />
                 </Link>
               </div>
-              <div className="craft-letterpress space-y-3 rounded-2xl p-5">
-                <p className="text-xs font-bold tracking-wider text-[#935941]">
-                  職人重點備忘
-                </p>
-                {currentSeason.points.map((pt) => (
-                  <div
-                    key={pt}
-                    className="flex items-center gap-3 rounded-xl bg-[#faf5ed] px-3.5 py-2.5 text-xs font-semibold text-[#3f362e]"
-                  >
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#4e6752] text-white">
-                      <Check size={12} />
+
+              {/* 互動式台灣海島溫濕度儲糧防潮調校儀 */}
+              <div className="craft-letterpress rounded-2xl p-5 sm:p-6">
+                <div className="flex items-center justify-between border-b border-[#e5d6c3] pb-3">
+                  <div>
+                    <span className="font-mono text-[10px] font-bold tracking-wider text-[#935941]">
+                      ISLAND HYGROMETER SIMULATOR
                     </span>
-                    <span>{pt}</span>
+                    <h4 className="editorial-title text-lg font-bold text-[#302b26]">
+                      海島溫濕度・儲糧鮮脆度即時模擬儀
+                    </h4>
                   </div>
-                ))}
+                  <span
+                    className={`rounded-full px-3 py-1 font-mono text-xs font-bold ${crispRetentionPct >= 80
+                        ? "bg-[#eef4ef] text-[#3d5c43]"
+                        : crispRetentionPct >= 65
+                          ? "bg-[#fcf3dc] text-[#8a5812]"
+                          : "bg-[#fbe9e5] text-[#a63a28]"
+                      }`}
+                  >
+                    鮮脆保持 {crispRetentionPct}%
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-[#4a3e33]">
+                      <span>台灣居家相對濕度 (RH)</span>
+                      <span className="font-mono text-[#935941]">
+                        {humidity}% RH
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={50}
+                      max={95}
+                      step={1}
+                      value={humidity}
+                      onChange={(e) => setHumidity(Number(e.target.value))}
+                      aria-label="調整環境相對濕度"
+                      className="mt-2 h-2 w-full cursor-pointer accent-[#4e6752]"
+                    />
+                    <div className="mt-1 flex justify-between font-mono text-[10px] text-[#8a7a6a]">
+                      <span>50% 除濕機開啟</span>
+                      <span>75% 一般日常</span>
+                      <span>95% 梅雨南風天</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-[#4a3e33]">
+                      <span>儲糧角落環境室溫</span>
+                      <span className="font-mono text-[#935941]">
+                        {roomTemp}°C
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={16}
+                      max={36}
+                      step={1}
+                      value={roomTemp}
+                      onChange={(e) => setRoomTemp(Number(e.target.value))}
+                      aria-label="調整室內溫度"
+                      className="mt-2 h-2 w-full cursor-pointer accent-[#935941]"
+                    />
+                    <div className="mt-1 flex justify-between font-mono text-[10px] text-[#8a7a6a]">
+                      <span>16°C 冬季寒流</span>
+                      <span>26°C 舒適室溫</span>
+                      <span>36°C 盛夏西曬</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div className="rounded-xl border border-[#e3d3c0] bg-[#faf5ed] p-3">
+                      <span className="block text-[10px] font-bold text-[#7c6a58]">
+                        開封後黃金賞味期
+                      </span>
+                      <strong className="mt-1 block font-mono text-2xl font-bold text-[#302b26]">
+                        {optimalFreshDays}{" "}
+                        <span className="text-xs font-normal">日內</span>
+                      </strong>
+                    </div>
+                    <div className="rounded-xl border border-[#e3d3c0] bg-[#faf5ed] p-3">
+                      <span className="block text-[10px] font-bold text-[#7c6a58]">
+                        30 日後顆粒酥脆度
+                      </span>
+                      <strong className="mt-1 block font-mono text-2xl font-bold text-[#935941]">
+                        {crispRetentionPct}%
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-[#dfd0be] bg-white p-3 text-xs leading-5 text-[#5a4c3f]">
+                    <strong className="text-[#935941]">即時診斷建議：</strong>
+                    {oxidationRiskLabel}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>

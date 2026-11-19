@@ -64,6 +64,33 @@ export function ProductCard({ product }: { product: Product }) {
   const removeCompare = useCompareStore((s) => s.remove);
 
   const [flipped, setFlipped] = useState(false);
+  const [tilt, setTilt] = useState<{
+    rx: number;
+    ry: number;
+    gx: number;
+    gy: number;
+    active: boolean;
+  }>({ rx: 0, ry: 0, gx: 50, gy: 50, active: false });
+
+  function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    const ry = (px - 0.5) * 9;
+    const rx = (0.5 - py) * 9;
+    setTilt({
+      rx,
+      ry,
+      gx: Math.round(px * 100),
+      gy: Math.round(py * 100),
+      active: true,
+    });
+  }
+
+  function handlePointerLeave() {
+    setTilt({ rx: 0, ry: 0, gx: 50, gy: 50, active: false });
+  }
 
   function addToCart(event: React.MouseEvent<HTMLButtonElement>) {
     try {
@@ -99,8 +126,25 @@ export function ProductCard({ product }: { product: Product }) {
     <motion.article
       layout
       whileHover={{ y: -6 }}
-      className="product-card polaroid-card group relative flex flex-col overflow-hidden rounded-[1.6rem] transition-all duration-300 hover:border-[#935941]"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      style={{
+        transform: tilt.active
+          ? `perspective(950px) rotateX(${tilt.rx.toFixed(2)}deg) rotateY(${tilt.ry.toFixed(2)}deg)`
+          : undefined,
+      }}
+      className="product-card polaroid-card group relative flex flex-col overflow-hidden rounded-[1.6rem] transition-all duration-200 hover:border-[#935941]"
     >
+      {/* 3D 活版暖金浮雕反光折射層 */}
+      {tilt.active && (
+        <div
+          aria-hidden="true"
+          style={{
+            background: `radial-gradient(circle at ${tilt.gx}% ${tilt.gy}%, rgba(255,244,218,0.42) 0%, rgba(215,175,110,0.10) 42%, transparent 72%)`,
+          }}
+          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-150"
+        />
+      )}
       <div className="relative aspect-[1.02] overflow-hidden bg-[#efe6da]">
         <Link
           href={`/products/${product.slug}`}

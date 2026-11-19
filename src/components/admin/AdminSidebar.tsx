@@ -23,7 +23,7 @@ const groups = [
   ] },
   { title: "交易與顧客", links: [
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
-    { href: "/admin/support", label: "售後需求", icon: Headset },
+    { href: "/admin/support", label: "線上客服與分級派單", icon: Headset },
     { href: "/admin/members", label: "會員管理", icon: Users },
     { href: "/admin/membership", label: "會員規則與優惠", icon: Award },
   ] },
@@ -47,7 +47,7 @@ export function AdminSidebar({ adminUsername }: { adminUsername: string }) {
     <>
       {groups.map((group) => (
         <div key={group.title} className="mb-6">
-          <p className="px-3 pb-2 text-[11px] font-bold tracking-[.14em] text-[#5B93C5]">{group.title}</p>
+          <p className="px-3 pb-2 text-[11px] font-bold tracking-[.14em] text-[#935941]">{group.title}</p>
           <div className="space-y-1">
             {group.links.map((item) => {
               const active = path === item.href || path.startsWith(`${item.href}/`) ||
@@ -60,7 +60,7 @@ export function AdminSidebar({ adminUsername }: { adminUsername: string }) {
                   onClick={() => setMobileOpen(false)}
                   className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-[#5B93C5] text-white shadow-sm font-semibold"
+                      ? "bg-[#935941] text-white shadow-sm font-semibold"
                       : "text-[#5e544a] hover:bg-[#f5ede3] hover:text-[#302b26]"
                   }`}
                 >

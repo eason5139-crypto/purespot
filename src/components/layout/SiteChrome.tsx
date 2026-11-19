@@ -7,6 +7,7 @@ import { Navbar } from "./Navbar";
 import { OverlayHub } from "./OverlayHub";
 import { SitePromotions } from "./SitePromotions";
 import { FlyToCartLayer } from "./FlyToCartLayer";
+import { LiveSupportWidget } from "@/components/support/LiveSupportWidget";
 import type { SiteContent } from "@/lib/siteContent";
 import { useSiteContentPreview } from "@/lib/useSiteContentPreview";
 
@@ -94,6 +95,7 @@ export function SiteChrome({
       </footer>
       <OverlayHub />
       <FlyToCartLayer />
+      <LiveSupportWidget />
       <SitePromotions promotions={displayContent.promotions} path={path} />
     </div>
   );

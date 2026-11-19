@@ -28,6 +28,7 @@ import {
   SpeciesMedallion,
   WaxSealStamp,
 } from "@/components/ui/CraftEmblems";
+import { DigitalCertificateStudio } from "@/components/community/DigitalCertificateStudio";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUiStore } from "@/store/useUiStore";
 import { usePetContextStore, useActivePet } from "@/store/usePetContextStore";
@@ -60,21 +61,6 @@ const stages: Record<string, string> = {
   SENIOR: "熟齡",
 };
 
-const HONOR_TITLES = [
-  "街坊安穩伴食代表",
-  "巷口散策固定班底",
-  "聽見備餐聲瞬移專員",
-  "客廳午睡首席監製",
-  "挑嘴食安品質評鑑員",
-];
-
-const HONOR_STAMPS = [
-  "準時開飯認證",
-  "街坊友善夥伴",
-  "清盤滿分紀錄",
-  "安心照護在案",
-];
-
 export default function CommunityPage() {
   const user = useAuthStore((state) => state.user);
   const openAuth = useUiStore((state) => state.setAuthOpen);
@@ -103,15 +89,8 @@ export default function CommunityPage() {
   const [reporting, setReporting] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("SPAM");
 
-  // 街坊擊掌致意計數與里民手形銘牌狀態
+  // 街坊擊掌致意計數
   const [patsMap, setPatsMap] = useState<Record<string, number>>({});
-  const [cardPetName, setCardPetName] = useState(activePet.name);
-  const [cardTitle, setCardTitle] = useState(HONOR_TITLES[0]!);
-  const [cardStamp, setCardStamp] = useState(HONOR_STAMPS[0]!);
-
-  useEffect(() => {
-    setCardPetName(activePet.name);
-  }, [activePet.name]);
 
   const load = useCallback(
     async (next?: string) => {
@@ -280,20 +259,6 @@ export default function CommunityPage() {
     }
   }
 
-  function handleCopyIdCard() {
-    const text = `【台灣街坊毛孩・里民手形銘牌】\n姓名：${cardPetName}\n榮譽稱號：${cardTitle}\n封蠟核章：${cardStamp}\n—— 發行單位：PURESPOT 台灣街坊生活誌`;
-    navigator.clipboard.writeText(text);
-    toast.success("已複製里民銘牌內容，可直接分享至社群平台");
-  }
-
-  function handleUseIdCardInDiary() {
-    setTitle(`【里民報到】${cardPetName} 領取「${cardTitle}」手形銘牌`);
-    setBody(
-      `今天為 ${cardPetName} 印製了台灣街坊毛孩里民手形銘牌，封蠟印記「${cardStamp}」。紀錄一下我們家最近的飲食與生活日常。`,
-    );
-    writePost();
-  }
-
   return (
     <main
       id="main-content"
@@ -360,170 +325,21 @@ export default function CommunityPage() {
         </div>
       </section>
 
+      {/* 原創工藝體驗：台灣街坊毛孩・數位銅版雕花里民伴食認證書 */}
+      <DigitalCertificateStudio
+        activePet={activePet}
+        onUseInDiary={({ petName, title: honor, stamp, serialNo }) => {
+          setTitle(
+            `【數位里民認證】${petName} 獲頒「${honor}」伴食認證書 (${serialNo})`,
+          );
+          setBody(
+            `今天為 ${petName} 核發了台灣街坊毛孩數位里民伴食認證書（證書字號：${serialNo}，封蠟雙印鑑：${stamp}）。記錄一下我們家最近的飲食與生活日常。`,
+          );
+          writePost();
+        }}
+      />
+
       <div className="page-shell pt-12">
-        {/* 原創工藝體驗：台灣街坊毛孩・里民手形銘牌印製所 */}
-        <section
-          id="id-card-studio"
-          className="craft-letterpress mb-12 scroll-mt-28 rounded-[2rem] p-6 sm:p-8"
-        >
-          <div className="grid items-center gap-8 lg:grid-cols-[1fr_1.05fr]">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#4e6752]/12 px-3 py-1 font-mono text-xs font-bold text-[#4e6752]">
-                <Award size={14} />
-                CRAFT CITIZEN PASS · 活版銘牌印製所
-              </span>
-              <h2 className="editorial-title mt-3 text-2xl font-bold text-[#302b26] sm:text-4xl">
-                印製「台灣街坊毛孩・里民手形銘牌」
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#695d52]">
-                自訂毛孩名稱、年度稱號與朱紅火漆封蠟章，製成可一鍵分享至社群或嵌入生活日記的專屬手形名牌。
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-[#5e5044]">
-                    1. 里民大名（可自由修改）
-                    <input
-                      type="text"
-                      maxLength={20}
-                      value={cardPetName}
-                      onChange={(e) =>
-                        setCardPetName(e.target.value || activePet.name)
-                      }
-                      className="input !mt-1.5 bg-white font-bold"
-                    />
-                  </label>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs font-bold text-[#5e5044]">
-                    2. 選擇年度稱號
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {HONOR_TITLES.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setCardTitle(t)}
-                        className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
-                          cardTitle === t
-                            ? "scale-105 bg-[#935941] text-white shadow-2xs"
-                            : "border border-[#dfd0be] bg-white text-[#6a5b4e] hover:border-[#935941]"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs font-bold text-[#5e5044]">
-                    3. 壓蓋火漆封蠟印記
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {HONOR_STAMPS.map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setCardStamp(st)}
-                        className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
-                          cardStamp === st
-                            ? "scale-105 bg-[#4e6752] text-white shadow-2xs"
-                            : "border border-[#dfd0be] bg-white text-[#6a5b4e] hover:border-[#4e6752]"
-                        }`}
-                      >
-                        {st}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 即時活版手形銘牌預覽 */}
-            <div className="flex flex-col items-center">
-              <motion.div
-                key={`${cardPetName}-${cardTitle}-${cardStamp}`}
-                initial={{ scale: 0.96, rotate: -0.8 }}
-                animate={{ scale: 1, rotate: 0 }}
-                whileHover={{ rotate: 0.8, y: -4 }}
-                className="relative w-full max-w-md overflow-hidden rounded-[1.6rem] border-2 border-[#b89b7a] bg-[linear-gradient(145deg,#fffdf8_0%,#f7ebd9_100%)] p-6 shadow-[inset_0_0_0_4px_#fffcf6,inset_0_0_0_5px_#d8c2a6,0_18px_40px_-20px_rgba(95,60,35,0.35)]"
-              >
-                <div className="flex items-center justify-between border-b-2 border-[#d4be9f] pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex size-7 items-center justify-center rounded-full bg-[#935941] text-white">
-                      <PawPrint size={14} />
-                    </span>
-                    <span className="font-serif text-sm font-bold tracking-widest text-[#302b26]">
-                      台灣毛孩街坊・里民手形銘牌
-                    </span>
-                  </div>
-                  <span className="font-mono text-[11px] font-bold text-[#8c735b]">
-                    NO. TW-{activePet.type.slice(0, 2)}889
-                  </span>
-                </div>
-
-                <div className="mt-5 flex items-center gap-5 pb-4">
-                  <div className="flex size-22 shrink-0 flex-col items-center justify-center rounded-2xl border border-[#d6c2a8] bg-[#fffaf2] text-center shadow-inner">
-                    <SpeciesMedallion type={activePet.type} size="md" />
-                    <span className="mt-1 text-[10px] font-bold text-[#7c6652]">
-                      {petLabels[activePet.type]}里民
-                    </span>
-                  </div>
-
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="text-xs text-[#7d6c5c]">
-                      里民姓名：
-                      <strong className="ml-1 font-serif text-lg font-bold text-[#302b26]">
-                        {cardPetName}
-                      </strong>
-                    </p>
-                    <p className="text-xs text-[#7d6c5c]">
-                      年度稱號：
-                      <span className="ml-1 inline-block rounded-md bg-[#935941]/12 px-2 py-0.5 text-xs font-bold text-[#935941]">
-                        {cardTitle}
-                      </span>
-                    </p>
-                    <p className="text-xs text-[#7d6c5c]">
-                      核發單位：PURESPOT 生活工藝選物所
-                    </p>
-                  </div>
-                </div>
-
-                {/* 壓印火漆封蠟印章 */}
-                <motion.div
-                  key={cardStamp}
-                  initial={{ scale: 1.48, opacity: 0, rotate: -26 }}
-                  animate={{ scale: 1, opacity: 1, rotate: -10 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
-                  className="pointer-events-none absolute -bottom-2 right-3"
-                >
-                  <WaxSealStamp text={cardStamp} subtext="PURESPOT" size={92} />
-                </motion.div>
-              </motion.div>
-
-              <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleCopyIdCard}
-                  className="btn-tactile inline-flex items-center gap-1.5 bg-[#935941] px-4 py-2.5 text-xs font-bold text-white"
-                >
-                  <Copy size={14} />
-                  複製銘牌宣言（分享至社群）
-                </button>
-                <button
-                  type="button"
-                  onClick={handleUseIdCardInDiary}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#d6c4b0] bg-white px-4 py-2.5 text-xs font-bold text-[#5a4a3c] hover:bg-[#f4ece1]"
-                >
-                  <Plus size={14} />
-                  以此銘牌發表生活日記
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* 同頻毛孩交流圈 */}
         <div id="circle" className="grid gap-5 lg:grid-cols-[1fr_300px]">
