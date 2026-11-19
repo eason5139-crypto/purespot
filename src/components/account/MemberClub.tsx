@@ -45,6 +45,16 @@ import {
   type PointsItemCategory,
   type PointsShopItem,
 } from "@/lib/pointsShopCatalog";
+import {
+  DEFAULT_ARCADE_CONFIG,
+  type PointsArcadeConfig,
+} from "@/lib/pointsArcadeConfig";
+import {
+  PointsArcadeHub,
+  type ArcadeLimits,
+  type ArcadeTaskStatus,
+  type CheckInStatus,
+} from "./PointsArcadeHub";
 import type { MemberTierCode } from "@/lib/supportTypes";
 
 type Snapshot = {
@@ -54,6 +64,10 @@ type Snapshot = {
   tierCode?: MemberTierCode;
   nextTierNt: number | null;
   dailyDrawClaimed?: boolean;
+  checkInStatus?: CheckInStatus;
+  arcadeConfig?: PointsArcadeConfig;
+  arcadeLimits?: ArcadeLimits;
+  arcadeTasks?: ArcadeTaskStatus[];
   shopExchanges?: {
     id: string;
     title: string;
@@ -102,8 +116,10 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [view, setView] = useState<
-    "bazaar" | "vault" | "simulator" | "badges" | "history" | "notices"
-  >("bazaar");
+    "arcade" | "bazaar" | "vault" | "simulator" | "history" | "notices"
+  >("arcade");
+  const [publicArcadeConfig, setPublicArcadeConfig] =
+    useState<PointsArcadeConfig>(DEFAULT_ARCADE_CONFIG);
 
   // 點數商店篩選與互動狀態
   const [shopCategory, setShopCategory] = useState<"ALL" | PointsItemCategory>(
@@ -118,20 +134,21 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
     category: PointsItemCategory;
   } | null>(null);
 
-  // 每日節氣福引搖獎機狀態
-  const [spinning, setSpinning] = useState(false);
-  const [drawResult, setDrawResult] = useState<{
-    ball: string;
-    rank: string;
-    points: number;
-  } | null>(null);
-
   // 10元1點・1點折1元試算儀滑桿
   const [simSpendNt, setSimSpendNt] = useState(2400);
   const [simRedeemPts, setSimRedeemPts] = useState(120);
 
   // 公益助糧累計克數
   const [charityTotalGrams, setCharityTotalGrams] = useState(14600);
+
+  useEffect(() => {
+    fetch("/api/points-arcade/config", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: { arcadeConfig?: PointsArcadeConfig } | null) => {
+        if (payload?.arcadeConfig) setPublicArcadeConfig(payload.arcadeConfig);
+      })
+      .catch(() => {});
+  }, []);
 
   async function load() {
     if (!user) {
@@ -161,39 +178,32 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
     return "MEMBER";
   }, [user, data?.tierCode, data?.tier]);
 
-  const currentPoints = data?.points ?? (user ? 120 : 0);
+  const currentPoints = data?.points ?? (user ? 100 : 0);
   const target = data?.nextTierNt ?? data?.config.goldSpendNt ?? 12000;
   const percent = Math.min(
     100,
     Math.round(((data?.spentNt ?? 0) / target) * 100),
   );
 
-  // 執行每日節氣福引搖獎
-  async function handleDailyDraw(e: React.MouseEvent<HTMLButtonElement>) {
-    if (!user) {
-      openAuth(true);
-      return;
-    }
-    const btnEl = e.currentTarget;
-    setSpinning(true);
-    try {
-      const res = await accountJson<{
-        draw: { ball: string; rank: string; points: number };
-      }>("/api/account/membership", jsonRequest("POST", { action: "daily_draw" }));
-      window.setTimeout(() => {
-        setDrawResult(res.draw);
-        setSpinning(false);
-        triggerPawBurst(btnEl);
-        toast.success(`福引搖獎開出「${res.draw.rank}」，獲得 +${res.draw.points} 點！`);
-        void load();
-      }, 650);
-    } catch (reason) {
-      setSpinning(false);
-      toast.error(
-        reason instanceof Error ? reason.message : "今日已領取過福引點數",
-      );
-    }
-  }
+  const effectiveArcadeConfig = data?.arcadeConfig ?? publicArcadeConfig;
+  const effectiveCheckIn: CheckInStatus = data?.checkInStatus ?? {
+    claimedToday: false,
+    streakDays: 0,
+    cycleDay: 0,
+    dailyPoints: effectiveArcadeConfig.checkIn.dailyPoints,
+    streak7Bonus: effectiveArcadeConfig.checkIn.streak7Bonus,
+  };
+  const effectiveLimits: ArcadeLimits = data?.arcadeLimits ?? {
+    fukubikiUsedToday: 0,
+    fukubikiDailyLimit: effectiveArcadeConfig.fukubiki.dailyLimit,
+    scratchUsedToday: 0,
+    scratchDailyLimit: effectiveArcadeConfig.scratch.dailyLimit,
+  };
+  const effectiveTasks: ArcadeTaskStatus[] =
+    data?.arcadeTasks ??
+    effectiveArcadeConfig.tasks
+      .filter((t) => t.isActive)
+      .map((t) => ({ ...t, completed: false, claimed: false }));
 
   // 執行點數商店選物換購
   async function handleExchangeItem(
@@ -304,16 +314,16 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
       {/* 頂部標題與點數規則橫幅 */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd0be] bg-[#fffaf2] px-3.5 py-1 font-mono text-xs font-bold tracking-wider text-[#935941]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd0be] bg-[#fffaf2] px-3.5 py-1 text-xs font-bold text-[#935941]">
             <Coins size={13} />
-            POINTS CRAFT BAZAAR · 消費 NT$10 贈 1 點 · 1 點折抵現金 NT$1
+            消費 NT$10 贈 1 點 · 1 點折抵現金 NT$1
           </span>
           <h1 className="editorial-title mt-2.5 text-3xl font-bold text-[#302b26] sm:text-4xl">
-            PURESPOT 會員點數商店與等級存摺
+            會員點數商店與遊樂中心
           </h1>
           <p className="mt-1.5 text-sm text-[#6b5d50]">
-            點數可直接於結帳時 <strong className="text-[#935941]">1 點折抵 NT$1 現金</strong>
-            ，或於此處換購隨箱鮮食試吃包、日台工藝器物與價值放大折價禮券。
+            每日簽到領 10 點、完成任務賺點數，可用於分類轉盤抽商品、點數商店換購或結帳直接{" "}
+            <strong className="text-[#935941]">1 點折 NT$1</strong>。
           </p>
         </div>
 
@@ -346,250 +356,119 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
         </p>
       )}
 
-      {/* 頂部雙欄：左欄「會員等級與點數存摺總覽卡」＋ 右欄「每日節氣八角福引搖獎機」 */}
-      <div className="grid gap-6 lg:grid-cols-[1.22fr_0.78fr]">
-        {/* 左欄：帳戶連動等級與點數存摺 */}
-        <div className="craft-letterpress relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e5d6c3] pb-5">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#935941] px-3 py-1 font-mono text-[11px] font-bold tracking-wider text-white">
-                  <Crown size={12} />
-                  {user
-                    ? `帳戶核定等級：${data?.tier || "新朋友"}`
-                    : "未登入訪客預覽"}
-                </span>
-                <span className="rounded-full border border-[#d6c2a8] bg-[#fffaf2] px-3 py-1 text-xs font-bold text-[#7c5c3e]">
-                  {userTierCode === "GOLD"
-                    ? "點數商店享 85 折 · P1 尊榮客服"
-                    : userTierCode === "SILVER"
-                      ? "點數商店享 9 折 · P2 優先客服"
-                      : "每滿 NT$10 累積 1 點 · 開戶贈 120 點"}
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-baseline gap-4">
-                <div>
-                  <span className="block text-xs font-bold text-[#7a6856]">
-                    目前可用點數餘額
-                  </span>
-                  <p className="mt-1 flex items-baseline gap-2 font-mono text-4xl font-bold text-[#935941] sm:text-5xl">
-                    <span>{currentPoints}</span>
-                    <span className="text-base font-bold text-[#5a4b3e]">
-                      點
-                    </span>
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[#cfe0d0] bg-[#f3f8f3] px-4 py-2.5">
-                  <span className="block text-[11px] font-bold text-[#4e6752]">
-                    結帳直接折抵現金價值（1 點 = NT$1）
-                  </span>
-                  <strong className="font-mono text-xl font-bold text-[#2f4b33]">
-                    可現折 {money(currentPoints)}
-                  </strong>
-                </div>
-              </div>
+      {/* 會員等級與點數存摺總覽卡 */}
+      <div className="craft-letterpress relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e5d6c3] pb-5">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#935941] px-3 py-1 font-mono text-[11px] font-bold tracking-wider text-white">
+                <Crown size={12} />
+                {user
+                  ? `帳戶核定等級：${data?.tier || "新朋友"}`
+                  : "未登入訪客預覽"}
+              </span>
+              <span className="rounded-full border border-[#d6c2a8] bg-[#fffaf2] px-3 py-1 text-xs font-bold text-[#7c5c3e]">
+                {userTierCode === "GOLD"
+                  ? "點數商店享 85 折 · P1 專屬客服"
+                  : userTierCode === "SILVER"
+                    ? "點數商店享 9 折 · P2 優先客服"
+                    : "每滿 NT$10 累積 1 點 · 入會贈 100 點"}
+              </span>
             </div>
 
-            {!user && (
-              <button
-                type="button"
-                onClick={() => openAuth(true)}
-                className="btn-tactile inline-flex items-center gap-2 bg-[#935941] px-4 py-2.5 text-xs font-bold text-white"
-              >
-                <LogIn size={14} />
-                登入領取 120 點開戶禮
-              </button>
-            )}
-          </div>
+            <div className="mt-4 flex flex-wrap items-baseline gap-4">
+              <div>
+                <span className="block text-xs font-bold text-[#7a6856]">
+                  目前可用點數餘額
+                </span>
+                <p className="mt-1 flex items-baseline gap-2 font-mono text-4xl font-bold text-[#935941] sm:text-5xl">
+                  <span>{currentPoints}</span>
+                  <span className="text-base font-bold text-[#5a4b3e]">點</span>
+                </p>
+              </div>
 
-          {/* 累計消費與升等進度條 */}
-          <div className="mt-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#5a4b3e]">
-              <span>
-                帳戶累計選物消費：{" "}
-                <strong className="font-mono text-[#302b26]">
-                  {money(data?.spentNt ?? 0)}
+              <div className="rounded-2xl border border-[#cfe0d0] bg-[#f3f8f3] px-4 py-2.5">
+                <span className="block text-[11px] font-bold text-[#4e6752]">
+                  結帳折抵現金價值（1 點 = NT$1）
+                </span>
+                <strong className="font-mono text-xl font-bold text-[#2f4b33]">
+                  可現折 {money(currentPoints)}
                 </strong>
-              </span>
-              <span>
-                {data?.nextTierNt
-                  ? `再累積 ${money(Math.max(0, data.nextTierNt - (data?.spentNt ?? 0)))} 自動升等下一級`
-                  : user
-                    ? "已達最高等級「星光夥伴 VIP」"
-                    : "滿 NT$3,000 升等暖心夥伴 · 滿 NT$12,000 升等星光夥伴 VIP"}
-              </span>
-            </div>
-            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#ead] bg-[#ede2d3]">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${percent}%` }}
-                transition={{ duration: 0.7 }}
-                className="h-full rounded-full bg-[linear-gradient(90deg,#935941_0%,#c9964c_100%)]"
-              />
+              </div>
             </div>
           </div>
 
-          {/* 三級會員權益快覽 */}
-          <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
-            {TIER_POINTS_PERKS.map((perk) => {
-              const isCurrent = userTierCode === perk.tier;
-              return (
-                <div
-                  key={perk.tier}
-                  className={`rounded-2xl border p-3 text-xs transition-all ${
-                    isCurrent
-                      ? "border-[#935941] bg-[#fdf5ea] shadow-2xs"
-                      : "border-[#e5d7c6] bg-white/80"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <strong className="text-[#302b26]">{perk.name}</strong>
-                    {isCurrent && (
-                      <span className="rounded-full bg-[#935941] px-2 py-0.5 text-[10px] font-bold text-white">
-                        目前等級
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-[11px] text-[#7c6a58]">
-                    {perk.thresholdText}
-                  </p>
-                  <p className="mt-1.5 font-semibold text-[#935941]">
-                    {perk.shopDiscountRate < 1
-                      ? `點數商店 ${Math.round(perk.shopDiscountRate * 100)} 折換購`
-                      : "10 元 1 點 · 1 點折 1 元"}
-                  </p>
-                </div>
-              );
-            })}
+          {!user && (
+            <button
+              type="button"
+              onClick={() => openAuth(true)}
+              className="btn-tactile inline-flex items-center gap-2 bg-[#935941] px-4 py-2.5 text-xs font-bold text-white"
+            >
+              <LogIn size={14} />
+              登入領取 100 點入會禮
+            </button>
+          )}
+        </div>
+
+        {/* 累計消費與升等進度條 */}
+        <div className="mt-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#5a4b3e]">
+            <span>
+              帳戶累計消費：{" "}
+              <strong className="font-mono text-[#302b26]">
+                {money(data?.spentNt ?? 0)}
+              </strong>
+            </span>
+            <span>
+              {data?.nextTierNt
+                ? `再累積 ${money(Math.max(0, data.nextTierNt - (data?.spentNt ?? 0)))} 自動升等下一級`
+                : user
+                  ? "已達最高等級「星光夥伴 VIP」"
+                  : "滿 NT$3,000 升等暖心夥伴 · 滿 NT$12,000 升等星光夥伴 VIP"}
+            </span>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#ede2d3]">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.7 }}
+              className="h-full rounded-full bg-[linear-gradient(90deg,#935941_0%,#c9964c_100%)]"
+            />
           </div>
         </div>
 
-        {/* 右欄：互動式「每日節氣・八角木製福引搖獎機」 */}
-        <div className="craft-letterpress flex flex-col justify-between rounded-[2rem] p-6">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fcf3dc] px-3 py-1 font-mono text-[11px] font-bold text-[#8a5812]">
-                <Dices size={13} />
-                DAILY FUKUBIKI · 每日福引搖獎機
-              </span>
-              <span className="font-mono text-xs font-bold text-[#935941]">
-                每日免費搖出 +15～+60 點
-              </span>
-            </div>
-            <h2 className="editorial-title mt-2.5 text-xl font-bold text-[#302b26]">
-              搖動八角木輪，領取今日伴食點數
-            </h2>
-            <p className="mt-1 text-xs leading-5 text-[#6b5d50]">
-              抽中點數將即時匯入您的帳戶存摺，可立即用於點數商店換購或結帳折抵現金。
-            </p>
-          </div>
-
-          {/* 八角福引搖獎機 SVG 與滾出彩球動畫 */}
-          <div className="my-4 flex items-center justify-center gap-5 rounded-2xl border border-[#e3d3c0] bg-[#fffaf2] p-4">
-            <motion.svg
-              viewBox="0 0 130 130"
-              className="size-28 shrink-0"
-              animate={{ rotate: spinning ? 720 : 0 }}
-              transition={{ duration: 0.65, ease: "easeInOut" }}
-            >
-              {/* 底座支架 */}
-              <path
-                d="M35 120L58 72H72L95 120"
-                stroke="#6e472b"
-                strokeWidth="5"
-                strokeLinecap="round"
-              />
-              <rect
-                x="24"
-                y="116"
-                width="82"
-                height="8"
-                rx="4"
-                fill="#8c5c38"
-              />
-              {/* 八角木鼓主體 */}
-              <polygon
-                points="46,16 84,16 110,42 110,78 84,104 46,104 20,78 20,42"
-                fill="#d8a872"
-                stroke="#7a4c2a"
-                strokeWidth="3.5"
-              />
-              <polygon
-                points="50,24 80,24 100,45 100,75 80,96 50,96 30,75 30,45"
-                fill="#edd0a8"
-                stroke="#9c6c44"
-                strokeWidth="1.5"
-              />
-              {/* 中心黃銅搖柄 */}
-              <circle
-                cx="65"
-                cy="60"
-                r="12"
-                fill="#c99b49"
-                stroke="#6e472b"
-                strokeWidth="2.5"
-              />
-              <line
-                x1="65"
-                y1="60"
-                x2="92"
-                y2="60"
-                stroke="#6e472b"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <circle cx="94" cy="60" r="6" fill="#935941" />
-            </motion.svg>
-
-            <div className="min-w-0 flex-1">
-              <AnimatePresence mode="wait">
-                {drawResult ? (
-                  <motion.div
-                    key={drawResult.rank}
-                    initial={{ scale: 0.7, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="rounded-xl border border-[#dfb86c] bg-[#fcf5e3] p-3 text-center"
-                  >
-                    <span className="inline-block rounded-full bg-[#8a5812] px-2.5 py-0.5 text-[10px] font-bold text-white">
-                      {drawResult.rank}
+        {/* 三級會員權益快覽 */}
+        <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
+          {TIER_POINTS_PERKS.map((perk) => {
+            const isCurrent = userTierCode === perk.tier;
+            return (
+              <div
+                key={perk.tier}
+                className={`rounded-2xl border p-3 text-xs transition-all ${
+                  isCurrent
+                    ? "border-[#935941] bg-[#fdf5ea] shadow-2xs"
+                    : "border-[#e5d7c6] bg-white/80"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <strong className="text-[#302b26]">{perk.name}</strong>
+                  {isCurrent && (
+                    <span className="rounded-full bg-[#935941] px-2 py-0.5 text-[10px] font-bold text-white">
+                      目前等級
                     </span>
-                    <p className="mt-1 font-mono text-2xl font-bold text-[#935941]">
-                      +{drawResult.points} 點
-                    </p>
-                    <p className="text-[11px] text-[#6b5226]">
-                      已匯入您的點數存摺！
-                    </p>
-                  </motion.div>
-                ) : (
-                  <div className="space-y-1.5 text-xs text-[#695b4e]">
-                    <p className="font-bold text-[#302b26]">四種福引彩球賞別：</p>
-                    <p>・特賞金箔球：+60 點（折 NT$60）</p>
-                    <p>・壹賞赤陶球：+35 點（折 NT$35）</p>
-                    <p>・貳賞翠玉球：+25 點（折 NT$25）</p>
-                    <p>・參賞胡桃球：+15 點（折 NT$15）</p>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            disabled={spinning || Boolean(data?.dailyDrawClaimed)}
-            onClick={handleDailyDraw}
-            className="btn-tactile flex w-full items-center justify-center gap-2 bg-[#935941] py-3 text-xs font-bold text-white hover:bg-[#7d4934] disabled:opacity-50"
-          >
-            <Sparkles size={15} />
-            {spinning
-              ? "正在轉動八角福引機…"
-              : data?.dailyDrawClaimed
-                ? "今日已領取福引點數（明日 00:00 重置）"
-                : user
-                  ? "轉動木柄・搖出今日免費點數"
-                  : "登入會員並搖出今日免費點數"}
-          </button>
+                  )}
+                </div>
+                <p className="mt-1 text-[11px] text-[#7c6a58]">
+                  {perk.thresholdText}
+                </p>
+                <p className="mt-1.5 font-semibold text-[#935941]">
+                  {perk.shopDiscountRate < 1
+                    ? `點數商店 ${Math.round(perk.shopDiscountRate * 100)} 折換購`
+                    : "10 元 1 點 · 1 點折 1 元"}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -643,16 +522,16 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {(
           [
-            ["bazaar", "點數商店市集", Gift],
+            ["arcade", "簽到・轉盤・任務", Dices],
+            ["bazaar", "點數商店", Gift],
             [
               "vault",
-              `我的票券與憑證 (${(data?.redemptions.length ?? 0) + (data?.shopExchanges?.length ?? 0)})`,
+              `我的票券 (${(data?.redemptions.length ?? 0) + (data?.shopExchanges?.length ?? 0)})`,
               Ticket,
             ],
-            ["simulator", "1點折1元試算儀", Calculator],
-            ["badges", "任務集章領點", Award],
-            ["history", "點數存摺明細", Coins],
-            ["notices", "會員通知中心", Bell],
+            ["simulator", "1點折1元試算", Calculator],
+            ["history", "點數明細", Coins],
+            ["notices", "會員通知", Bell],
           ] as const
         ).map(([id, label, Icon]) => (
           <button
@@ -676,7 +555,21 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
         ))}
       </div>
 
-      {/* 分頁 1：點數商店市集（Points Craft Bazaar） */}
+      {/* 分頁 0：每日簽到、三款點數遊戲與雙軌任務中心 */}
+      {view === "arcade" && (
+        <PointsArcadeHub
+          isLoggedIn={Boolean(user)}
+          points={currentPoints}
+          arcadeConfig={effectiveArcadeConfig}
+          checkInStatus={effectiveCheckIn}
+          arcadeLimits={effectiveLimits}
+          arcadeTasks={effectiveTasks}
+          onRequireAuth={() => openAuth(true)}
+          onRefresh={load}
+        />
+      )}
+
+      {/* 分頁 1：點數商店 */}
       {view === "bazaar" && (
         <div className="space-y-6">
           {/* 分類篩選、搜尋與可兌換過濾 */}
@@ -1156,7 +1049,7 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
               </div>
 
               <div className="col-span-2 rounded-2xl border border-[#cfe0d0] bg-[#f3f8f4] p-4 text-xs leading-5 text-[#2e4932]">
-                <strong>職人點數放大秘訣：</strong>若將 {simRedeemPts}{" "}
+                <strong>點數放大建議：</strong>若將 {simRedeemPts}{" "}
                 點拿到「點數商店市集」換購隨箱試吃包或放大禮券，最高可換得相當於{" "}
                 <strong className="font-mono text-sm">
                   {money(Math.round(simRedeemPts * 2.1))}
@@ -1168,47 +1061,50 @@ export function MemberClub({ standalone = false }: { standalone?: boolean }) {
         </div>
       )}
 
-      {/* 分頁 4：任務集章領點 */}
-      {view === "badges" && (
-        <div className="grid gap-3.5 sm:grid-cols-2">
-          {data?.badges.map((badge) => (
-            <div
-              key={badge.title}
-              className={`flex items-center gap-4 rounded-2xl border p-5 ${
-                badge.earned
-                  ? "border-[#b8ceb9] bg-[#f2f8f3]"
-                  : "border-[#e5d6c3] bg-white"
-              }`}
-            >
-              <span
-                className={`grid size-12 place-items-center rounded-2xl ${
+      {/* 成就徽章（隨簽到與任務頁籤一同呈現） */}
+      {view === "arcade" && data?.badges && data.badges.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-[#302b26]">會員成就徽章</h3>
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            {data.badges.map((badge) => (
+              <div
+                key={badge.title}
+                className={`flex items-center gap-4 rounded-2xl border p-4 ${
                   badge.earned
-                    ? "bg-[#4e6752] text-white"
-                    : "bg-[#f4ece1] text-[#935941]"
+                    ? "border-[#b8ceb9] bg-[#f2f8f3]"
+                    : "border-[#e5d6c3] bg-white"
                 }`}
               >
-                <Award size={24} />
-              </span>
-              <div className="flex-1">
-                <h3 className="font-bold text-[#302b26]">{badge.title}</h3>
-                <p className="mt-0.5 text-xs text-[#6b5d50]">
-                  {badge.earned
-                    ? `已完成任務並領取 +${badge.points} 點`
-                    : `${badge.missionTitle} · 完成可獲 +${badge.points} 點（等值 NT$${badge.points}）`}
-                </p>
+                <span
+                  className={`grid size-11 place-items-center rounded-2xl ${
+                    badge.earned
+                      ? "bg-[#4e6752] text-white"
+                      : "bg-[#f4ece1] text-[#935941]"
+                  }`}
+                >
+                  <Award size={20} />
+                </span>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-[#302b26]">{badge.title}</h4>
+                  <p className="mt-0.5 text-xs text-[#6b5d50]">
+                    {badge.earned
+                      ? `已達成並領取 +${badge.points} 點`
+                      : `${badge.missionTitle} · 完成獲 +${badge.points} 點`}
+                  </p>
+                </div>
+                {badge.earned ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#4e6752] px-2.5 py-1 text-[11px] font-bold text-white">
+                    <Check size={13} />
+                    已領點
+                  </span>
+                ) : (
+                  <span className="font-mono text-xs font-bold text-[#935941]">
+                    +{badge.points} 點
+                  </span>
+                )}
               </div>
-              {badge.earned ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#4e6752] px-2.5 py-1 text-[11px] font-bold text-white">
-                  <Check size={13} />
-                  已領點
-                </span>
-              ) : (
-                <span className="font-mono text-xs font-bold text-[#935941]">
-                  +{badge.points} 點
-                </span>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

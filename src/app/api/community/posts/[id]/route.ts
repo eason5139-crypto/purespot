@@ -4,6 +4,7 @@ import { requireUser } from "@/server/auth";
 import { ApiError, apiError, readBody, verifyOrigin } from "@/server/http";
 import { rateLimit } from "@/server/rateLimit";
 import { communityActionInput } from "@/lib/community";
+import { recordTaskSignal } from "@/server/pointsArcadeRepository";
 
 export const runtime = "nodejs";
 type RouteContext = { params: Promise<{ id: string }> };
@@ -20,13 +21,19 @@ export async function POST(request: Request, context: RouteContext) {
     if (input.action === "like") {
       const existing = await db.communityLike.findUnique({ where: { postId_userId: { postId: id, userId } } });
       if (existing) await db.communityLike.delete({ where: { postId_userId: { postId: id, userId } } });
-      else await db.communityLike.create({ data: { postId: id, userId } });
+      else {
+        await db.communityLike.create({ data: { postId: id, userId } });
+        void recordTaskSignal(userId, "daily_community_interact").catch(() => {});
+      }
       return NextResponse.json({ liked: !existing });
     }
     if (input.action === "bookmark") {
       const existing = await db.communityBookmark.findUnique({ where: { postId_userId: { postId: id, userId } } });
       if (existing) await db.communityBookmark.delete({ where: { postId_userId: { postId: id, userId } } });
-      else await db.communityBookmark.create({ data: { postId: id, userId } });
+      else {
+        await db.communityBookmark.create({ data: { postId: id, userId } });
+        void recordTaskSignal(userId, "daily_community_interact").catch(() => {});
+      }
       return NextResponse.json({ saved: !existing });
     }
     if (input.action === "report") {

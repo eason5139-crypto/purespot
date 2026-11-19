@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { sendTaskSignal } from "@/lib/taskSignal";
+import { useAuthStore } from "@/store/useAuthStore";
 import {
   ArrowRight,
   Calculator,
@@ -30,8 +32,13 @@ import type { Product } from "@/lib/types";
 import { petLabels, supportsFoodCalculator } from "@/lib/types";
 
 export function ProductDetail({ product }: { product: Product }) {
+  const user = useAuthStore((state) => state.user);
   const images = [product.image, ...(product.gallery ?? [])].filter(Boolean);
   const [activeImage, setActiveImage] = useState(images[0] ?? product.image);
+
+  useEffect(() => {
+    if (user) sendTaskSignal("daily_browse_shop");
+  }, [user?.id, product.id]);
 
   const pet = useActivePet();
   const fit = matchProduct(product, pet);

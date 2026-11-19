@@ -16,6 +16,8 @@ import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
 import { useActivePet, usePetContextStore } from "@/store/usePetContextStore";
 import { useCatalogStore } from "@/store/useCatalogStore";
 import { useCareStore } from "@/store/useCareStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { sendTaskSignal } from "@/lib/taskSignal";
 import {
   addCalendarDays,
   dailyFoodGrams,
@@ -62,7 +64,11 @@ function downloadReminder(date: string, petName: string, productName: string) {
 }
 
 export function RefillForecast() {
+  const user = useAuthStore((state) => state.user);
   const pet = useActivePet();
+  useEffect(() => {
+    if (user) sendTaskSignal("mile_nutrition_calc");
+  }, [user?.id]);
   const pets = usePetContextStore((state) => state.allPets);
   const products = useCatalogStore((state) => state.products);
   const hydrated = useCareStore((state) => state.hydrated);

@@ -9,17 +9,20 @@ import {
   Download,
   Eraser,
   FileCheck2,
+  Lock,
+  LogIn,
   PenTool,
-  Plus,
   RectangleHorizontal,
   RectangleVertical,
   ShieldCheck,
-  Sparkles,
   Stamp,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { ActivePet } from "@/lib/types";
 import { petLabels } from "@/lib/types";
+import type { IssuedCertificateRecord } from "@/lib/pointsArcadeConfig";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useUiStore } from "@/store/useUiStore";
 import { SpeciesMedallion, WaxSealStamp } from "@/components/ui/CraftEmblems";
 import { triggerPawBurst } from "@/lib/flyToCart";
 
@@ -58,6 +61,9 @@ export function DigitalCertificateStudio({
   activePet,
   onUseInDiary,
 }: DigitalCertificateStudioProps) {
+  const user = useAuthStore((s) => s.user);
+  const openAuth = useUiStore((s) => s.setAuthOpen);
+
   const [layout, setLayout] = useState<"landscape" | "portrait">("landscape");
   const [petName, setPetName] = useState(activePet.name);
   const [breedText, setBreedText] = useState(
@@ -78,6 +84,9 @@ export function DigitalCertificateStudio({
   );
   const [stampTrigger, setStampTrigger] = useState(0);
   const [downloading, setDownloading] = useState(false);
+  const [issuing, setIssuing] = useState(false);
+  const [issuedList, setIssuedList] = useState<IssuedCertificateRecord[]>([]);
+  const [totalIssuedGlobal, setTotalIssuedGlobal] = useState<number>(0);
 
   // 手寫簽名板狀態
   const [signMode, setSignMode] = useState<"type" | "draw">("type");
@@ -85,7 +94,47 @@ export function DigitalCertificateStudio({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawnSignature, setHasDrawnSignature] = useState(false);
 
+  const issuedCert = issuedList.find((c) => c.petId === activePet.id) ?? null;
+
   useEffect(() => {
+    if (!user) {
+      setIssuedList([]);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/account/certificates", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          payload: {
+            certificates?: IssuedCertificateRecord[];
+            totalIssuedGlobal?: number;
+          } | null,
+        ) => {
+          if (cancelled || !payload) return;
+          setIssuedList(payload.certificates ?? []);
+          setTotalIssuedGlobal(payload.totalIssuedGlobal ?? 0);
+        },
+      )
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (issuedCert) {
+      setPetName(issuedCert.petName);
+      setBreedText(issuedCert.breedText || activePet.breed || petLabels[activePet.type]);
+      setWeightText(issuedCert.weightText || `${activePet.weightKg} 公斤`);
+      setAllergyText(issuedCert.allergyText);
+      setHonorTitle(issuedCert.honorTitle);
+      setSealText(issuedCert.sealText);
+      setPledgeText(issuedCert.pledgeText);
+      setOwnerName(issuedCert.ownerName);
+      setPhotoDataUrl(activePet.avatarUrl || null);
+      return;
+    }
     setPetName(activePet.name);
     setBreedText(activePet.breed || petLabels[activePet.type]);
     setWeightText(`${activePet.weightKg} 公斤`);
@@ -95,18 +144,16 @@ export function DigitalCertificateStudio({
         : "全肉源適配・無已知過敏原",
     );
     setPhotoDataUrl(activePet.avatarUrl || null);
-  }, [activePet]);
+  }, [activePet, issuedCert]);
 
   const ageLabel =
     activePet.ageMonths >= 12
       ? `${Math.floor(activePet.ageMonths / 12)} 歲 ${activePet.ageMonths % 12} 個月`
       : `${activePet.ageMonths} 個月`;
 
-  const serialNo = `TW-${activePet.type.slice(0, 3)}-2026-${String(
-    (petName.charCodeAt(0) || 88) * 10 + Math.round(activePet.weightKg * 10),
-  ).padStart(4, "0")}`;
+  const serialNo = issuedCert ? issuedCert.serialNo : "PREVIEW-待核發官方編號";
 
-  const issueDate = "2026.11.19";
+  const issueDate = issuedCert ? issuedCert.issuedAt : new Date().toISOString().slice(0, 10).replaceAll("-", ".");
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -177,10 +224,71 @@ export function DigitalCertificateStudio({
     setHasDrawnSignature(false);
   }
 
-  // 高解析度 Canvas 數位證書繪製與 PNG 匯出
+  // 正式核發限量官方編號證書（每隻已建檔毛孩終身限量 1 張）
+  async function handleIssueOfficialCertificate(
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    if (!user) {
+      openAuth(true);
+      toast.info("請先登入會員並選擇已建檔毛孩，即可核發專屬限量編號證書");
+      return;
+    }
+    triggerPawBurst(e.currentTarget);
+    setIssuing(true);
+    try {
+      const response = await fetch("/api/account/certificates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          petId: activePet.id,
+          petName,
+          petType: activePet.type,
+          breedText,
+          weightText,
+          allergyText,
+          honorTitle,
+          sealText,
+          pledgeText,
+          ownerName,
+        }),
+      });
+      const result = (await response.json()) as {
+        certificate?: IssuedCertificateRecord;
+        alreadyIssued?: boolean;
+        totalIssuedGlobal?: number;
+        error?: string;
+      };
+      if (!response.ok || !result.certificate) {
+        throw new Error(result.error || "官方證書核發失敗");
+      }
+      setIssuedList((prev) => [
+        ...prev.filter((c) => c.petId !== result.certificate!.petId),
+        result.certificate!,
+      ]);
+      if (typeof result.totalIssuedGlobal === "number") {
+        setTotalIssuedGlobal(result.totalIssuedGlobal);
+      }
+      setStampTrigger((c) => c + 1);
+      toast.success(
+        result.alreadyIssued
+          ? `已載入 ${result.certificate.petName} 的官方封存正本（${result.certificate.serialNo}）`
+          : `正式核發成功！編號 ${result.certificate.serialNo}（已達成里程碑任務，可前往點數中心領取 +15 點）`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "證書核發失敗");
+    } finally {
+      setIssuing(false);
+    }
+  }
+
+  // 高解析度 Canvas 數位證書繪製與 PNG 匯出（僅限已核發之官方正本）
   async function handleDownloadCertificate(
     e: React.MouseEvent<HTMLButtonElement>,
   ) {
+    if (!issuedCert) {
+      toast.info("請先點擊「正式核發限量官方證書」取得專屬編號後再下載原件");
+      return;
+    }
     triggerPawBurst(e.currentTarget);
     setDownloading(true);
     try {
@@ -671,17 +779,22 @@ export function DigitalCertificateStudio({
         {/* 頂部工作台標頭與版型切換器 */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e4d5c3] pb-6">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d5c3ae] bg-[#faf2e6] px-3.5 py-1 font-mono text-[11px] font-bold tracking-wider text-[#935941]">
-              <Award size={13} />
-              DIGITAL CITIZENSHIP CERTIFICATE STUDIO · 數位銅版雕花認證所
-            </span>
-            <h2 className="editorial-title mt-2.5 text-2xl font-bold text-[#302b26] sm:text-4xl">
-              核發「台灣街坊毛孩・數位里民伴食認證書」
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d5c3ae] bg-[#faf2e6] px-3.5 py-1 text-xs font-bold text-[#935941]">
+                <Award size={13} />
+                每隻毛孩終身限量 1 張官方編號正本
+              </span>
+              {totalIssuedGlobal > 0 && (
+                <span className="rounded-full bg-[#eef4ef] px-3 py-1 font-mono text-[11px] font-bold text-[#3d5c43]">
+                  全站已核發 {totalIssuedGlobal} 份
+                </span>
+              )}
+            </div>
+            <h2 className="editorial-title mt-2.5 text-2xl font-bold text-[#302b26] sm:text-3xl">
+              毛孩官方數位認證書
             </h2>
             <p className="mt-1 text-xs leading-6 text-[#6b5d50] sm:text-sm">
-              自動同步 {activePet.name}{" "}
-              的體重、品種與過敏原避忌紀錄，支援上傳專屬照片、手寫飼主簽名、雙重火漆金箔蓋印與一鍵下載高解析度
-              PNG 證書。
+              每隻帳戶內建檔毛孩僅能核發一次唯一遞增序號並永久封存，核發完成即可下載高解析度原件並領取任務點數。
             </p>
           </div>
 
@@ -715,8 +828,27 @@ export function DigitalCertificateStudio({
         </div>
 
         <div className="mt-7 grid items-start gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-          {/* 左欄：認證書客製化控制台 */}
+          {/* 左欄：認證書客製化控制台（已核發時鎖定不可重複印製） */}
           <div className="space-y-5 rounded-2xl border border-[#e5d7c5] bg-[#fcf8f2] p-5 sm:p-6">
+            {issuedCert && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-[#bcd0bf] bg-[#eef5ef] p-3.5 text-xs text-[#2f4d34]">
+                <Lock size={15} className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-bold">
+                    已完成限量核發 · 官方序號 {issuedCert.serialNo}（第{" "}
+                    {issuedCert.editionNumber} 號正本）
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#45634a]">
+                    為維持證書稀缺與防偽性，此毛孩資料已永久封存不可重新核發新編號；您仍可隨時免費下載同一份正本 PNG 或分享至社群。
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <fieldset
+              disabled={Boolean(issuedCert)}
+              className="space-y-5 disabled:opacity-75"
+            >
             {/* 1. 毛孩大名、品種與照片上傳 */}
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-bold text-[#5e5044]">
@@ -936,6 +1068,7 @@ export function DigitalCertificateStudio({
                 </div>
               )}
             </div>
+            </fieldset>
           </div>
 
           {/* 右欄：高工藝數位認證書即時預覽與 PNG 下載 */}
@@ -1157,44 +1290,71 @@ export function DigitalCertificateStudio({
               </div>
             </motion.div>
 
-            {/* 下載與分享操作按鈕列 */}
+            {/* 核發、下載與分享操作按鈕列 */}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <button
-                type="button"
-                disabled={downloading}
-                onClick={handleDownloadCertificate}
-                className="btn-tactile inline-flex items-center gap-2 bg-[#935941] px-5 py-3 text-xs font-bold text-white hover:bg-[#7d4934] disabled:opacity-50 sm:text-sm"
-              >
-                <Download size={16} />
-                {downloading
-                  ? "正在繪製高解析度證書…"
-                  : `下載高畫質數位證書 (${layout === "landscape" ? "橫式賞狀" : "9:16 限動"} .PNG)`}
-              </button>
+              {!user ? (
+                <button
+                  type="button"
+                  onClick={() => openAuth(true)}
+                  className="btn-tactile inline-flex items-center gap-2 bg-[#935941] px-5 py-3 text-xs font-bold text-white hover:bg-[#7d4934] sm:text-sm"
+                >
+                  <LogIn size={16} />
+                  登入會員核發專屬限量證書（每隻限領 1 張）
+                </button>
+              ) : !issuedCert ? (
+                <button
+                  type="button"
+                  disabled={issuing}
+                  onClick={handleIssueOfficialCertificate}
+                  className="btn-tactile inline-flex items-center gap-2 bg-[#935941] px-5 py-3 text-xs font-bold text-white hover:bg-[#7d4934] disabled:opacity-50 sm:text-sm"
+                >
+                  <Award size={16} />
+                  {issuing
+                    ? "正在核發唯一官方序號…"
+                    : `正式核發限量官方證書（${activePet.name} 僅限 1 張）`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={downloading}
+                  onClick={handleDownloadCertificate}
+                  className="btn-tactile inline-flex items-center gap-2 bg-[#4e6752] px-5 py-3 text-xs font-bold text-white hover:bg-[#3d5340] disabled:opacity-50 sm:text-sm"
+                >
+                  <Download size={16} />
+                  {downloading
+                    ? "正在繪製高解析度原件…"
+                    : `下載已封存正本 (${layout === "landscape" ? "橫式賞狀" : "9:16 限動"} .PNG)`}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={handleCopyCertificateText}
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-[#d6c4b0] bg-white px-4 py-3 text-xs font-bold text-[#5a4a3c] transition-colors hover:bg-[#f4ece1]"
-              >
-                <Copy size={14} />
-                複製證書字號與證詞
-              </button>
+              {issuedCert && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCopyCertificateText}
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-[#d6c4b0] bg-white px-4 py-3 text-xs font-bold text-[#5a4a3c] transition-colors hover:bg-[#f4ece1]"
+                  >
+                    <Copy size={14} />
+                    複製官方字號
+                  </button>
 
-              <button
-                type="button"
-                onClick={() =>
-                  onUseInDiary({
-                    petName,
-                    title: honorTitle,
-                    stamp: sealText,
-                    serialNo,
-                  })
-                }
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-[#b8ceb9] bg-[#eef4ef] px-4 py-3 text-xs font-bold text-[#3d5c43] transition-colors hover:bg-[#e1ede3]"
-              >
-                <FileCheck2 size={14} />
-                嵌入街坊生活日記發表
-              </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUseInDiary({
+                        petName,
+                        title: honorTitle,
+                        stamp: sealText,
+                        serialNo,
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-[#b8ceb9] bg-[#eef4ef] px-4 py-3 text-xs font-bold text-[#3d5c43] transition-colors hover:bg-[#e1ede3]"
+                  >
+                    <FileCheck2 size={14} />
+                    附證書編號發表日記
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

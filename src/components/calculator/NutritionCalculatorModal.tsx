@@ -26,6 +26,7 @@ import { useUiStore } from "@/store/useUiStore";
 import { SavedPetPicker } from "@/components/pets/SavedPetPicker";
 import { useAuthStore } from "@/store/useAuthStore";
 import { savePetToCloud } from "@/lib/petCloudSync";
+import { sendTaskSignal } from "@/lib/taskSignal";
 import {
   calculatePetNutrition,
   DELIVERY_INTERVALS,
@@ -37,13 +38,16 @@ import { decimal, money } from "@/lib/utils";
 import type { IntervalDays } from "@/lib/types";
 
 export function NutritionCalculatorModal() {
+  const user = useAuthStore((s) => s.user);
   const pet = useActivePet();
   const productId = useUiStore((s) => s.calculatorProductId);
+  useEffect(() => {
+    if (productId && user) sendTaskSignal("mile_nutrition_calc");
+  }, [productId, user?.id]);
   const close = useUiStore((s) => s.openCalculator);
   const openCart = useUiStore((s) => s.setCartOpen);
   const updatePet = usePetContextStore((s) => s.updatePet);
   const add = useCartStore((s) => s.addItem);
-  const user = useAuthStore((s) => s.user);
   const [draftPet, setDraftPet] = useState(pet);
   const product = getProduct(productId ?? "");
   const [manualInterval, setManualInterval] = useState<IntervalDays | null>(
