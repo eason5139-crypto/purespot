@@ -1,22 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  BarChart3,
+  Clock,
   Download,
   ExternalLink,
+  Grid3X3,
+  Link2,
+  Maximize2,
+  Minimize2,
   Search,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import type { ABCProductData } from "@/lib/adminTypes";
 import { money } from "@/lib/utils";
 
 type ClassName = "A" | "B" | "C";
 type Basis = "revenue" | "profit" | "sales";
-type Quadrant = "STAR" | "RISK" | "POTENTIAL" | "WATCH";
+type ViewMode = "grid" | "pareto";
 
 interface Classified extends ABCProductData {
   rank: number;
@@ -25,8 +32,14 @@ interface Classified extends ABCProductData {
   contributionPct: number;
   cumulativePct: number;
   avgUnitPrice: number;
+  velocity: number; // 近期動能 (-1 ~ +inf)
   momentumPct: number | null;
-  quadrant: Quadrant;
+  healthScore: number; // 0-100 綜合健康分
+  xBand: 0 | 1 | 2; // 0=低毛利, 1=中毛利, 2=高毛利
+  yBand: 0 | 1 | 2; // 0=低銷量, 1=中銷量, 2=高銷量
+  zoneKey: string;
+  zoneLabel: string;
+  strategy: string;
 }
 
 const CLASS_STYLE: Record<
@@ -35,65 +48,65 @@ const CLASS_STYLE: Record<
     color: string;
     softBg: string;
     border: string;
-    text: string;
     label: string;
-    action: string;
+    shortDesc: string;
   }
 > = {
   A: {
-    color: "#935941",
-    softBg: "#fdf5ec",
-    border: "#dfb89a",
-    text: "#7c452f",
-    label: "A 類主力",
-    action: "確保不斷貨，嚴密監控進價與安全庫存",
+    color: "#4e6752",
+    softBg: "#eff5f0",
+    border: "#bcd0bf",
+    label: "核心商品",
+    shortDesc: "主力貢獻品項",
   },
   B: {
     color: "#b8823c",
     softBg: "#fcf6e8",
     border: "#e2c896",
-    text: "#875c21",
-    label: "B 類成長",
-    action: "觀察回購率，透過組合套組拉升件數",
+    label: "穩定商品",
+    shortDesc: "中堅成長品項",
   },
   C: {
-    color: "#6b7c6e",
-    softBg: "#f2f6f3",
-    border: "#c4d2c7",
-    text: "#455949",
-    label: "C 類長尾",
-    action: "控制採購深度，評估汰換或滿額加價購",
+    color: "#935941",
+    softBg: "#fdf3ec",
+    border: "#dfb89a",
+    label: "觀察商品",
+    shortDesc: "長尾待優化品項",
   },
 };
 
-const QUADRANT_META: Record<
-  Quadrant,
-  { label: string; bg: string; text: string; advice: string }
-> = {
-  STAR: {
-    label: "高營收・高毛利",
-    bg: "bg-[#eef5ef]",
-    text: "text-[#35553a]",
-    advice: "核心獲利品項，維持安全庫存與首頁主要曝光。",
-  },
-  RISK: {
-    label: "高營收・低毛利",
-    bg: "bg-[#fbeee9]",
-    text: "text-[#9c3e2a]",
-    advice: "賣得多但利潤薄，優先核對進貨成本或微調售價。",
-  },
-  POTENTIAL: {
-    label: "低營收・高毛利",
-    bg: "bg-[#fcf4df]",
-    text: "text-[#8a5a14]",
-    advice: "毛利體質優良，適合搭配 A 類商品做加購推廣。",
-  },
-  WATCH: {
-    label: "低營收・低毛利",
-    bg: "bg-[#f3efe9]",
-    text: "text-[#6b5f54]",
-    advice: "減少補貨批量，檢視商品定價與庫存週轉狀況。",
-  },
+// 九宮格分區定義 [yBand][xBand] (y: 0=低銷量, 1=中銷量, 2=高銷量；x: 0=低毛利, 1=中毛利, 2=高毛利)
+const ZONE_LABELS: [
+  [string, string, string],
+  [string, string, string],
+  [string, string, string],
+] = [
+  ["淘汰候選", "觀察中", "利潤型"],
+  ["普通品", "穩定型", "精品型"],
+  ["走量型", "明星商品", "雙高之星"],
+];
+
+// 品牌暖色系九宮格底色 [yBand][xBand]
+const ZONE_FILLS: [
+  [string, string, string],
+  [string, string, string],
+  [string, string, string],
+] = [
+  ["rgba(168, 74, 54, 0.065)", "rgba(148, 134, 118, 0.045)", "rgba(184, 130, 60, 0.075)"],
+  ["rgba(148, 134, 118, 0.045)", "rgba(184, 130, 60, 0.055)", "rgba(184, 130, 60, 0.10)"],
+  ["rgba(147, 89, 65, 0.075)", "rgba(78, 103, 82, 0.085)", "rgba(78, 103, 82, 0.145)"],
+];
+
+const ZONE_BADGE_STYLE: Record<string, string> = {
+  雙高之星: "bg-[#e7f1e8] text-[#2f4d34] border-[#c4dac7]",
+  明星商品: "bg-[#eef5ef] text-[#3a5a3f] border-[#cee0d1]",
+  走量型: "bg-[#faeee7] text-[#8a452d] border-[#e6c5b3]",
+  精品型: "bg-[#fcf3df] text-[#875817] border-[#e7d09c]",
+  穩定型: "bg-[#f6f1ea] text-[#5e5246] border-[#e0d3c3]",
+  普通品: "bg-[#f4f0eb] text-[#6d6257] border-[#dfd5c9]",
+  利潤型: "bg-[#fcf4e2] text-[#8c5e1c] border-[#e6cfa0]",
+  觀察中: "bg-[#f5f1ec] text-[#75685b] border-[#e2d8cc]",
+  淘汰候選: "bg-[#fbece8] text-[#9b3d28] border-[#e8bfb4]",
 };
 
 const BASIS_META: Record<
@@ -112,10 +125,134 @@ const PET_LABELS: Record<string, string> = {
   RABBIT: "兔兔",
 };
 
+// SVG 畫布常數（對齊 POS 九宮格比例並加大可讀性）
+const PAD = { left: 58, right: 24, top: 24, bottom: 54 };
+const SVG_W = 760;
+const SVG_H = 420;
+const PLOT_W = SVG_W - PAD.left - PAD.right;
+const PLOT_H = SVG_H - PAD.top - PAD.bottom;
+
 function getBasisValue(product: ABCProductData, basis: Basis): number {
   if (basis === "sales") return product.salesQty;
   if (basis === "profit") return Math.max(0, product.grossProfitNt ?? 0);
   return product.revenue;
+}
+
+/** 六維度交叉營運策略建議（毛利 × 銷量排名 × 成長動能 × 貢獻比 × 共購商品 × 熱門時段） */
+function buildStrategy(
+  p: {
+    abc: ClassName;
+    marginPct: number | null;
+    salesQty: number;
+    contributionPct: number;
+    velocity: number;
+    bestPair?: string | null;
+    peakHour?: number | null;
+    estimatedCost: boolean;
+  },
+  maxQty: number,
+): string {
+  const margin = p.marginPct;
+  const isHighMargin = margin !== null && margin >= 55;
+  const isMidMargin = margin !== null && margin >= 35 && margin < 55;
+  const isLowMargin = margin !== null && margin < 35;
+
+  const qtyRank = maxQty > 0 ? p.salesQty / maxQty : 0;
+  const isTopQty = qtyRank > 0.65;
+  const isMidQty = qtyRank > 0.3 && qtyRank <= 0.65;
+  const isLowQty = qtyRank <= 0.3;
+
+  const isRising = p.velocity > 0.15;
+  const isDeclining = p.velocity < -0.15;
+  const isKeyRev = p.contributionPct > 8;
+  const pair = p.bestPair ?? "";
+  const hasPair = pair.length > 0;
+  const hour = p.peakHour;
+  const peakHint =
+    hour != null
+      ? hour >= 20 || hour <= 1
+        ? "晚間下單最集中，可於夜間推播補貨提醒。"
+        : hour >= 11 && hour <= 14
+          ? "午間流量最高，適合置頂於午休首頁推薦。"
+          : ""
+      : "";
+
+  if (p.abc === "A") {
+    if (margin === null) {
+      return "主力商品尚未建立單位成本，建議先至商品庫存補齊進價，才能確認實際獲利空間。";
+    }
+    if (isHighMargin && isTopQty && isKeyRev && isRising) {
+      return `核心獲利引擎，高毛利高銷量且持續成長。優先鎖定安全庫存避免缺貨${hasPair ? `，並與「${pair}」組成固定套組拉升客單價` : ""}。`;
+    }
+    if (isHighMargin && isTopQty && isDeclining) {
+      return "核心高利品項近 7 日銷量下滑，先核對庫存規格是否齊全、評價回饋與站內曝光位置，避免直接降價。";
+    }
+    if (isHighMargin && isTopQty) {
+      return `雙高主力商品，維持穩定供貨為第一要務。${hasPair ? `「${pair}」共購率高，適合建立搭配優惠組合。` : "可推定期配方案穩固回購。"}${peakHint}`;
+    }
+    if (isHighMargin && isMidQty && isRising) {
+      return `毛利優良且動能向上，具備成為全店頭牌潛力。${hasPair ? `搭配「${pair}」設定組合價` : "提升首頁與分類置頂曝光"}可加速放量。`;
+    }
+    if (isHighMargin && isLowQty) {
+      return `單件獲利能力強但購買人數尚有空間。${hasPair ? `可綁定「${pair}」做加購推薦，` : "強化商品頁成分亮點與首頁曝光，"}擴大新客轉化。`;
+    }
+    if (isMidMargin && isTopQty && isDeclining) {
+      return "走量主力出現下滑且毛利中等，建議檢視供應商進價與促銷折扣力道，防止獲利受壓。";
+    }
+    if (isMidMargin && isTopQty) {
+      return `銷量穩健、毛利中等。${hasPair ? `透過「${pair}」高毛利品項做搭售` : "向供應商洽談大量採購折扣或推大包裝規格"}，可直接拉升整體毛利額。`;
+    }
+    if (isLowMargin) {
+      return "主力營收來源但毛利偏低，建議核對實際進貨成本、調整免運與折扣門檻，或搭配高毛利副食一起銷售。";
+    }
+    return `主力表現穩定${isRising ? "且動能向上，適合加大推廣" : isDeclining ? "但近期略降，建議追蹤庫存與回購週期" : "，維持現行定價與補貨節奏"}。`;
+  }
+
+  if (p.abc === "B") {
+    if (margin === null) {
+      return "具一定銷量但缺少成本設定，補齊進價後即可評估是否投入廣告或組合推廣。";
+    }
+    if (isHighMargin && (isTopQty || isRising)) {
+      return `高毛利準主力且具成長動能，距離 A 類僅一步之遙。${hasPair ? `與「${pair}」打包推薦組合` : "納入首頁焦點與滿額推薦"}可加速升級。`;
+    }
+    if (isHighMargin && isDeclining) {
+      return "高毛利商品近期銷量走弱，建議檢查分類排序是否被擠壓，並搭配會員點數加倍或試用組重新帶動。";
+    }
+    if (isHighMargin) {
+      return `毛利體質佳的精品型商品。${hasPair ? `與「${pair}」共購率高，建議設為結帳加價購。` : "加強站內推薦位與回購提醒。"}${peakHint}`;
+    }
+    if (isMidMargin && isRising) {
+      return `穩定且成長中的中堅品項，${hasPair ? `搭配「${pair}」組合銷售` : "維持穩定庫存與版位曝光"}有望推升至核心層級。`;
+    }
+    if (isMidMargin && isDeclining) {
+      return "中等毛利且近 7 日銷量下滑，建議確認季節需求變化或微調組合優惠，避免落入觀察區。";
+    }
+    if (isLowMargin) {
+      return "毛利偏薄的中間層商品，不建議單獨下殺折扣，改檢討採購成本、規格定價或僅作湊單配角。";
+    }
+    return "整體穩定的 B 類商品，持續監控補貨週轉與兩週銷量走勢。";
+  }
+
+  // C 類
+  if (margin === null) {
+    return "低銷量且缺少成本資料，優先補齊成本以判斷是否值得繼續備貨與佔用倉儲空間。";
+  }
+  if (isHighMargin && isRising) {
+    return `高毛利且近期正在成長的潛力品項。${hasPair ? `與「${pair}」具共購關聯，適合包裝成推薦組合` : "提高分類曝光與成分特色說明"}，有機會快速拉升銷量。`;
+  }
+  if (isHighMargin) {
+    return `單件利潤佳但買氣偏低，多半屬於曝光不足。${hasPair ? `放入「${pair}」商品頁的加購區` : "設為購物車滿額加價購或點數兌換推薦"}，測試真實需求。`;
+  }
+  if (isMidMargin && isRising) {
+    return "毛利尚可且近期出現成長訊號，保留觀察 2 至 3 週並留意回購狀況。";
+  }
+  if (isLowMargin && isLowQty && isDeclining) {
+    return "低銷量、低毛利且持續衰退，建議縮減採購深度、以滿額贈或清倉組合出清後評估下架。";
+  }
+  if (isLowMargin) {
+    return "銷量與獲利貢獻雙低，建議停止補貨或重新議價定價，避免長期積壓庫存資金。";
+  }
+  return "低銷量觀察品項，可透過組合加購測試市場反應，若一個月內無起色再評估汰換。";
 }
 
 function classify(
@@ -123,7 +260,8 @@ function classify(
   first: number,
   second: number,
   basis: Basis,
-): Classified[] {
+  zoomX: boolean,
+): { items: Classified[]; minMargin: number; maxMargin: number; maxQty: number; maxRev: number } {
   const ordered = [...products].sort(
     (a, b) =>
       getBasisValue(b, basis) - getBasisValue(a, basis) ||
@@ -134,19 +272,24 @@ function classify(
     (sum, product) => sum + getBasisValue(product, basis),
     0,
   );
-  const avgRev =
-    ordered.length > 0
-      ? ordered.reduce((s, p) => s + p.revenue, 0) / ordered.length
-      : 0;
-  const withMargin = ordered.filter((p) => p.marginPct != null);
-  const avgMargin =
-    withMargin.length > 0
-      ? withMargin.reduce((s, p) => s + (p.marginPct ?? 0), 0) /
-        withMargin.length
-      : 30;
+  const maxQty = Math.max(1, ...ordered.map((p) => p.salesQty));
+  const maxRev = Math.max(1, ...ordered.map((p) => p.revenue));
+
+  const validMargins = ordered
+    .map((p) => p.marginPct)
+    .filter((m): m is number => m !== null);
+  const rawMinM = validMargins.length ? Math.min(...validMargins) : 0;
+  const rawMaxM = validMargins.length ? Math.max(...validMargins) : 100;
+  const minMargin = zoomX
+    ? Math.max(0, Math.floor((rawMinM - 5) / 5) * 5)
+    : 0;
+  const maxMargin = zoomX
+    ? Math.min(100, Math.max(minMargin + 15, Math.ceil((rawMaxM + 5) / 5) * 5))
+    : 100;
+  const marginSpan = Math.max(1, maxMargin - minMargin);
 
   let cumulative = 0;
-  return ordered.map((product, index) => {
+  const items: Classified[] = ordered.map((product, index) => {
     const before = cumulative;
     const basisValue = getBasisValue(product, basis);
     const contributionPct = totalBasis ? (basisValue / totalBasis) * 100 : 0;
@@ -154,23 +297,56 @@ function classify(
 
     const abc: ClassName =
       before < first ? "A" : before < second ? "B" : "C";
-    const highRev = product.revenue >= avgRev;
-    const highMargin = (product.marginPct ?? avgMargin) >= avgMargin;
-    const quadrant: Quadrant =
-      highRev && highMargin
-        ? "STAR"
-        : highRev && !highMargin
-          ? "RISK"
-          : !highRev && highMargin
-            ? "POTENTIAL"
-            : "WATCH";
 
+    const velocity =
+      product.qtyPrior > 0
+        ? (product.qtyRecent - product.qtyPrior) / product.qtyPrior
+        : product.qtyRecent > 0
+          ? 1
+          : 0;
     const momentumPct =
       product.qtyPrior > 0
         ? ((product.qtyRecent - product.qtyPrior) / product.qtyPrior) * 100
         : product.qtyRecent > 0
           ? 100
           : null;
+
+    const qtyNorm = product.salesQty / maxQty;
+    const marginVal = product.marginPct ?? 35;
+    const healthScore = Math.round(
+      Math.min(
+        100,
+        Math.max(
+          0,
+          marginVal * 0.45 +
+            Math.min(1.5, Math.max(-1, velocity) + 1) * 18 +
+            qtyNorm * 28,
+        ),
+      ),
+    );
+
+    const xNorm =
+      product.marginPct !== null
+        ? Math.min(1, Math.max(0, (product.marginPct - minMargin) / marginSpan))
+        : 0.5;
+    const xBand: 0 | 1 | 2 = xNorm < 1 / 3 ? 0 : xNorm < 2 / 3 ? 1 : 2;
+    const yBand: 0 | 1 | 2 = qtyNorm < 1 / 3 ? 0 : qtyNorm < 2 / 3 ? 1 : 2;
+    const zoneKey = `${xBand}-${yBand}`;
+    const zoneLabel = ZONE_LABELS[yBand][xBand];
+
+    const strategy = buildStrategy(
+      {
+        abc,
+        marginPct: product.marginPct,
+        salesQty: product.salesQty,
+        contributionPct,
+        velocity,
+        bestPair: product.bestPair,
+        peakHour: product.peakHour,
+        estimatedCost: product.estimatedCost,
+      },
+      maxQty,
+    );
 
     return {
       ...product,
@@ -181,69 +357,24 @@ function classify(
       cumulativePct: Math.min(100, cumulative),
       avgUnitPrice:
         product.salesQty > 0 ? Math.round(product.revenue / product.salesQty) : 0,
+      velocity,
       momentumPct,
-      quadrant,
+      healthScore,
+      xBand,
+      yBand,
+      zoneKey,
+      zoneLabel,
+      strategy,
     };
   });
+
+  return { items, minMargin, maxMargin, maxQty, maxRev };
 }
 
-function csvCell(value: string | number | null) {
+function csvCell(value: string | number | null | undefined) {
   const raw = value == null ? "" : String(value);
   const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return `"${safe.replaceAll('"', '""')}"`;
-}
-
-// 簡易比例面積切片（Treemap 演算法）
-interface TreemapRect {
-  item: Classified;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-function buildTreemap(
-  items: Classified[],
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-): TreemapRect[] {
-  const valid = items.filter((i) => i.basisValue > 0);
-  if (valid.length === 0 || w <= 0 || h <= 0) return [];
-  if (valid.length === 1) {
-    return [{ item: valid[0]!, x, y, w, h }];
-  }
-
-  const total = valid.reduce((s, i) => s + i.basisValue, 0);
-  let acc = 0;
-  let splitIdx = 1;
-  for (let i = 0; i < valid.length; i++) {
-    acc += valid[i]!.basisValue;
-    if (acc >= total / 2) {
-      splitIdx = Math.max(1, i + 1);
-      if (splitIdx >= valid.length) splitIdx = valid.length - 1;
-      break;
-    }
-  }
-
-  const firstHalf = valid.slice(0, splitIdx);
-  const secondHalf = valid.slice(splitIdx);
-  const firstSum = firstHalf.reduce((s, i) => s + i.basisValue, 0);
-  const ratio = total > 0 ? firstSum / total : 0.5;
-
-  if (w >= h) {
-    const w1 = w * ratio;
-    return [
-      ...buildTreemap(firstHalf, x, y, w1, h),
-      ...buildTreemap(secondHalf, x + w1, y, w - w1, h),
-    ];
-  }
-  const h1 = h * ratio;
-  return [
-    ...buildTreemap(firstHalf, x, y, w, h1),
-    ...buildTreemap(secondHalf, x, y + h1, w, h - h1),
-  ];
 }
 
 export function ProductABCChart({
@@ -256,19 +387,26 @@ export function ProductABCChart({
   onDaysChange: (days: 7 | 30 | 90) => void;
 }) {
   const [basis, setBasis] = useState<Basis>("revenue");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [zoomX, setZoomX] = useState(false);
   const [aCut, setACut] = useState<number>(70);
   const [bCut, setBCut] = useState<number>(90);
   const [category, setCategory] = useState("ALL");
   const [petType, setPetType] = useState("ALL");
   const [abcFilter, setAbcFilter] = useState<"ALL" | ClassName>("ALL");
+  const [zoneFilter, setZoneFilter] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<"rank" | "margin" | "sales">("rank");
+  const [sort, setSort] = useState<"rank" | "margin" | "sales" | "health">("rank");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  const data = useMemo(
-    () => classify(rawData, aCut, bCut, basis),
-    [rawData, aCut, bCut, basis],
+  const { items: data, minMargin, maxMargin, maxQty, maxRev } = useMemo(
+    () => classify(rawData, aCut, bCut, basis, zoomX),
+    [rawData, aCut, bCut, basis, zoomX],
   );
 
   const categories = useMemo(
@@ -284,6 +422,7 @@ export function ProductABCChart({
             (category === "ALL" || p.category === category) &&
             (petType === "ALL" || p.petType === petType) &&
             (abcFilter === "ALL" || p.abc === abcFilter) &&
+            (!zoneFilter || p.zoneKey === zoneFilter) &&
             p.name.toLowerCase().includes(query.toLowerCase()),
         )
         .sort((a, b) =>
@@ -291,29 +430,26 @@ export function ProductABCChart({
             ? b.salesQty - a.salesQty
             : sort === "margin"
               ? (b.marginPct ?? -Infinity) - (a.marginPct ?? -Infinity)
-              : a.rank - b.rank,
+              : sort === "health"
+                ? b.healthScore - a.healthScore
+                : a.rank - b.rank,
         ),
-    [data, category, petType, abcFilter, query, sort],
+    [data, category, petType, abcFilter, zoneFilter, query, sort],
   );
 
   const activeId = hoveredId ?? selectedId;
   const selected =
     data.find((p) => p.productId === activeId) ?? displayed[0] ?? data[0];
+  const hoveredProduct = hoveredId
+    ? data.find((p) => p.productId === hoveredId) ?? null
+    : null;
 
-  const totalRevenue = data.reduce((s, p) => s + p.revenue, 0);
   const totalBasis = data.reduce((s, p) => s + p.basisValue, 0);
-  const complete = data.filter((p) => p.costCoveragePct === 100);
-  const knownRevenue = complete.reduce((s, p) => s + p.revenue, 0);
-  const totalProfit = complete.reduce(
-    (s, p) => s + (p.grossProfitNt ?? 0),
-    0,
-  );
 
   const classStats = useMemo(() => {
     return (["A", "B", "C"] as const).map((cls) => {
       const items = data.filter((p) => p.abc === cls);
       const basisSum = items.reduce((s, p) => s + p.basisValue, 0);
-      const revSum = items.reduce((s, p) => s + p.revenue, 0);
       const marginItems = items.filter((p) => p.marginPct != null);
       const avgMargin =
         marginItems.length > 0
@@ -326,71 +462,119 @@ export function ProductABCChart({
         countPct: data.length ? (items.length / data.length) * 100 : 0,
         basisSum,
         basisPct: totalBasis ? (basisSum / totalBasis) * 100 : 0,
-        revSum,
         avgMargin,
       };
     });
   }, [data, totalBasis]);
 
+  // 九宮格每格計數
+  const zoneCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of data) {
+      counts[item.zoneKey] = (counts[item.zoneKey] ?? 0) + 1;
+    }
+    return counts;
+  }, [data]);
+
+  // 計算九宮格氣泡座標（加上輕微防重疊偏移，避免完全重疊無法點擊）
+  const bubbles = useMemo(() => {
+    const span = Math.max(1, maxMargin - minMargin);
+    const ordered = [
+      ...data.filter((p) => p.marginPct === null),
+      ...data.filter((p) => p.marginPct !== null),
+    ];
+
+    const placed: Array<{ item: Classified; x: number; y: number; r: number }> = [];
+    for (const item of ordered) {
+      const xPct =
+        item.marginPct !== null
+          ? Math.min(0.98, Math.max(0.02, (item.marginPct - minMargin) / span))
+          : 0.5;
+      const yPct = Math.min(0.96, Math.max(0.05, item.salesQty / maxQty));
+      let x = PAD.left + xPct * PLOT_W;
+      let y = PAD.top + (1 - yPct) * PLOT_H;
+      const r = Math.max(
+        10,
+        Math.min(34, Math.sqrt(item.revenue / maxRev) * 33),
+      );
+
+      // 若與已放置氣泡中心極度接近（< 6px），沿黃金角微調 8px
+      let collisionCount = 0;
+      for (const prev of placed) {
+        const dx = x - prev.x;
+        const dy = y - prev.y;
+        if (dx * dx + dy * dy < 36) collisionCount++;
+      }
+      if (collisionCount > 0) {
+        const angle = collisionCount * 2.39996;
+        const dist = 9 + collisionCount * 3;
+        x = Math.min(
+          PAD.left + PLOT_W - r,
+          Math.max(PAD.left + r, x + Math.cos(angle) * dist),
+        );
+        y = Math.min(
+          PAD.top + PLOT_H - r,
+          Math.max(PAD.top + r, y + Math.sin(angle) * dist),
+        );
+      }
+
+      placed.push({ item, x, y, r });
+    }
+    return placed;
+  }, [data, minMargin, maxMargin, maxQty, maxRev]);
+
   // 柏拉圖前 14 名
   const paretoItems = useMemo(() => data.slice(0, 14), [data]);
-  const paretoMaxBasis = Math.max(
-    1,
-    ...paretoItems.map((i) => i.basisValue),
-  );
+  const paretoMaxBasis = Math.max(1, ...paretoItems.map((i) => i.basisValue));
 
-  // Treemap 前 18 名
-  const treemapRects = useMemo(
-    () => buildTreemap(data.slice(0, 18), 0, 0, 100, 100),
-    [data],
-  );
+  const activeZoneLabel = useMemo(() => {
+    if (!zoneFilter) return null;
+    const [xb, yb] = zoneFilter.split("-").map(Number);
+    return ZONE_LABELS[yb as 0 | 1 | 2]?.[xb as 0 | 1 | 2] ?? null;
+  }, [zoneFilter]);
 
-  // 四象限散點座標計算
-  const scatterStats = useMemo(() => {
-    const maxRev = Math.max(1, ...data.map((p) => p.revenue));
-    const avgRev = data.length
-      ? data.reduce((s, p) => s + p.revenue, 0) / data.length
-      : 0;
-    const withM = data.filter((p) => p.marginPct != null);
-    const avgM = withM.length
-      ? withM.reduce((s, p) => s + (p.marginPct ?? 0), 0) / withM.length
-      : 30;
-    const maxM = Math.max(60, ...withM.map((p) => p.marginPct ?? 0));
-    const maxQty = Math.max(1, ...data.map((p) => p.salesQty));
-    return { maxRev, avgRev, avgM, maxM, maxQty };
-  }, [data]);
+  function updateTooltipFromEvent(e: React.MouseEvent<SVGGElement>) {
+    const rect = chartContainerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }
 
   function downloadCsv() {
     const rows = [
       [
         "ABC",
         "排名",
-        "商品",
+        "商品名稱",
         "分類",
-        "四象限",
-        "銷量",
+        "九宮格定位",
+        "近期趨勢%",
+        "健康度",
+        "熱門時段",
+        "銷售量",
         "商品營收",
         `${BASIS_META[basis].label}占比%`,
         "累計占比%",
-        "銷貨成本",
-        "毛利",
         "毛利率%",
-        "成本來源",
+        "策略建議",
       ],
       ...displayed.map((p) => [
         p.abc,
         p.rank,
         p.name,
         p.category,
-        QUADRANT_META[p.quadrant].label,
+        p.zoneLabel,
+        p.momentumPct != null ? p.momentumPct.toFixed(0) : "",
+        p.healthScore,
+        p.peakHour != null ? `${p.peakHour}:00` : "",
         p.salesQty,
         p.revenue,
         p.contributionPct.toFixed(1),
         p.cumulativePct.toFixed(1),
-        p.cogsNt,
-        p.grossProfitNt,
         p.marginPct != null ? p.marginPct.toFixed(1) : "",
-        p.estimatedCost ? "估算" : "實際",
+        p.strategy,
       ]),
     ];
     const content =
@@ -406,11 +590,10 @@ export function ProductABCChart({
   }
 
   return (
-    <div className="space-y-6 text-[#302b26]">
-      {/* 頂部精簡控制列：基準切換、期間、門檻滑桿、下載 */}
-      <div className="rounded-2xl border border-[#e5d8c8] bg-white p-4 shadow-2xs space-y-4">
+    <div className="space-y-5 text-[#302b26]">
+      {/* 頂部精簡控制列 */}
+      <div className="rounded-2xl border border-[#e5d8c8] bg-white p-4 shadow-2xs space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* 計算基準切換 */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-[#6e6257]">分類基準</span>
             <div className="flex rounded-xl border border-[#e5d8c8] bg-[#faf6f0] p-1">
@@ -419,7 +602,7 @@ export function ProductABCChart({
                   key={b}
                   type="button"
                   onClick={() => setBasis(b)}
-                  className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                     basis === b
                       ? "bg-[#935941] text-white shadow-2xs"
                       : "text-[#675b4f] hover:text-[#302b26]"
@@ -430,14 +613,14 @@ export function ProductABCChart({
               ))}
             </div>
 
-            <span className="ml-2 text-xs font-bold text-[#6e6257]">期間</span>
+            <span className="ml-1 text-xs font-bold text-[#6e6257]">期間</span>
             <div className="flex rounded-xl border border-[#e5d8c8] bg-[#faf6f0] p-1">
               {([7, 30, 90] as const).map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => onDaysChange(d)}
-                  className={`rounded-lg px-3 py-1.5 font-mono text-xs font-bold transition-all ${
+                  className={`rounded-lg px-2.5 py-1.5 font-mono text-xs font-bold transition-all ${
                     days === d
                       ? "bg-[#302b26] text-white"
                       : "text-[#675b4f] hover:text-[#302b26]"
@@ -460,11 +643,11 @@ export function ProductABCChart({
           </button>
         </div>
 
-        {/* 即時可拖曳 A / B 門檻滑桿 */}
-        <div className="flex flex-wrap items-center gap-4 border-t border-[#f0e6da] pt-3.5 text-xs">
+        {/* A / B 門檻控制列 */}
+        <div className="flex flex-wrap items-center gap-4 border-t border-[#f0e6da] pt-3 text-xs">
           <span className="inline-flex items-center gap-1.5 font-bold text-[#5e5043]">
             <SlidersHorizontal size={14} className="text-[#935941]" />
-            A / B 門檻切線
+            A / B 門檻
           </span>
 
           <div className="flex gap-1.5">
@@ -474,10 +657,10 @@ export function ProductABCChart({
                 setACut(70);
                 setBCut(90);
               }}
-              className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold ${
+              className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold transition-colors ${
                 aCut === 70 && bCut === 90
-                  ? "border-[#935941] bg-[#fdf5ec] text-[#935941]"
-                  : "border-[#e5d8c8] text-[#6e6257]"
+                  ? "border-[#4e6752] bg-[#eff5f0] text-[#4e6752]"
+                  : "border-[#e5d8c8] text-[#6e6257] hover:border-[#c8b6a2]"
               }`}
             >
               70 / 90
@@ -488,19 +671,19 @@ export function ProductABCChart({
                 setACut(80);
                 setBCut(95);
               }}
-              className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold ${
+              className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold transition-colors ${
                 aCut === 80 && bCut === 95
-                  ? "border-[#935941] bg-[#fdf5ec] text-[#935941]"
-                  : "border-[#e5d8c8] text-[#6e6257]"
+                  ? "border-[#4e6752] bg-[#eff5f0] text-[#4e6752]"
+                  : "border-[#e5d8c8] text-[#6e6257] hover:border-[#c8b6a2]"
               }`}
             >
               80 / 95
             </button>
           </div>
 
-          <label className="flex flex-1 min-w-[170px] items-center gap-2.5">
-            <span className="shrink-0 font-bold text-[#935941]">
-              A 類累計 ≤ {aCut}%
+          <label className="flex min-w-[160px] flex-1 items-center gap-2.5">
+            <span className="shrink-0 font-bold text-[#4e6752]">
+              A 類 ≤ {aCut}%
             </span>
             <input
               type="range"
@@ -513,13 +696,13 @@ export function ProductABCChart({
                 setACut(nextA);
                 if (bCut <= nextA + 5) setBCut(Math.min(98, nextA + 5));
               }}
-              className="h-1.5 flex-1 cursor-pointer accent-[#935941]"
+              className="h-1.5 flex-1 cursor-pointer accent-[#4e6752]"
             />
           </label>
 
-          <label className="flex flex-1 min-w-[170px] items-center gap-2.5">
+          <label className="flex min-w-[160px] flex-1 items-center gap-2.5">
             <span className="shrink-0 font-bold text-[#b8823c]">
-              B 類累計 ≤ {bCut}%
+              B 類 ≤ {bCut}%
             </span>
             <input
               type="range"
@@ -534,11 +717,17 @@ export function ProductABCChart({
         </div>
       </div>
 
-      {/* A / B / C 三級結構對比卡片（點擊即可篩選對應級別） */}
+      {/* A / B / C 三張摘要卡（對齊 POS 風格並可點擊篩選） */}
       <div className="grid gap-4 md:grid-cols-3">
         {classStats.map((stat) => {
           const st = CLASS_STYLE[stat.cls];
           const active = abcFilter === stat.cls;
+          const rangeText =
+            stat.cls === "A"
+              ? `佔前 ${aCut}%`
+              : stat.cls === "B"
+                ? `佔 ${aCut}–${bCut}%`
+                : `其餘 ${100 - bCut}%`;
           return (
             <motion.button
               key={stat.cls}
@@ -548,15 +737,17 @@ export function ProductABCChart({
                 setAbcFilter((prev) => (prev === stat.cls ? "ALL" : stat.cls))
               }
               style={{
-                borderColor: active ? st.color : "#e5d8c8",
+                borderLeftColor: st.color,
+                borderLeftWidth: 4,
                 backgroundColor: active ? st.softBg : "#ffffff",
+                borderColor: active ? st.color : "#e5d8c8",
               }}
-              className="rounded-2xl border-2 p-5 text-left transition-all shadow-2xs"
+              className="rounded-2xl border p-5 text-left shadow-2xs transition-all"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <span
-                    className="flex size-7 items-center justify-center rounded-lg font-mono text-sm font-bold text-white"
+                    className="flex size-7 items-center justify-center rounded-lg font-mono text-sm font-black text-white"
                     style={{ backgroundColor: st.color }}
                   >
                     {stat.cls}
@@ -565,49 +756,41 @@ export function ProductABCChart({
                     {st.label}
                   </strong>
                 </div>
-                <span className="font-mono text-xs font-bold text-[#7c6d5e]">
-                  {stat.count} 款（{stat.countPct.toFixed(0)}%）
+                <span className="rounded-full bg-[#faf6f0] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#75675a]">
+                  {rangeText}
                 </span>
               </div>
 
-              <div className="mt-4 flex items-baseline justify-between">
-                <div>
-                  <span className="block text-[11px] text-[#7c6d5e]">
-                    {BASIS_META[basis].label}貢獻
-                  </span>
-                  <strong
-                    className="font-mono text-2xl font-bold"
+              <div className="mt-3.5 flex items-baseline justify-between gap-2">
+                <div className="flex items-baseline gap-1">
+                  <span
+                    className="font-mono text-3xl font-black"
                     style={{ color: st.color }}
                   >
-                    {BASIS_META[basis].format(stat.basisSum)}
-                  </strong>
+                    {stat.count}
+                  </span>
+                  <span className="text-xs font-bold text-[#8a7c6e]">
+                    種（{stat.countPct.toFixed(0)}%）
+                  </span>
                 </div>
                 <div className="text-right">
-                  <span className="block text-[11px] text-[#7c6d5e]">
-                    佔比 / 均毛利
+                  <span className="block font-mono text-sm font-bold text-[#302b26]">
+                    {BASIS_META[basis].format(stat.basisSum)}
                   </span>
-                  <strong className="font-mono text-sm font-bold text-[#302b26]">
-                    {stat.basisPct.toFixed(1)}% ·{" "}
-                    {stat.avgMargin == null
-                      ? "—"
-                      : `${stat.avgMargin.toFixed(1)}%`}
-                  </strong>
+                  <span className="font-mono text-[11px] text-[#7a6d60]">
+                    佔 {stat.basisPct.toFixed(1)}% · 均毛利{" "}
+                    {stat.avgMargin == null ? "—" : `${stat.avgMargin.toFixed(1)}%`}
+                  </span>
                 </div>
               </div>
 
-              {/* 比例條：品項數占比 vs 貢獻占比 */}
-              <div className="mt-3 space-y-1.5">
-                <div className="h-2 overflow-hidden rounded-full bg-[#f0e8de]">
-                  <motion.div
-                    animate={{ width: `${stat.basisPct}%` }}
-                    transition={{ duration: 0.45 }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: st.color }}
-                  />
-                </div>
-                <p className="text-[11px] font-medium text-[#6b5d50]">
-                  {st.action}
-                </p>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#f0e8de]">
+                <motion.div
+                  animate={{ width: `${stat.basisPct}%` }}
+                  transition={{ duration: 0.45 }}
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: st.color }}
+                />
               </div>
             </motion.button>
           );
@@ -620,907 +803,999 @@ export function ProductABCChart({
         </div>
       ) : (
         <>
-          {/* 上方雙圖譜：柏拉圖雙軸累積曲線 ＋ 比例面積樹狀圖 (Treemap) */}
-          <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-            {/* 圖譜 1：互動柏拉圖雙軸圖 */}
+          {/* 主視覺區：POS 同款九宮格分布圖（支援一鍵切柏拉圖） ＋ 右側單品診斷卡 */}
+          <div className="grid gap-5 xl:grid-cols-[1.45fr_0.55fr]">
             <section className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#f0e6da]">
-                <h3 className="text-sm font-bold text-[#302b26]">
-                  柏拉圖雙軸累積曲線（{BASIS_META[basis].label} Top{" "}
-                  {paretoItems.length}）
-                </h3>
-                <div className="flex items-center gap-3 text-[11px] font-semibold">
-                  {(["A", "B", "C"] as const).map((c) => (
-                    <span key={c} className="inline-flex items-center gap-1">
-                      <span
-                        className="size-2.5 rounded-sm"
-                        style={{ backgroundColor: CLASS_STYLE[c].color }}
-                      />
-                      {c} 類
-                    </span>
-                  ))}
-                  <span className="inline-flex items-center gap-1 text-[#302b26]">
-                    <span className="h-0.5 w-3 bg-[#302b26]" />
-                    累計 %
-                  </span>
+              {/* 圖表頁首 */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0e6da] pb-3.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="text-sm font-bold text-[#302b26]">
+                    {viewMode === "grid"
+                      ? "商品九宮格分布圖"
+                      : `柏拉圖累積曲線（Top ${paretoItems.length}）`}
+                  </h3>
+                  {activeZoneLabel && viewMode === "grid" && (
+                    <button
+                      type="button"
+                      onClick={() => setZoneFilter(null)}
+                      className="inline-flex items-center gap-1 rounded-full border border-[#935941]/30 bg-[#fdf3ec] px-2.5 py-0.5 text-[11px] font-bold text-[#935941] hover:bg-[#f9e5d7]"
+                    >
+                      分區：{activeZoneLabel}
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {viewMode === "grid" && (
+                    <button
+                      type="button"
+                      onClick={() => setZoomX((v) => !v)}
+                      title="切換橫軸為標準 0–100% 或自動展開至實際毛利區間"
+                      className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-colors ${
+                        zoomX
+                          ? "border-[#935941] bg-[#fdf3ec] text-[#935941]"
+                          : "border-[#e5d8c8] bg-[#faf6f0] text-[#6b5e51] hover:text-[#302b26]"
+                      }`}
+                    >
+                      {zoomX ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                      {zoomX
+                        ? `毛利 ${minMargin}–${maxMargin}%`
+                        : "展開毛利軸"}
+                    </button>
+                  )}
+
+                  <div className="flex rounded-lg border border-[#e5d8c8] bg-[#faf6f0] p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("grid")}
+                      className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
+                        viewMode === "grid"
+                          ? "bg-[#302b26] text-white"
+                          : "text-[#6e6257] hover:text-[#302b26]"
+                      }`}
+                    >
+                      <Grid3X3 size={12} />
+                      九宮格
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("pareto")}
+                      className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-bold transition-all ${
+                        viewMode === "pareto"
+                          ? "bg-[#302b26] text-white"
+                          : "text-[#6e6257] hover:text-[#302b26]"
+                      }`}
+                    >
+                      <BarChart3 size={12} />
+                      柏拉圖
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 overflow-x-auto">
-                <svg
-                  viewBox="0 0 720 275"
-                  className="w-full min-w-[540px] select-none"
-                  role="img"
-                  aria-label="商品 ABC 柏拉圖雙軸累積圖"
+              {viewMode === "grid" ? (
+                /* ─── POS 同款優化版：3×3 九宮格氣泡視覺圖 ─── */
+                <div
+                  ref={chartContainerRef}
+                  className="relative mt-4 overflow-x-auto"
+                  onMouseLeave={() => {
+                    setHoveredId(null);
+                    setTooltipPos(null);
+                  }}
                 >
-                  {/* 水平參考網格 25%, 50%, 75%, 100% */}
-                  {[0, 25, 50, 75, 100].map((pct) => {
-                    const y = 225 - (pct / 100) * 195;
-                    return (
-                      <g key={pct}>
-                        <line
-                          x1="44"
-                          y1={y}
-                          x2="676"
-                          y2={y}
-                          stroke="#f0e7dc"
-                          strokeWidth="1"
-                        />
-                        <text
-                          x="682"
-                          y={y + 4}
-                          fill="#8a7c6e"
-                          fontSize="10"
-                          fontFamily="monospace"
-                        >
-                          {pct}%
-                        </text>
-                      </g>
-                    );
-                  })}
+                  <svg
+                    viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+                    className="w-full min-w-[560px] select-none"
+                    role="img"
+                    aria-label="商品 ABC 九宮格分布圖"
+                  >
+                    {/* 九宮格底色、標籤、商品數與點擊篩選區 */}
+                    {[0, 1, 2].map((yi) =>
+                      [0, 1, 2].map((xi) => {
+                        const zx = PAD.left + xi * (PLOT_W / 3);
+                        const zy = PAD.top + (2 - yi) * (PLOT_H / 3);
+                        const zKey = `${xi}-${yi}`;
+                        const zLabel = ZONE_LABELS[yi as 0 | 1 | 2][xi as 0 | 1 | 2];
+                        const count = zoneCounts[zKey] ?? 0;
+                        const isZoneActive = zoneFilter === zKey;
 
-                  {/* 可動 A 類切線與 B 類切線 */}
-                  {(() => {
-                    const yA = 225 - (aCut / 100) * 195;
-                    const yB = 225 - (bCut / 100) * 195;
-                    return (
-                      <>
-                        <line
-                          x1="44"
-                          y1={yA}
-                          x2="676"
-                          y2={yA}
-                          stroke="#935941"
-                          strokeWidth="1.5"
-                          strokeDasharray="5 4"
-                        />
-                        <text
-                          x="48"
-                          y={yA - 4}
-                          fill="#935941"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          A 線 {aCut}%
-                        </text>
-                        <line
-                          x1="44"
-                          y1={yB}
-                          x2="676"
-                          y2={yB}
-                          stroke="#b8823c"
-                          strokeWidth="1.5"
-                          strokeDasharray="5 4"
-                        />
-                        <text
-                          x="110"
-                          y={yB - 4}
-                          fill="#b8823c"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          B 線 {bCut}%
-                        </text>
-                      </>
-                    );
-                  })()}
-
-                  {/* 長條柱狀圖 */}
-                  {paretoItems.map((item, idx) => {
-                    const stepW = 620 / Math.max(1, paretoItems.length);
-                    const barW = Math.min(34, stepW * 0.62);
-                    const cx = 52 + idx * stepW + stepW / 2;
-                    const barH = Math.max(
-                      4,
-                      (item.basisValue / paretoMaxBasis) * 185,
-                    );
-                    const isActive = selected?.productId === item.productId;
-
-                    return (
-                      <g
-                        key={item.productId}
-                        className="cursor-pointer"
-                        onMouseEnter={() => setHoveredId(item.productId)}
-                        onMouseLeave={() => setHoveredId(null)}
-                        onClick={() => setSelectedId(item.productId)}
-                      >
-                        <rect
-                          x={cx - barW / 2}
-                          y={225 - barH}
-                          width={barW}
-                          height={barH}
-                          rx="5"
-                          fill={CLASS_STYLE[item.abc].color}
-                          opacity={isActive ? 1 : 0.78}
-                          stroke={isActive ? "#302b26" : "none"}
-                          strokeWidth={isActive ? 2 : 0}
-                        />
-                        <text
-                          x={cx}
-                          y="243"
-                          textAnchor="middle"
-                          fill={isActive ? "#935941" : "#6e6257"}
-                          fontSize="9.5"
-                          fontWeight={isActive ? "bold" : "normal"}
-                        >
-                          #{item.rank}
-                        </text>
-                        <text
-                          x={cx}
-                          y="258"
-                          textAnchor="middle"
-                          fill="#8a7c6e"
-                          fontSize="8.5"
-                        >
-                          {item.name.slice(0, 4)}
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {/* 累計占比折線與節點 */}
-                  {paretoItems.length > 0 && (
-                    <>
-                      <polyline
-                        fill="none"
-                        stroke="#302b26"
-                        strokeWidth="2.2"
-                        points={paretoItems
-                          .map((item, idx) => {
-                            const stepW = 620 / Math.max(1, paretoItems.length);
-                            const cx = 52 + idx * stepW + stepW / 2;
-                            const cy = 225 - (item.cumulativePct / 100) * 195;
-                            return `${cx},${cy}`;
-                          })
-                          .join(" ")}
-                      />
-                      {paretoItems.map((item, idx) => {
-                        const stepW = 620 / Math.max(1, paretoItems.length);
-                        const cx = 52 + idx * stepW + stepW / 2;
-                        const cy = 225 - (item.cumulativePct / 100) * 195;
-                        const isActive = selected?.productId === item.productId;
                         return (
-                          <circle
-                            key={item.productId}
-                            cx={cx}
-                            cy={cy}
-                            r={isActive ? 5.5 : 3.5}
-                            fill={isActive ? "#935941" : "#ffffff"}
-                            stroke="#302b26"
-                            strokeWidth="2"
+                          <g
+                            key={`zone-${zKey}`}
                             className="cursor-pointer"
-                            onMouseEnter={() => setHoveredId(item.productId)}
-                            onMouseLeave={() => setHoveredId(null)}
-                            onClick={() => setSelectedId(item.productId)}
-                          />
+                            onClick={() =>
+                              setZoneFilter((prev) =>
+                                prev === zKey ? null : zKey,
+                              )
+                            }
+                          >
+                            <rect
+                              x={zx}
+                              y={zy}
+                              width={PLOT_W / 3}
+                              height={PLOT_H / 3}
+                              fill={ZONE_FILLS[yi as 0 | 1 | 2][xi as 0 | 1 | 2]}
+                              stroke={isZoneActive ? "#935941" : "#e6dacb"}
+                              strokeWidth={isZoneActive ? 2 : 1}
+                              opacity={
+                                zoneFilter && !isZoneActive ? 0.35 : 1
+                              }
+                            />
+                            <text
+                              x={zx + 10}
+                              y={zy + 19}
+                              fill={isZoneActive ? "#935941" : "#6c5f53"}
+                              fontSize="11"
+                              fontWeight="800"
+                              opacity={isZoneActive ? 1 : 0.78}
+                            >
+                              {zLabel}
+                            </text>
+                            {count > 0 && (
+                              <text
+                                x={zx + PLOT_W / 3 - 10}
+                                y={zy + 19}
+                                textAnchor="end"
+                                fill="#8a7c6e"
+                                fontSize="10"
+                                fontFamily="monospace"
+                                fontWeight="700"
+                              >
+                                {count} 款
+                              </text>
+                            )}
+                          </g>
                         );
-                      })}
-                    </>
-                  )}
-                </svg>
-              </div>
-            </section>
+                      }),
+                    )}
 
-            {/* 圖譜 2：比例面積樹狀圖 (Treemap) */}
-            <section className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs flex flex-col">
-              <div className="flex items-center justify-between pb-4 border-b border-[#f0e6da]">
-                <h3 className="text-sm font-bold text-[#302b26]">
-                  貢獻面積樹狀圖
-                </h3>
-                <span className="font-mono text-[11px] font-semibold text-[#8a7c6e]">
-                  面積＝{BASIS_META[basis].label}占比
-                </span>
-              </div>
+                    {/* 外框線 */}
+                    <rect
+                      x={PAD.left}
+                      y={PAD.top}
+                      width={PLOT_W}
+                      height={PLOT_H}
+                      fill="none"
+                      stroke="#d5c6b3"
+                      strokeWidth="1.2"
+                    />
 
-              <div className="relative mt-4 h-[245px] w-full overflow-hidden rounded-xl border border-[#e5d8c8] bg-[#faf6f0]">
-                {treemapRects.map(({ item, x, y, w, h }) => {
-                  const isActive = selected?.productId === item.productId;
-                  const st = CLASS_STYLE[item.abc];
-                  const showLabel = w > 14 && h > 16;
-                  return (
-                    <button
-                      key={item.productId}
-                      type="button"
-                      onMouseEnter={() => setHoveredId(item.productId)}
-                      onMouseLeave={() => setHoveredId(null)}
-                      onClick={() => setSelectedId(item.productId)}
-                      title={`${item.abc}類 · ${item.name} (${item.contributionPct.toFixed(1)}%)`}
-                      style={{
-                        left: `${x}%`,
-                        top: `${y}%`,
-                        width: `${w}%`,
-                        height: `${h}%`,
-                        backgroundColor: st.color,
-                        opacity: isActive ? 1 : 0.84,
-                      }}
-                      className={`absolute flex flex-col justify-between overflow-hidden border border-white/80 p-2 text-left text-white transition-all ${
-                        isActive ? "z-10 ring-2 ring-[#302b26]" : "hover:opacity-100"
-                      }`}
-                    >
-                      {showLabel && (
-                        <>
-                          <span className="truncate text-[11px] font-bold leading-tight">
-                            {item.name}
-                          </span>
-                          <span className="font-mono text-[10px] font-semibold opacity-90">
-                            {item.abc} · {item.contributionPct.toFixed(1)}%
-                          </span>
-                        </>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-
-          {/* 中段：營收 × 毛利率四象限氣泡散點圖 ＋ 右側單品診斷卡 */}
-          <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-            {/* 圖譜 3：營收 × 毛利率四象限氣泡散點圖 */}
-            <section className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#f0e6da]">
-                <h3 className="text-sm font-bold text-[#302b26]">
-                  營收 × 毛利率四象限氣泡圖
-                </h3>
-                <span className="font-mono text-[11px] text-[#8a7c6e]">
-                  氣泡大小＝銷售件數 · 十字線＝全店均值
-                </span>
-              </div>
-
-              <div className="mt-4 overflow-x-auto">
-                <svg
-                  viewBox="0 0 680 280"
-                  className="w-full min-w-[520px] select-none"
-                  role="img"
-                  aria-label="商品營收與毛利率四象限氣泡散點圖"
-                >
-                  {(() => {
-                    const padL = 50;
-                    const padR = 24;
-                    const padT = 22;
-                    const padB = 34;
-                    const plotW = 680 - padL - padR;
-                    const plotH = 280 - padT - padB;
-                    const avgX =
-                      padL +
-                      (scatterStats.avgRev / scatterStats.maxRev) * plotW;
-                    const avgY =
-                      padT +
-                      plotH -
-                      (scatterStats.avgM / scatterStats.maxM) * plotH;
-
-                    return (
-                      <>
-                        {/* 四象限底色區塊 */}
-                        <rect
-                          x={avgX}
-                          y={padT}
-                          width={padL + plotW - avgX}
-                          height={avgY - padT}
-                          fill="#eef5ef"
-                          opacity="0.65"
-                        />
-                        <rect
-                          x={avgX}
-                          y={avgY}
-                          width={padL + plotW - avgX}
-                          height={padT + plotH - avgY}
-                          fill="#fbeee9"
-                          opacity="0.6"
-                        />
-                        <rect
-                          x={padL}
-                          y={padT}
-                          width={avgX - padL}
-                          height={avgY - padT}
-                          fill="#fcf5e3"
-                          opacity="0.6"
-                        />
-                        <rect
-                          x={padL}
-                          y={avgY}
-                          width={avgX - padL}
-                          height={padT + plotH - avgY}
-                          fill="#f7f3ed"
-                          opacity="0.7"
-                        />
-
-                        {/* 外框與均值十字線 */}
-                        <rect
-                          x={padL}
-                          y={padT}
-                          width={plotW}
-                          height={plotH}
-                          fill="none"
-                          stroke="#e2d5c6"
-                          strokeWidth="1"
-                        />
-                        <line
-                          x1={avgX}
-                          y1={padT}
-                          x2={avgX}
-                          y2={padT + plotH}
-                          stroke="#b8a590"
-                          strokeWidth="1.2"
-                          strokeDasharray="4 4"
-                        />
-                        <line
-                          x1={padL}
-                          y1={avgY}
-                          x2={padL + plotW}
-                          y2={avgY}
-                          stroke="#b8a590"
-                          strokeWidth="1.2"
-                          strokeDasharray="4 4"
-                        />
-
-                        {/* 象限標籤 */}
+                    {/* X 軸分區標籤與刻度 */}
+                    {["低毛利", "中毛利", "高毛利"].map((label, i) => {
+                      const low = Math.round(
+                        minMargin + (i * (maxMargin - minMargin)) / 3,
+                      );
+                      const high = Math.round(
+                        minMargin + ((i + 1) * (maxMargin - minMargin)) / 3,
+                      );
+                      return (
                         <text
-                          x={padL + plotW - 8}
-                          y={padT + 16}
-                          textAnchor="end"
-                          fill="#35553a"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          高營收・高毛利（核心主力）
-                        </text>
-                        <text
-                          x={padL + plotW - 8}
-                          y={padT + plotH - 8}
-                          textAnchor="end"
-                          fill="#9c3e2a"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          高營收・低毛利（成本警示）
-                        </text>
-                        <text
-                          x={padL + 8}
-                          y={padT + 16}
-                          fill="#8a5a14"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          低營收・高毛利（潛力推廣）
-                        </text>
-                        <text
-                          x={padL + 8}
-                          y={padT + plotH - 8}
-                          fill="#786b5e"
-                          fontSize="10"
-                          fontWeight="bold"
-                        >
-                          低營收・低毛利（長尾觀察）
-                        </text>
-
-                        {/* 座標軸刻度 */}
-                        <text
-                          x={padL - 8}
-                          y={padT + 4}
-                          textAnchor="end"
-                          fill="#8a7c6e"
-                          fontSize="9.5"
-                          fontFamily="monospace"
-                        >
-                          {Math.round(scatterStats.maxM)}%
-                        </text>
-                        <text
-                          x={padL - 8}
-                          y={avgY + 3}
-                          textAnchor="end"
-                          fill="#6e6257"
-                          fontSize="9.5"
-                          fontFamily="monospace"
-                        >
-                          {scatterStats.avgM.toFixed(0)}%
-                        </text>
-                        <text
-                          x={padL - 8}
-                          y={padT + plotH}
-                          textAnchor="end"
-                          fill="#8a7c6e"
-                          fontSize="9.5"
-                          fontFamily="monospace"
-                        >
-                          0%
-                        </text>
-                        <text
-                          x={padL + plotW / 2}
-                          y={272}
+                          key={label}
+                          x={PAD.left + (i + 0.5) * (PLOT_W / 3)}
+                          y={SVG_H - 26}
+                          fill="#6b5e51"
+                          fontSize="11"
+                          fontWeight="700"
                           textAnchor="middle"
-                          fill="#7c6d5e"
-                          fontSize="10"
                         >
-                          商品營收（NT$）→
+                          {label}（{low}–{high}%）
                         </text>
+                      );
+                    })}
 
-                        {/* 氣泡節點 */}
-                        {data.map((item) => {
-                          const marginVal = item.marginPct ?? scatterStats.avgM;
-                          const cx =
-                            padL +
-                            Math.min(
-                              1,
-                              item.revenue / scatterStats.maxRev,
-                            ) *
-                              (plotW - 18) +
-                            9;
-                          const cy =
-                            padT +
-                            plotH -
-                            Math.min(1, Math.max(0, marginVal / scatterStats.maxM)) *
-                              (plotH - 18) -
-                            9;
-                          const r =
-                            6 +
-                            Math.sqrt(item.salesQty / scatterStats.maxQty) * 14;
+                    {/* Y 軸標籤 */}
+                    {["低銷量", "中銷量", "高銷量"].map((label, i) => (
+                      <text
+                        key={label}
+                        x={PAD.left - 10}
+                        y={PAD.top + (2.5 - i) * (PLOT_H / 3)}
+                        fill="#6b5e51"
+                        fontSize="10.5"
+                        fontWeight="700"
+                        textAnchor="end"
+                        dominantBaseline="middle"
+                      >
+                        {label}
+                      </text>
+                    ))}
+
+                    {/* 軸標題 */}
+                    <text
+                      x={PAD.left + PLOT_W / 2}
+                      y={SVG_H - 7}
+                      fill="#8a7c6e"
+                      fontSize="10"
+                      fontWeight="600"
+                      textAnchor="middle"
+                    >
+                      毛利率 →（氣泡面積：銷售金額）
+                    </text>
+
+                    {/* 商品氣泡 */}
+                    {bubbles.map(({ item, x, y, r }) => {
+                      const isSelected = selected?.productId === item.productId;
+                      const isHovered = hoveredId === item.productId;
+                      const matchesFilters =
+                        (abcFilter === "ALL" || item.abc === abcFilter) &&
+                        (!zoneFilter || item.zoneKey === zoneFilter);
+                      const noCost = item.marginPct === null;
+                      const fillColor = noCost
+                        ? "#9e9286"
+                        : CLASS_STYLE[item.abc].color;
+                      const strokeColor = CLASS_STYLE[item.abc].color;
+                      const dimmed =
+                        !matchesFilters || (hoveredId !== null && !isHovered);
+
+                      return (
+                        <g
+                          key={item.productId}
+                          className="cursor-pointer"
+                          onMouseEnter={(e) => {
+                            setHoveredId(item.productId);
+                            updateTooltipFromEvent(e);
+                          }}
+                          onMouseMove={updateTooltipFromEvent}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedId(item.productId);
+                          }}
+                        >
+                          {/* 選中高亮外圈 */}
+                          {(isSelected || isHovered) && (
+                            <circle
+                              cx={x}
+                              cy={y}
+                              r={r + 5}
+                              fill="none"
+                              stroke={strokeColor}
+                              strokeWidth="2"
+                              strokeDasharray="4 3"
+                              opacity={0.75}
+                            />
+                          )}
+
+                          <motion.circle
+                            cx={x}
+                            cy={y}
+                            initial={false}
+                            animate={{
+                              r: isHovered ? r + 2.5 : r,
+                              fillOpacity: dimmed
+                                ? 0.16
+                                : noCost
+                                  ? 0.22
+                                  : isHovered || isSelected
+                                    ? 0.94
+                                    : 0.76,
+                            }}
+                            transition={{ duration: 0.18 }}
+                            fill={fillColor}
+                            stroke={isSelected ? "#302b26" : strokeColor}
+                            strokeWidth={
+                              isSelected ? 2.4 : isHovered ? 2 : noCost ? 1.4 : 1.2
+                            }
+                            strokeDasharray={noCost ? "4 2.5" : "none"}
+                          />
+
+                          {r >= 17 && !dimmed && (
+                            <text
+                              x={x}
+                              y={y + 1}
+                              fill={noCost ? "#52473d" : "#ffffff"}
+                              fontSize={r >= 24 ? "9.5" : "8"}
+                              fontWeight="800"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              style={{ pointerEvents: "none" }}
+                            >
+                              {item.name.length > 5
+                                ? `${item.name.slice(0, 4)}…`
+                                : item.name}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+                  </svg>
+
+                  {/* 精緻 HTML 懸浮提示卡（自動避邊） */}
+                  <AnimatePresence>
+                    {hoveredProduct && tooltipPos && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.12 }}
+                        style={{
+                          left:
+                            tooltipPos.x >
+                            (chartContainerRef.current?.clientWidth ?? 600) - 240
+                              ? Math.max(8, tooltipPos.x - 235)
+                              : tooltipPos.x + 16,
+                          top: Math.max(8, tooltipPos.y - 96),
+                        }}
+                        className="pointer-events-none absolute z-20 w-[220px] rounded-xl border border-[#dfd0be] bg-white/95 p-3 shadow-lg backdrop-blur-xs"
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span
+                            className="rounded px-1.5 py-0.5 font-mono text-[10px] font-black text-white"
+                            style={{
+                              backgroundColor:
+                                CLASS_STYLE[hoveredProduct.abc].color,
+                            }}
+                          >
+                            {hoveredProduct.abc} 類
+                          </span>
+                          <span className="text-[10px] font-bold text-[#75675a]">
+                            {hoveredProduct.zoneLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 line-clamp-1 text-xs font-bold text-[#302b26]">
+                          {hoveredProduct.name}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 border-t border-[#f0e6da] pt-2 font-mono text-[11px]">
+                          <span className="text-[#7c6f63]">銷量</span>
+                          <span className="text-right font-bold text-[#302b26]">
+                            {hoveredProduct.salesQty} 件
+                          </span>
+                          <span className="text-[#7c6f63]">營收</span>
+                          <span className="text-right font-bold text-[#302b26]">
+                            {money(hoveredProduct.revenue)}
+                          </span>
+                          <span className="text-[#7c6f63]">佔比</span>
+                          <span className="text-right font-bold text-[#302b26]">
+                            {hoveredProduct.contributionPct.toFixed(1)}%
+                          </span>
+                          <span className="text-[#7c6f63]">毛利率</span>
+                          <span className="text-right font-bold text-[#302b26]">
+                            {hoveredProduct.marginPct != null
+                              ? `${hoveredProduct.marginPct.toFixed(1)}%`
+                              : "未設成本"}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* 底部圖例 */}
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#f3ebe1] pt-3 text-[11px] font-bold text-[#6e6257]">
+                    <div className="flex flex-wrap items-center gap-4">
+                      {(["A", "B", "C"] as const).map((cls) => (
+                        <button
+                          key={cls}
+                          type="button"
+                          onClick={() =>
+                            setAbcFilter((prev) =>
+                              prev === cls ? "ALL" : cls,
+                            )
+                          }
+                          className={`inline-flex items-center gap-1.5 transition-opacity ${
+                            abcFilter !== "ALL" && abcFilter !== cls
+                              ? "opacity-40"
+                              : "opacity-100"
+                          }`}
+                        >
+                          <span
+                            className="size-3 rounded-full"
+                            style={{ backgroundColor: CLASS_STYLE[cls].color }}
+                          />
+                          {cls} 類（{CLASS_STYLE[cls].label}）
+                        </button>
+                      ))}
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="size-3 rounded-full border border-dashed border-[#8a7c6e] bg-[#9e9286]/20" />
+                        無成本資料
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-medium text-[#8a7c6e]">
+                      點擊格子可篩選分區 · 點擊氣泡查看診斷
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* ─── 輔助視角：柏拉圖雙軸累積曲線 ─── */
+                <div className="mt-4 overflow-x-auto">
+                  <svg
+                    viewBox="0 0 740 310"
+                    className="w-full min-w-[540px] select-none"
+                    role="img"
+                    aria-label="商品 ABC 柏拉圖累積曲線"
+                  >
+                    {[0, 25, 50, 75, 100].map((pct) => {
+                      const y = 250 - (pct / 100) * 215;
+                      return (
+                        <g key={pct}>
+                          <line
+                            x1="44"
+                            y1={y}
+                            x2="692"
+                            y2={y}
+                            stroke="#f0e7dc"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x="698"
+                            y={y + 4}
+                            fill="#8a7c6e"
+                            fontSize="10"
+                            fontFamily="monospace"
+                          >
+                            {pct}%
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* A / B 動態門檻虛線 */}
+                    {(() => {
+                      const yA = 250 - (aCut / 100) * 215;
+                      const yB = 250 - (bCut / 100) * 215;
+                      return (
+                        <>
+                          <line
+                            x1="44"
+                            y1={yA}
+                            x2="692"
+                            y2={yA}
+                            stroke="#4e6752"
+                            strokeWidth="1.5"
+                            strokeDasharray="5 4"
+                          />
+                          <text
+                            x="48"
+                            y={yA - 4}
+                            fill="#4e6752"
+                            fontSize="10"
+                            fontWeight="bold"
+                          >
+                            A 線 {aCut}%
+                          </text>
+                          <line
+                            x1="44"
+                            y1={yB}
+                            x2="692"
+                            y2={yB}
+                            stroke="#b8823c"
+                            strokeWidth="1.5"
+                            strokeDasharray="5 4"
+                          />
+                          <text
+                            x="114"
+                            y={yB - 4}
+                            fill="#b8823c"
+                            fontSize="10"
+                            fontWeight="bold"
+                          >
+                            B 線 {bCut}%
+                          </text>
+                        </>
+                      );
+                    })()}
+
+                    {paretoItems.map((item, idx) => {
+                      const stepW = 636 / Math.max(1, paretoItems.length);
+                      const barW = Math.min(34, stepW * 0.62);
+                      const cx = 52 + idx * stepW + stepW / 2;
+                      const barH = Math.max(
+                        4,
+                        (item.basisValue / paretoMaxBasis) * 205,
+                      );
+                      const isActive = selected?.productId === item.productId;
+                      return (
+                        <g
+                          key={item.productId}
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredId(item.productId)}
+                          onMouseLeave={() => setHoveredId(null)}
+                          onClick={() => setSelectedId(item.productId)}
+                        >
+                          <rect
+                            x={cx - barW / 2}
+                            y={250 - barH}
+                            width={barW}
+                            height={barH}
+                            rx="5"
+                            fill={CLASS_STYLE[item.abc].color}
+                            opacity={isActive ? 1 : 0.78}
+                            stroke={isActive ? "#302b26" : "none"}
+                            strokeWidth={isActive ? 2 : 0}
+                          />
+                          <text
+                            x={cx}
+                            y="269"
+                            textAnchor="middle"
+                            fill={isActive ? "#935941" : "#6e6257"}
+                            fontSize="9.5"
+                            fontWeight={isActive ? "bold" : "normal"}
+                          >
+                            #{item.rank}
+                          </text>
+                          <text
+                            x={cx}
+                            y="286"
+                            textAnchor="middle"
+                            fill="#8a7c6e"
+                            fontSize="8.5"
+                          >
+                            {item.name.slice(0, 4)}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {paretoItems.length > 0 && (
+                      <>
+                        <polyline
+                          fill="none"
+                          stroke="#302b26"
+                          strokeWidth="2.2"
+                          points={paretoItems
+                            .map((item, idx) => {
+                              const stepW = 636 / Math.max(1, paretoItems.length);
+                              const cx = 52 + idx * stepW + stepW / 2;
+                              const cy = 250 - (item.cumulativePct / 100) * 215;
+                              return `${cx},${cy}`;
+                            })
+                            .join(" ")}
+                        />
+                        {paretoItems.map((item, idx) => {
+                          const stepW = 636 / Math.max(1, paretoItems.length);
+                          const cx = 52 + idx * stepW + stepW / 2;
+                          const cy = 250 - (item.cumulativePct / 100) * 215;
                           const isActive =
                             selected?.productId === item.productId;
                           return (
-                            <g
-                              key={item.productId}
+                            <circle
+                              key={`pt-${item.productId}`}
+                              cx={cx}
+                              cy={cy}
+                              r={isActive ? 5.5 : 3.5}
+                              fill={isActive ? "#935941" : "#ffffff"}
+                              stroke="#302b26"
+                              strokeWidth="2"
                               className="cursor-pointer"
                               onMouseEnter={() => setHoveredId(item.productId)}
                               onMouseLeave={() => setHoveredId(null)}
                               onClick={() => setSelectedId(item.productId)}
-                            >
-                              {isActive && (
-                                <circle
-                                  cx={cx}
-                                  cy={cy}
-                                  r={r + 5}
-                                  fill="none"
-                                  stroke="#302b26"
-                                  strokeWidth="1.5"
-                                  strokeDasharray="3 2"
-                                />
-                              )}
-                              <circle
-                                cx={cx}
-                                cy={cy}
-                                r={r}
-                                fill={CLASS_STYLE[item.abc].color}
-                                opacity={isActive ? 0.96 : 0.72}
-                                stroke="#ffffff"
-                                strokeWidth="1.8"
-                              />
-                              <text
-                                x={cx}
-                                y={cy + 3}
-                                textAnchor="middle"
-                                fill="#ffffff"
-                                fontSize="9"
-                                fontWeight="bold"
-                              >
-                                {item.rank}
-                              </text>
-                            </g>
+                            />
                           );
                         })}
                       </>
-                    );
-                  })()}
-                </svg>
-              </div>
+                    )}
+                  </svg>
+                </div>
+              )}
             </section>
 
-            {/* 右側：單品詳盡診斷卡 */}
-            <section className="rounded-2xl border border-[#e5d8c8] bg-[#faf6f0] p-5 flex flex-col justify-between">
-              {selected ? (
-                <>
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e5d8c8] pb-3.5">
-                      <div className="flex items-center gap-2">
+            {/* 右側單品策略診斷卡（與九宮格／柏拉圖／表格即時連動） */}
+            {selected && (
+              <aside className="flex flex-col justify-between rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-2 border-b border-[#f0e6da] pb-3.5">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span
-                          className="rounded-lg px-2.5 py-1 font-mono text-xs font-bold text-white"
+                          className="rounded-md px-2 py-0.5 font-mono text-[11px] font-black text-white"
                           style={{
                             backgroundColor: CLASS_STYLE[selected.abc].color,
                           }}
                         >
-                          {selected.abc} 類 · #{selected.rank}
+                          {selected.abc} 類 #{selected.rank}
                         </span>
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                            QUADRANT_META[selected.quadrant].bg
-                          } ${QUADRANT_META[selected.quadrant].text}`}
+                          className={`rounded-md border px-2 py-0.5 text-[11px] font-bold ${
+                            ZONE_BADGE_STYLE[selected.zoneLabel] ??
+                            "bg-[#faf6f0] text-[#5e5246] border-[#e5d8c8]"
+                          }`}
                         >
-                          {QUADRANT_META[selected.quadrant].label}
+                          {selected.zoneLabel}
                         </span>
                       </div>
-                      <span className="font-mono text-xs text-[#7c6d5e]">
+                      <h4 className="mt-2 text-base font-bold leading-snug text-[#302b26]">
+                        {selected.name}
+                      </h4>
+                      <p className="mt-0.5 text-xs text-[#7c6f63]">
                         {selected.category} ·{" "}
                         {PET_LABELS[selected.petType] ?? selected.petType}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 四項關鍵數值 */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-xl border border-[#efe5d8] bg-[#faf6f0] p-3">
+                      <span className="text-[11px] font-semibold text-[#7a6d60]">
+                        期間營收（佔比）
+                      </span>
+                      <p className="mt-1 font-mono text-base font-bold text-[#302b26]">
+                        {money(selected.revenue)}
+                      </p>
+                      <span className="font-mono text-[11px] text-[#7a6d60]">
+                        {selected.contributionPct.toFixed(1)}% · 累計{" "}
+                        {selected.cumulativePct.toFixed(1)}%
                       </span>
                     </div>
 
-                    <h4 className="mt-3 text-lg font-bold text-[#302b26]">
-                      {selected.name}
-                    </h4>
-
-                    {/* 6 格單品核心指標 */}
-                    <div className="mt-4 grid grid-cols-2 gap-2.5">
-                      <MetricBox
-                        label="商品營收"
-                        value={money(selected.revenue)}
-                        accent="#935941"
-                      />
-                      <MetricBox
-                        label="銷售件數 / 均價"
-                        value={`${selected.salesQty} 件 · ${money(selected.avgUnitPrice)}`}
-                      />
-                      <MetricBox
-                        label={`${BASIS_META[basis].label}占比 / 累計`}
-                        value={`${selected.contributionPct.toFixed(1)}% / ${selected.cumulativePct.toFixed(1)}%`}
-                      />
-                      <MetricBox
-                        label="毛利額 / 毛利率"
-                        value={
-                          selected.marginPct == null
-                            ? "待補成本"
-                            : `${money(selected.grossProfitNt ?? 0)} (${selected.marginPct.toFixed(1)}%)`
-                        }
-                        accent={
-                          selected.marginPct != null && selected.marginPct < 20
-                            ? "#b43d2a"
-                            : "#4e6752"
-                        }
-                      />
-                      <MetricBox
-                        label="近 7 日銷量動能"
-                        value={
-                          selected.momentumPct == null
-                            ? `${selected.qtyRecent} 件`
-                            : `${selected.qtyRecent} 件 (${selected.momentumPct >= 0 ? "+" : ""}${selected.momentumPct.toFixed(0)}%)`
-                        }
-                        accent={
-                          selected.momentumPct != null &&
-                          selected.momentumPct >= 0
-                            ? "#4e6752"
-                            : "#b43d2a"
-                        }
-                      />
-                      <MetricBox
-                        label="成本狀態"
-                        value={
-                          selected.costCoveragePct < 100
-                            ? `覆蓋 ${selected.costCoveragePct}%`
-                            : selected.estimatedCost
-                              ? "含估算成本"
-                              : "實際報價"
-                        }
-                      />
+                    <div className="rounded-xl border border-[#efe5d8] bg-[#faf6f0] p-3">
+                      <span className="text-[11px] font-semibold text-[#7a6d60]">
+                        銷售量（均價）
+                      </span>
+                      <p className="mt-1 font-mono text-base font-bold text-[#302b26]">
+                        {selected.salesQty.toLocaleString()} 件
+                      </p>
+                      <span className="font-mono text-[11px] text-[#7a6d60]">
+                        均價 {money(selected.avgUnitPrice)}
+                      </span>
                     </div>
 
-                    {/* 營運處置建議 */}
-                    <div className="mt-4 rounded-xl border border-[#e2d4c2] bg-white p-3.5 text-xs leading-5 text-[#5a4d40]">
-                      <strong className="text-[#935941]">營運處置：</strong>
-                      {QUADRANT_META[selected.quadrant].advice}
+                    <div className="rounded-xl border border-[#efe5d8] bg-[#faf6f0] p-3">
+                      <span className="text-[11px] font-semibold text-[#7a6d60]">
+                        毛利率（毛利額）
+                      </span>
+                      <p
+                        className="mt-1 font-mono text-base font-bold"
+                        style={{
+                          color:
+                            selected.marginPct == null
+                              ? "#8a7c6e"
+                              : selected.marginPct >= 55
+                                ? "#4e6752"
+                                : selected.marginPct >= 35
+                                  ? "#b8823c"
+                                  : "#9b3d28",
+                        }}
+                      >
+                        {selected.marginPct != null
+                          ? `${selected.marginPct.toFixed(1)}%`
+                          : "未設成本"}
+                      </p>
+                      <span className="font-mono text-[11px] text-[#7a6d60]">
+                        {selected.grossProfitNt != null
+                          ? money(selected.grossProfitNt)
+                          : "—"}
+                        {selected.estimatedCost ? "（估算）" : ""}
+                      </span>
+                    </div>
+
+                    <div className="rounded-xl border border-[#efe5d8] bg-[#faf6f0] p-3">
+                      <span className="text-[11px] font-semibold text-[#7a6d60]">
+                        近 7 日銷量趨勢
+                      </span>
+                      <p className="mt-1 flex items-center gap-1 font-mono text-base font-bold">
+                        {selected.momentumPct == null ? (
+                          <span className="text-[#8a7c6e]">持平</span>
+                        ) : selected.momentumPct >= 0 ? (
+                          <span className="inline-flex items-center text-[#4e6752]">
+                            <ArrowUpRight size={16} />+
+                            {Math.round(selected.momentumPct)}%
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-[#9b3d28]">
+                            <ArrowDownRight size={16} />
+                            {Math.round(selected.momentumPct)}%
+                          </span>
+                        )}
+                      </p>
+                      <span className="font-mono text-[11px] text-[#7a6d60]">
+                        近 7 天 {selected.qtyRecent} / 前期 {selected.qtyPrior}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-[#e5d8c8] pt-3.5">
-                    <Link
-                      href="/admin/products"
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#935941] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#7d4934]"
-                    >
-                      調整成本與售價
-                      <ExternalLink size={13} />
-                    </Link>
-                    <Link
-                      href="/admin/inventory"
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#d8c8b4] bg-white px-3.5 py-2 text-xs font-bold text-[#5e5043] hover:border-[#935941]"
-                    >
-                      前往補貨管理
-                    </Link>
+                  {/* 健康度儀表條 + 熱門時段 + 共購搭檔 */}
+                  <div className="space-y-2.5 rounded-xl border border-[#efe5d8] bg-[#fcfaf6] p-3.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#5e5246]">綜合健康度</span>
+                      <span className="font-mono font-black text-[#302b26]">
+                        {selected.healthScore} / 100
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-[#ece3d7]">
+                      <motion.div
+                        animate={{ width: `${selected.healthScore}%` }}
+                        transition={{ duration: 0.35 }}
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor:
+                            selected.healthScore >= 75
+                              ? "#4e6752"
+                              : selected.healthScore >= 45
+                                ? "#b8823c"
+                                : "#9b3d28",
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] text-[#6d6054]">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={12} className="text-[#935941]" />
+                        熱門時段：
+                        <strong className="font-mono text-[#302b26]">
+                          {selected.peakHour != null
+                            ? `${String(selected.peakHour).padStart(2, "0")}:00`
+                            : "—"}
+                        </strong>
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Link2 size={12} className="text-[#4e6752]" />
+                        常共購：
+                        <strong className="text-[#302b26]">
+                          {selected.bestPair ?? "尚無明顯組合"}
+                        </strong>
+                      </span>
+                    </div>
                   </div>
-                </>
-              ) : null}
-            </section>
+
+                  {/* 策略建議 */}
+                  <div className="rounded-xl border border-[#e7d6c3] bg-[#fdf8f2] p-3.5">
+                    <p className="text-[11px] font-bold text-[#935941]">
+                      營運策略建議
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#473d34]">
+                      {selected.strategy}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 快捷動作 */}
+                <div className="mt-4 flex gap-2 border-t border-[#f0e6da] pt-3.5">
+                  <Link
+                    href="/admin/products"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#dfd0be] bg-[#faf6f0] py-2 text-xs font-bold text-[#5e4d3f] transition-colors hover:border-[#935941] hover:text-[#935941]"
+                  >
+                    商品管理
+                    <ExternalLink size={12} />
+                  </Link>
+                  <Link
+                    href="/admin/inventory"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#935941] py-2 text-xs font-bold text-white transition-colors hover:bg-[#7d4934]"
+                  >
+                    庫存與成本
+                    <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </aside>
+            )}
           </div>
 
-          {/* 總覽統計摘要列 */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Summary
-              label="分析期商品營收"
-              value={money(totalRevenue)}
-              detail={`近 ${days} 日 · 共 ${data.length} 款成交`}
-            />
-            <Summary
-              label="可計算毛利總額"
-              value={knownRevenue ? money(totalProfit) : "待補成本"}
-              detail={`成本覆蓋 ${totalRevenue ? ((knownRevenue / totalRevenue) * 100).toFixed(1) : 0}%`}
-            />
-            <Summary
-              label="整體商品毛利率"
-              value={
-                knownRevenue
-                  ? `${((totalProfit / knownRevenue) * 100).toFixed(1)}%`
-                  : "—"
-              }
-              detail="已扣除單件成本"
-            />
-            <Summary
-              label="高營收低毛利警示"
-              value={`${data.filter((p) => p.quadrant === "RISK").length} 款`}
-              detail="建議優先檢核進價"
-            />
-          </div>
+          {/* 底部商品分類明細表（對齊 POS 欄位並支援點擊連動） */}
+          <section className="overflow-hidden rounded-2xl border border-[#e5d8c8] bg-white shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0e6da] p-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#302b26]">
+                  商品分類明細
+                </h3>
+                <span className="rounded-full bg-[#faf6f0] px-2.5 py-0.5 font-mono text-[11px] font-bold text-[#75675a]">
+                  {displayed.length} / {data.length} 項
+                </span>
+                {(abcFilter !== "ALL" || zoneFilter) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAbcFilter("ALL");
+                      setZoneFilter(null);
+                    }}
+                    className="text-xs font-bold text-[#935941] hover:underline"
+                  >
+                    重設篩選
+                  </button>
+                )}
+              </div>
 
-          {/* 底部明細篩選與表格 */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[#e5d8c8] bg-white p-4">
-              <label className="text-xs font-bold text-[#6e6257]">
-                級別
-                <select
-                  aria-label="ABC 級別"
-                  value={abcFilter}
-                  onChange={(e) =>
-                    setAbcFilter(e.target.value as "ALL" | ClassName)
-                  }
-                  className="input !mt-1 !min-h-9 !py-1 text-xs"
-                >
-                  <option value="ALL">全部</option>
-                  <option value="A">A 類</option>
-                  <option value="B">B 類</option>
-                  <option value="C">C 類</option>
-                </select>
-              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="relative">
+                  <Search
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9b8d80]"
+                  />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="搜尋商品..."
+                    className="h-9 w-44 rounded-xl border border-[#e5d8c8] bg-[#faf6f0] pl-8 pr-3 text-xs outline-none focus:border-[#935941]"
+                  />
+                </label>
 
-              <label className="text-xs font-bold text-[#6e6257]">
-                分類
                 <select
-                  aria-label="ABC 商品分類"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="input !mt-1 !min-h-9 !py-1 text-xs"
+                  className="h-9 rounded-xl border border-[#e5d8c8] bg-[#faf6f0] px-3 text-xs font-semibold text-[#52473d] outline-none focus:border-[#935941]"
                 >
                   <option value="ALL">全部分類</option>
-                  {categories.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
                     </option>
                   ))}
                 </select>
-              </label>
 
-              <label className="text-xs font-bold text-[#6e6257]">
-                物種
                 <select
-                  aria-label="ABC 毛孩類型"
                   value={petType}
                   onChange={(e) => setPetType(e.target.value)}
-                  className="input !mt-1 !min-h-9 !py-1 text-xs"
+                  className="h-9 rounded-xl border border-[#e5d8c8] bg-[#faf6f0] px-3 text-xs font-semibold text-[#52473d] outline-none focus:border-[#935941]"
                 >
-                  <option value="ALL">全部</option>
-                  <option value="CAT">貓咪</option>
-                  <option value="DOG">狗狗</option>
-                  <option value="HAMSTER">倉鼠</option>
-                  <option value="RABBIT">兔兔</option>
+                  <option value="ALL">全部對象</option>
+                  {Object.entries(PET_LABELS).map(([k, label]) => (
+                    <option key={k} value={k}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
-              </label>
 
-              <label className="text-xs font-bold text-[#6e6257]">
-                排序
                 <select
-                  aria-label="ABC 排序"
                   value={sort}
                   onChange={(e) =>
-                    setSort(e.target.value as "rank" | "margin" | "sales")
+                    setSort(
+                      e.target.value as "rank" | "margin" | "sales" | "health",
+                    )
                   }
-                  className="input !mt-1 !min-h-9 !py-1 text-xs"
+                  className="h-9 rounded-xl border border-[#e5d8c8] bg-[#faf6f0] px-3 text-xs font-semibold text-[#52473d] outline-none focus:border-[#935941]"
                 >
-                  <option value="rank">{BASIS_META[basis].label}排名</option>
-                  <option value="margin">毛利率</option>
-                  <option value="sales">銷售件數</option>
+                  <option value="rank">依 ABC 排名</option>
+                  <option value="margin">依毛利率高到低</option>
+                  <option value="sales">依銷售量高到低</option>
+                  <option value="health">依健康度高到低</option>
                 </select>
-              </label>
-
-              <label className="relative min-w-[180px] flex-1">
-                <Search
-                  size={14}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8a7c6e]"
-                />
-                <input
-                  aria-label="搜尋 ABC 商品"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="搜尋商品名稱"
-                  className="input !mt-0 !min-h-9 !py-1 !pl-9 text-xs"
-                />
-              </label>
+              </div>
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-[#e5d8c8] bg-white">
-              <table className="w-full min-w-[980px] text-left text-xs">
-                <thead className="bg-[#faf6f0] text-[#6e6257]">
-                  <tr>
-                    {[
-                      "級別",
-                      "排名／商品",
-                      "分類",
-                      "四象限",
-                      "銷量",
-                      "週動能",
-                      "商品營收",
-                      "占比／累計",
-                      "毛利",
-                      "毛利率",
-                      "成本",
-                    ].map((name) => (
-                      <th key={name} className="px-3.5 py-3 font-bold">
-                        {name}
-                      </th>
-                    ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#faf6f0] text-[11px] font-bold text-[#75675a]">
+                  <tr className="border-b border-[#ece1d4]">
+                    <th className="px-4 py-3">分類</th>
+                    <th className="px-4 py-3">商品名稱</th>
+                    <th className="px-4 py-3">九宮格定位</th>
+                    <th className="px-4 py-3">近期趨勢</th>
+                    <th className="px-4 py-3">健康度</th>
+                    <th className="px-4 py-3">熱門時段</th>
+                    <th className="px-4 py-3 text-right">銷售量</th>
+                    <th className="px-4 py-3 text-right">貢獻金額</th>
+                    <th className="px-4 py-3 text-right">毛利率</th>
+                    <th className="px-4 py-3">策略建議</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f2e9de]">
-                  {displayed.map((product) => {
-                    const isSel = selected?.productId === product.productId;
+                  {displayed.map((p) => {
+                    const isSelected = selected?.productId === p.productId;
+                    const st = CLASS_STYLE[p.abc];
                     return (
                       <tr
-                        key={product.productId}
-                        onClick={() => setSelectedId(product.productId)}
+                        key={p.productId}
+                        onClick={() => setSelectedId(p.productId)}
                         className={`cursor-pointer transition-colors ${
-                          isSel ? "bg-[#fdf5ec]" : "hover:bg-[#faf6f0]"
+                          isSelected
+                            ? "bg-[#fdf5ec]"
+                            : "hover:bg-[#faf6f0]/80"
                         }`}
                       >
-                        <td className="px-3.5 py-3">
+                        <td className="px-4 py-3">
                           <span
-                            className="inline-flex size-6 items-center justify-center rounded-md font-mono font-bold text-white"
+                            className="inline-flex size-7 items-center justify-center rounded-lg font-mono text-[11px] font-black"
                             style={{
-                              backgroundColor: CLASS_STYLE[product.abc].color,
+                              backgroundColor: st.softBg,
+                              color: st.color,
+                              border: `1px solid ${st.border}`,
                             }}
                           >
-                            {product.abc}
+                            {p.abc}
                           </span>
                         </td>
-                        <td className="px-3.5 py-3 font-bold text-[#302b26]">
-                          {product.rank}. {product.name}
+                        <td className="max-w-[180px] px-4 py-3">
+                          <p className="truncate font-bold text-[#302b26]">
+                            {p.name}
+                          </p>
+                          <span className="text-[10px] text-[#8a7c6e]">
+                            {p.category} · {PET_LABELS[p.petType] ?? p.petType}
+                          </span>
                         </td>
-                        <td className="px-3.5 py-3 text-[#6b5d50]">
-                          {product.category}
-                        </td>
-                        <td className="px-3.5 py-3">
+                        <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                              QUADRANT_META[product.quadrant].bg
-                            } ${QUADRANT_META[product.quadrant].text}`}
+                            className={`inline-block whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-bold ${
+                              ZONE_BADGE_STYLE[p.zoneLabel] ??
+                              "bg-[#faf6f0] text-[#5e5246] border-[#e5d8c8]"
+                            }`}
                           >
-                            {QUADRANT_META[product.quadrant].label}
+                            {p.zoneLabel}
                           </span>
                         </td>
-                        <td className="px-3.5 py-3 font-mono">
-                          {product.salesQty}
-                        </td>
-                        <td className="px-3.5 py-3 font-mono">
-                          {product.momentumPct == null ? (
-                            <span className="text-[#9c8e80]">—</span>
-                          ) : product.momentumPct >= 0 ? (
-                            <span className="inline-flex items-center text-[#4e6752] font-bold">
-                              <ArrowUpRight size={12} />+
-                              {product.momentumPct.toFixed(0)}%
+                        <td className="whitespace-nowrap px-4 py-3 font-mono font-bold">
+                          {p.velocity > 0.1 ? (
+                            <span className="text-[#4e6752]">
+                              ↑ {Math.round(p.velocity * 100)}%
+                            </span>
+                          ) : p.velocity < -0.1 ? (
+                            <span className="text-[#9b3d28]">
+                              ↓ {Math.abs(Math.round(p.velocity * 100))}%
                             </span>
                           ) : (
-                            <span className="inline-flex items-center text-[#b43d2a] font-bold">
-                              <ArrowDownRight size={12} />
-                              {product.momentumPct.toFixed(0)}%
-                            </span>
+                            <span className="text-[#9b8d80]">—</span>
                           )}
                         </td>
-                        <td className="px-3.5 py-3 font-mono font-semibold text-[#302b26]">
-                          {money(product.revenue)}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#ece3d7]">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${p.healthScore}%`,
+                                  backgroundColor:
+                                    p.healthScore >= 75
+                                      ? "#4e6752"
+                                      : p.healthScore >= 45
+                                        ? "#b8823c"
+                                        : "#9b3d28",
+                                }}
+                              />
+                            </div>
+                            <span className="font-mono text-[10px] font-bold text-[#6e6257]">
+                              {p.healthScore}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-3.5 py-3 font-mono text-[#6b5d50]">
-                          {product.contributionPct.toFixed(1)}% /{" "}
-                          {product.cumulativePct.toFixed(1)}%
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <span className="rounded bg-[#f5efe6] px-2 py-0.5 font-mono text-[11px] font-bold text-[#5e5246]">
+                            {p.peakHour != null
+                              ? `${String(p.peakHour).padStart(2, "0")}:00`
+                              : "—"}
+                          </span>
                         </td>
-                        <td className="px-3.5 py-3 font-mono">
-                          {product.grossProfitNt == null
-                            ? "—"
-                            : money(product.grossProfitNt)}
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-[#52473d]">
+                          {p.salesQty.toLocaleString()}
                         </td>
-                        <td
-                          className={`px-3.5 py-3 font-mono font-bold ${
-                            product.marginPct != null && product.marginPct < 20
-                              ? "text-[#b43d2a]"
-                              : "text-[#4e6752]"
-                          }`}
-                        >
-                          {product.marginPct == null
-                            ? "—"
-                            : `${product.marginPct.toFixed(1)}%`}
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
+                          <span
+                            className="font-bold"
+                            style={{ color: st.color }}
+                          >
+                            {money(p.revenue)}
+                          </span>
+                          <span className="block text-[10px] text-[#8a7c6e]">
+                            {p.contributionPct.toFixed(1)}%
+                          </span>
                         </td>
-                        <td className="px-3.5 py-3 text-[#7c6d5e]">
-                          {product.costCoveragePct < 100
-                            ? "不完整"
-                            : product.estimatedCost
-                              ? "估算"
-                              : "實際"}
+                        <td className="whitespace-nowrap px-4 py-3 text-right font-mono font-bold">
+                          {p.marginPct != null ? (
+                            <span
+                              style={{
+                                color:
+                                  p.marginPct >= 55
+                                    ? "#4e6752"
+                                    : p.marginPct >= 35
+                                      ? "#b8823c"
+                                      : "#9b3d28",
+                              }}
+                            >
+                              {p.marginPct.toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-[#9b8d80]">—</span>
+                          )}
+                        </td>
+                        <td className="min-w-[240px] max-w-[320px] px-4 py-3 text-[11px] leading-relaxed text-[#5c5045]">
+                          {p.strategy}
                         </td>
                       </tr>
                     );
                   })}
-                  {!displayed.length && (
+                  {displayed.length === 0 && (
                     <tr>
                       <td
-                        colSpan={11}
-                        className="p-8 text-center text-[#8a7c6e]"
+                        colSpan={10}
+                        className="px-4 py-10 text-center text-xs text-[#8a7c6e]"
                       >
-                        無符合條件商品
+                        無符合篩選條件的商品
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         </>
       )}
-    </div>
-  );
-}
-
-function MetricBox({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[#e5d8c8] bg-white p-3">
-      <span className="block text-[10px] font-semibold text-[#8a7c6e]">
-        {label}
-      </span>
-      <strong
-        className="mt-1 block font-mono text-sm font-bold"
-        style={{ color: accent ?? "#302b26" }}
-      >
-        {value}
-      </strong>
-    </div>
-  );
-}
-
-function Summary({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs">
-      <p className="text-xs font-semibold text-[#7c6d5e]">{label}</p>
-      <p className="mt-2 font-mono text-2xl font-bold text-[#935941]">
-        {value}
-      </p>
-      <p className="mt-1.5 text-[11px] text-[#8a7c6e]">{detail}</p>
     </div>
   );
 }

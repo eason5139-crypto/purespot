@@ -100,6 +100,8 @@ export interface ABCProductData {
   petType: string;
   qtyRecent: number;  // 近 7 天
   qtyPrior: number;   // 前 7-14 天
+  peakHour?: number | null;   // 台北時區熱門下單小時 (0-23)
+  bestPair?: string | null;   // 同筆訂單最常共購商品
 }
 
 /** 回購率詳細指標 */

@@ -136,7 +136,23 @@ export async function GET(request: Request) {
     const petTypeCountMap = new Map<string, { count: number; amount: number }>();
 
     // ABC 商品統計
-    const abcMap = new Map<string, { name: string; category: string; petType: string; salesQty: number; revenue: number; cogs: number; coveredRevenue: number; estimatedCost: boolean; qtyRecent: number; qtyPrior: number }>();
+    const abcMap = new Map<
+      string,
+      {
+        name: string;
+        category: string;
+        petType: string;
+        salesQty: number;
+        revenue: number;
+        cogs: number;
+        coveredRevenue: number;
+        estimatedCost: boolean;
+        qtyRecent: number;
+        qtyPrior: number;
+        hours: number[];
+        pairs: Map<string, number>;
+      }
+    >();
     let monthProductRevenue = 0, monthCoveredRevenue = 0, monthCogs = 0, monthCostEstimated = false;
 
     // 回購率計算
@@ -176,6 +192,8 @@ export async function GET(request: Request) {
 
       // 品類 + 寵物類型 + ABC
       let hasAutoship = false;
+      const taipeiHour = (oDate.getUTCHours() + 8) % 24;
+      const orderProductsInAbcWindow: Array<{ id: string; name: string }> = [];
       for (const item of o.items) {
         if (item.isAutoship) hasAutoship = true;
         const itemRev = item.unitPriceNt * item.quantity;
@@ -200,14 +218,41 @@ export async function GET(request: Request) {
         const productId = prod?.id ?? item.productName;
         const productName = prod?.name ?? item.productName;
         if (oDate >= abcStart) {
-          const prev = abcMap.get(productId) ?? { name: productName, category: catName, petType, salesQty: 0, revenue: 0, cogs: 0, coveredRevenue: 0, estimatedCost: false, qtyRecent: 0, qtyPrior: 0 };
+          const prev = abcMap.get(productId) ?? {
+            name: productName,
+            category: catName,
+            petType,
+            salesQty: 0,
+            revenue: 0,
+            cogs: 0,
+            coveredRevenue: 0,
+            estimatedCost: false,
+            qtyRecent: 0,
+            qtyPrior: 0,
+            hours: new Array(24).fill(0),
+            pairs: new Map<string, number>(),
+          };
           prev.salesQty += item.quantity;
           prev.revenue += itemRev;
+          prev.hours[taipeiHour] = (prev.hours[taipeiHour] ?? 0) + item.quantity;
           if (unitCost !== null) { prev.cogs += unitCost * item.quantity; prev.coveredRevenue += itemRev; }
           if (costEstimated) prev.estimatedCost = true;
           if (oDate >= sevenDaysAgo) prev.qtyRecent += item.quantity;
           else if (oDate >= fourteenDaysAgo) prev.qtyPrior += item.quantity;
           abcMap.set(productId, prev);
+          if (!orderProductsInAbcWindow.some((entry) => entry.id === productId)) {
+            orderProductsInAbcWindow.push({ id: productId, name: productName });
+          }
+        }
+      }
+      if (orderProductsInAbcWindow.length > 1) {
+        for (const a of orderProductsInAbcWindow) {
+          const rec = abcMap.get(a.id);
+          if (!rec) continue;
+          for (const b of orderProductsInAbcWindow) {
+            if (a.id === b.id) continue;
+            rec.pairs.set(b.name, (rec.pairs.get(b.name) ?? 0) + 1);
+          }
         }
       }
       if (hasAutoship) autoshipRev += o.totalNt;
@@ -279,16 +324,39 @@ export async function GET(request: Request) {
 
     // ── ABC 商品資料 ──────────────────────────────────────
     const abcProducts: ABCProductData[] = Array.from(abcMap.entries())
-      .map(([productId, d]) => ({
-        productId, name: d.name, category: d.category, petType: d.petType,
-        salesQty: d.salesQty, revenue: d.revenue, qtyRecent: d.qtyRecent, qtyPrior: d.qtyPrior,
-        cogsNt: d.coveredRevenue === d.revenue ? d.cogs : null,
-        grossProfitNt: d.coveredRevenue === d.revenue ? d.revenue - d.cogs : null,
-        marginPct: d.coveredRevenue === d.revenue && d.revenue > 0 ? Math.round((d.revenue - d.cogs) / d.revenue * 1000) / 10 : null,
-        costCoveragePct: d.revenue > 0 ? Math.round(d.coveredRevenue / d.revenue * 1000) / 10 : 0,
-        estimatedCost: d.estimatedCost,
-      }))
-      .filter(p => p.revenue > 0)
+      .map(([productId, d]) => {
+        const maxHourQty = Math.max(...d.hours, 0);
+        const peakHour = maxHourQty > 0 ? d.hours.indexOf(maxHourQty) : null;
+        let bestPair: string | null = null;
+        let bestPairCount = 0;
+        for (const [pairName, cnt] of d.pairs.entries()) {
+          if (cnt > bestPairCount) {
+            bestPairCount = cnt;
+            bestPair = pairName;
+          }
+        }
+        return {
+          productId,
+          name: d.name,
+          category: d.category,
+          petType: d.petType,
+          salesQty: d.salesQty,
+          revenue: d.revenue,
+          qtyRecent: d.qtyRecent,
+          qtyPrior: d.qtyPrior,
+          cogsNt: d.coveredRevenue === d.revenue ? d.cogs : null,
+          grossProfitNt: d.coveredRevenue === d.revenue ? d.revenue - d.cogs : null,
+          marginPct:
+            d.coveredRevenue === d.revenue && d.revenue > 0
+              ? Math.round(((d.revenue - d.cogs) / d.revenue) * 1000) / 10
+              : null,
+          costCoveragePct: d.revenue > 0 ? Math.round((d.coveredRevenue / d.revenue) * 1000) / 10 : 0,
+          estimatedCost: d.estimatedCost,
+          peakHour,
+          bestPair,
+        };
+      })
+      .filter((p) => p.revenue > 0)
       .sort((a, b) => b.revenue - a.revenue);
 
     // ── history ───────────────────────────────────────────
