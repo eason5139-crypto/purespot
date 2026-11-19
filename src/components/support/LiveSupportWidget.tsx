@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Award,
   CheckCircle2,
   Clock,
+  Coins,
   Crown,
+  Gift,
   Headset,
+  LogIn,
   MessageSquarePlus,
   PawPrint,
   RefreshCw,
@@ -20,7 +23,9 @@ import {
 import { toast } from "sonner";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useUiStore } from "@/store/useUiStore";
 import { petLabels } from "@/lib/types";
+import { money } from "@/lib/utils";
 import {
   MEMBER_TIER_META,
   SUPPORT_CATEGORIES,
@@ -58,21 +63,48 @@ const STATUS_META: Record<
   },
 };
 
+interface AccountTierProfile {
+  userId: string | null;
+  isLoggedIn: boolean;
+  name: string;
+  email: string;
+  tier: MemberTierCode;
+  tierLabel: string;
+  priority: number;
+  spentNt: number;
+  points: number;
+  nextTierNt: number | null;
+  ordersCount: number;
+}
+
 export function LiveSupportWidget() {
   const pet = useActivePet();
   const user = useAuthStore((s) => s.user);
+  const openAuth = useUiStore((s) => s.setAuthOpen);
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"new" | "threads">("new");
   const [clientToken, setClientToken] = useState("");
+  const [profile, setProfile] = useState<AccountTierProfile>({
+    userId: null,
+    isLoggedIn: false,
+    name: "訪客飼主",
+    email: "",
+    tier: "GUEST",
+    tierLabel: MEMBER_TIER_META.GUEST.label,
+    priority: 4,
+    spentNt: 0,
+    points: 0,
+    nextTierNt: 3000,
+    ordersCount: 0,
+  });
   const [threads, setThreads] = useState<SupportThread[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // 新諮詢表單狀態（第一步必選問題分類）
+  // 新諮詢表單狀態（問題分類由買家選擇，會員等級完全由會員帳戶自動連動）
   const [category, setCategory] = useState<SupportCategory>("NUTRITION");
-  const [simulatedTier, setSimulatedTier] = useState<MemberTierCode>("GOLD");
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -88,9 +120,9 @@ export function LiveSupportWidget() {
   }, []);
 
   useEffect(() => {
-    if (user?.name && !buyerName) setBuyerName(user.name);
-    if (user?.email && !buyerEmail) setBuyerEmail(user.email);
-  }, [user, buyerName, buyerEmail]);
+    if (user?.name) setBuyerName(user.name);
+    if (user?.email) setBuyerEmail(user.email);
+  }, [user]);
 
   const petSummaryText = `${pet.name}（${pet.breed || petLabels[pet.type]} · ${pet.weightKg}kg · ${Math.max(1, Math.round(pet.ageMonths / 12))}歲${pet.allergies.length > 0 ? ` · 避開過敏原：${pet.allergies.join("、")}` : " · 無已知過敏原"}）`;
 
@@ -104,15 +136,15 @@ export function LiveSupportWidget() {
       );
       if (!res.ok) return;
       const data = (await res.json()) as {
-        profile?: {
-          tier: MemberTierCode;
-          name: string;
-          email: string;
-        };
+        profile?: AccountTierProfile;
         threads?: SupportThread[];
       };
-      if (data.profile && user) {
-        setSimulatedTier(data.profile.tier);
+      if (data.profile) {
+        setProfile(data.profile);
+        if (data.profile.isLoggedIn) {
+          setBuyerName(data.profile.name);
+          setBuyerEmail(data.profile.email);
+        }
       }
       if (data.threads) {
         setThreads(data.threads);
@@ -128,10 +160,10 @@ export function LiveSupportWidget() {
   }
 
   useEffect(() => {
-    if (open && clientToken) {
+    if (clientToken) {
       void loadThreads(clientToken);
     }
-  }, [open, clientToken]);
+  }, [open, clientToken, user?.id]);
 
   useEffect(() => {
     const onOpenSupport = (ev: Event) => {
@@ -149,7 +181,8 @@ export function LiveSupportWidget() {
 
   const currentCategoryMeta =
     SUPPORT_CATEGORIES.find((c) => c.id === category) ?? SUPPORT_CATEGORIES[0]!;
-  const currentTierMeta = MEMBER_TIER_META[simulatedTier];
+  const accountTierCode: MemberTierCode = user ? profile.tier : "GUEST";
+  const currentTierMeta = MEMBER_TIER_META[accountTierCode];
   const activeThread =
     threads.find((t) => t.id === activeThreadId) ?? threads[0] ?? null;
 
@@ -174,7 +207,6 @@ export function LiveSupportWidget() {
           clientToken,
           buyerName: buyerName.trim() || undefined,
           buyerEmail: buyerEmail.trim() || undefined,
-          simulatedTier,
           category,
           subject: subject.trim(),
           message: message.trim(),
@@ -195,7 +227,7 @@ export function LiveSupportWidget() {
       setMessage("");
       setTab("threads");
       toast.success(
-        `已依「${currentTierMeta.label}」優先序送出「${currentCategoryMeta.shortLabel}」諮詢單`,
+        `已依您帳戶的「${currentTierMeta.label}」等級送出「${currentCategoryMeta.shortLabel}」諮詢單`,
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "送出失敗");
@@ -259,7 +291,7 @@ export function LiveSupportWidget() {
               CRAFT CONCIERGE · 線上客服
             </span>
             <span className="block text-xs font-bold text-[#302b26]">
-              分類諮詢・會員分級專線
+              {user ? `${currentTierMeta.label}專線` : "分類諮詢・即時傳訊"}
             </span>
           </div>
           {unreadRepliesCount > 0 && (
@@ -284,7 +316,7 @@ export function LiveSupportWidget() {
               aria-labelledby="support-widget-title"
               className="craft-letterpress flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-[2rem] bg-[#fffdf9] shadow-2xl"
             >
-              {/* 頂部標題與會員分級狀態列 */}
+              {/* 頂部標題與自動連動的會員帳戶等級 */}
               <div className="border-b border-[#e5d6c3] bg-[linear-gradient(135deg,#faf2e6_0%,#f2e3cf_100%)] px-6 py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -297,7 +329,8 @@ export function LiveSupportWidget() {
                         className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${currentTierMeta.badgeBg} ${currentTierMeta.badgeText} ${currentTierMeta.badgeBorder}`}
                       >
                         <Crown size={11} />
-                        {currentTierMeta.label}
+                        帳戶連動：{currentTierMeta.label}（P
+                        {currentTierMeta.priority}）
                       </span>
                     </div>
                     <h2
@@ -307,7 +340,7 @@ export function LiveSupportWidget() {
                       PURESPOT 職人線上客服與營養諮詢所
                     </h2>
                     <p className="mt-0.5 text-xs text-[#6b5d50]">
-                      {currentTierMeta.slaText} · 訊息將自動分類並同步至公司後台
+                      {currentTierMeta.slaText}
                     </p>
                   </div>
 
@@ -333,7 +366,7 @@ export function LiveSupportWidget() {
                     }`}
                   >
                     <MessageSquarePlus size={14} />
-                    1. 選擇分類發起諮詢
+                    1. 選擇問題分類提問
                   </button>
                   <button
                     type="button"
@@ -365,50 +398,77 @@ export function LiveSupportWidget() {
               <div className="flex-1 overflow-y-auto p-5 sm:p-6">
                 {tab === "new" ? (
                   <form onSubmit={handleSubmitNew} className="space-y-4">
-                    {/* 會員分級佇列切換／顯示（支援展示不同等級在後台的分級排序） */}
-                    <div className="rounded-2xl border border-[#e3d3c0] bg-[#faf4eb] p-3.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5a4b3e]">
-                          <Award size={14} className="text-[#935941]" />
-                          會員等級分級通道（後台依等級優先派單）
-                        </span>
-                        <span className="font-mono text-[11px] font-semibold text-[#935941]">
-                          Priority P{currentTierMeta.priority}
-                        </span>
-                      </div>
-                      <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                        {(
-                          ["GOLD", "SILVER", "MEMBER", "GUEST"] as const
-                        ).map((tierKey) => {
-                          const m = MEMBER_TIER_META[tierKey];
-                          const active = simulatedTier === tierKey;
-                          return (
-                            <button
-                              key={tierKey}
-                              type="button"
-                              onClick={() => setSimulatedTier(tierKey)}
-                              className={`rounded-xl border px-2.5 py-2 text-left transition-all ${
-                                active
-                                  ? "border-[#935941] bg-white font-bold text-[#935941] shadow-2xs ring-2 ring-[#935941]/15"
-                                  : "border-[#e2d3c1] bg-[#fffcf8] text-[#6d5f52] hover:border-[#c8b299]"
-                              }`}
+                    {/* 自動連動的會員帳戶等級與點數狀態卡（不可手選，直接同步帳戶） */}
+                    {user ? (
+                      <div className="rounded-2xl border border-[#dfd0be] bg-[#faf4eb] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold ${currentTierMeta.badgeBg} ${currentTierMeta.badgeText} ${currentTierMeta.badgeBorder}`}
                             >
-                              <span className="block font-mono text-[10px] opacity-75">
-                                P{m.priority} 等級
-                              </span>
-                              <span className="block truncate text-xs font-bold">
-                                {m.label}
-                              </span>
-                            </button>
-                          );
-                        })}
+                              <Crown size={12} />
+                              {currentTierMeta.label}
+                            </span>
+                            <span className="text-xs font-bold text-[#302b26]">
+                              {profile.name} 的會員帳戶已連動
+                            </span>
+                          </div>
+                          <span className="font-mono text-[11px] font-bold text-[#935941]">
+                            派單優先序：P{currentTierMeta.priority}
+                          </span>
+                        </div>
+                        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-[#e8dbc9] pt-2.5 text-xs text-[#695b4e]">
+                          <span>
+                            累計消費{" "}
+                            <strong className="font-mono text-[#302b26]">
+                              {money(profile.spentNt)}
+                            </strong>{" "}
+                            · 可用點數{" "}
+                            <strong className="font-mono text-[#935941]">
+                              {profile.points} 點
+                            </strong>
+                            （可折現金 {money(profile.points)}）
+                          </span>
+                          <Link
+                            href="/rewards"
+                            onClick={() => setOpen(false)}
+                            className="inline-flex items-center gap-1 font-bold text-[#935941] hover:underline"
+                          >
+                            <Gift size={12} />
+                            前往點數商店
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e3d3c0] bg-[#faf4eb] p-4">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full border border-[#dcd2c6] bg-white px-2.5 py-0.5 text-[11px] font-bold text-[#6e6257]">
+                              目前身分：未登入訪客（P4 一般通道）
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-[#6b5d50]">
+                            登入會員即可自動同步您的帳戶等級（星光 VIP／暖心夥伴／新朋友），享後台優先派單與點數回饋。
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            openAuth(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#935941] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#7d4934]"
+                        >
+                          <LogIn size={13} />
+                          登入連動會員等級
+                        </button>
+                      </div>
+                    )}
 
                     {/* 第一步：必選五大問題分類 */}
                     <div>
                       <p className="text-xs font-bold text-[#302b26]">
-                        第一步：請選擇您要詢問的問題類別（後台將自動分流至對應專員）
+                        請選擇您要詢問的問題類別（後台將自動歸類並依您帳戶等級優先派單）
                       </p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         {SUPPORT_CATEGORIES.map((cat) => {
@@ -498,6 +558,7 @@ export function LiveSupportWidget() {
                         <input
                           type="text"
                           value={buyerName}
+                          readOnly={Boolean(user)}
                           onChange={(e) => setBuyerName(e.target.value)}
                           placeholder="例：麻糬媽咪"
                           className="input !mt-1 !min-h-9 !py-1.5 text-xs"
@@ -508,6 +569,7 @@ export function LiveSupportWidget() {
                         <input
                           type="email"
                           value={buyerEmail}
+                          readOnly={Boolean(user)}
                           onChange={(e) => setBuyerEmail(e.target.value)}
                           placeholder="通知回覆用信箱"
                           className="input !mt-1 !min-h-9 !py-1.5 text-xs"
@@ -550,7 +612,7 @@ export function LiveSupportWidget() {
                           maxLength={1500}
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
-                          placeholder="請輸入想詢問的細節，後台客服與營養師將依您的問題分類與會員等級優先回覆…"
+                          placeholder="請輸入想詢問的細節，後台客服與營養師將依您的問題分類與帳戶會員等級優先回覆…"
                           className="input !mt-1 min-h-20 text-xs"
                         />
                       </label>
@@ -564,12 +626,11 @@ export function LiveSupportWidget() {
                       <Send size={14} />
                       {submitting
                         ? "正在傳送至後台客服中心…"
-                        : `以「${currentTierMeta.label}」通道送出（分類：${currentCategoryMeta.shortLabel}）`}
+                        : `送出諮詢（帳戶等級：${currentTierMeta.label} · 分類：${currentCategoryMeta.shortLabel}）`}
                     </button>
                   </form>
                 ) : (
                   <div className="space-y-4">
-                    {/* 諮詢單切換列 */}
                     {threads.length > 0 ? (
                       <>
                         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -728,7 +789,7 @@ export function LiveSupportWidget() {
                           目前尚無諮詢紀錄
                         </p>
                         <p className="mt-1 text-xs text-[#7c6e60]">
-                          請點擊上方「1. 選擇分類發起諮詢」傳送訊息給我們。
+                          請點擊上方「1. 選擇問題分類提問」傳送訊息給我們。
                         </p>
                       </div>
                     )}

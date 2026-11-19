@@ -36,9 +36,10 @@ import {
 const links = [
   { href: "/", label: "品牌首頁", badge: "" },
   { href: "/shop", label: "選物本舖", badge: "旬食木盒" },
-  { href: "/transparency", label: "7C 溯源誌", badge: "" },
-  { href: "/community", label: "街坊生活誌", badge: "里民手形" },
+  { href: "/rewards", label: "點數商店", badge: "1點折1元" },
+  { href: "/community", label: "街坊生活誌", badge: "數位證書" },
   { href: "/care", label: "飼育道具室", badge: "" },
+  { href: "/transparency", label: "7C 溯源誌", badge: "" },
   { href: "/account", label: "我的帳戶", badge: "" },
 ];
 

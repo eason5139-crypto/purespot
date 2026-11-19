@@ -25,6 +25,7 @@ export const checkoutOrderSchema = z.object({
     address: z.string().trim().min(5).max(200),
   }),
   discountCode: z.string().trim().max(40).optional(),
+  pointsToUse: z.number().int().min(0).max(100000).optional(),
   familyGroupId: z.string().uuid().optional(),
   giftCard: z.object({
     included: z.boolean(), recipient: z.string().trim().max(30), message: z.string().trim().max(120),
@@ -126,6 +127,7 @@ export async function createCheckoutOrder(userId: string, input: CheckoutOrderIn
     shippingAddress: input.shippingAddress,
   }, `CHECKOUT:${input.paymentMethod}:${input.idempotencyKey}`, {
     discountCode: input.discountCode,
+    pointsToUse: input.pointsToUse,
     familyGroupId: input.familyGroupId,
     giftCard: input.giftCard,
   });

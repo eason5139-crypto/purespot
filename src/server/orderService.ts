@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "./db";
 import { ApiError } from "./http";
+import { reconcilePoints } from "./membership";
 export const orderInputSchema = z
   .object({
     idempotencyKey: z.uuid(),
@@ -32,8 +33,21 @@ export async function createOrder(
   userId: string,
   input: z.infer<typeof orderInputSchema>,
   paymentReference: string,
-  options?: { discountCode?: string; familyGroupId?: string; giftCard?: { included: boolean; recipient: string; message: string; signature: string; font: "serif" | "sans"; tone: "clay" | "blue" } },
+  options?: {
+    discountCode?: string;
+    pointsToUse?: number;
+    familyGroupId?: string;
+    giftCard?: {
+      included: boolean;
+      recipient: string;
+      message: string;
+      signature: string;
+      font: "serif" | "sans";
+      tone: "clay" | "blue";
+    };
+  },
 ) {
+  await reconcilePoints(userId);
   const requestHash = createHash("sha256")
     .update(
       JSON.stringify({
@@ -124,8 +138,15 @@ export async function createOrder(
       const shippingNt = subtotalNt >= threshold ? 0 : 80;
       const redemption = options?.discountCode ? await tx.rewardRedemption.findFirst({ where: { code: options.discountCode.toUpperCase(), userId, orderId: null } }) : null;
       if (options?.discountCode && !redemption) throw new ApiError(400, "優惠代碼無效或已使用");
-      if (redemption && redemption.discountNt > subtotalNt) throw new ApiError(400, "本次商品金額低於優惠折抵額");
-      const discountNt = redemption?.discountNt ?? 0;
+      const pointsToUse = Math.max(0, Math.floor(options?.pointsToUse ?? 0));
+      if (pointsToUse > 0) {
+        const balance = await tx.pointEntry.aggregate({ where: { userId }, _sum: { points: true } });
+        const currentPoints = Math.max(0, balance._sum.points ?? 0);
+        if (pointsToUse > currentPoints) throw new ApiError(400, "會員可用點數不足，請調整折抵點數");
+      }
+      const couponDiscountNt = redemption?.discountNt ?? 0;
+      const discountNt = couponDiscountNt + pointsToUse;
+      if (discountNt > subtotalNt) throw new ApiError(400, "本次商品金額低於總折抵額");
       for (const [variantId, quantity] of demand) {
         const reserved = await tx.productVariant.updateMany({
           where: { id: variantId, stock: { gte: quantity } },
@@ -156,6 +177,30 @@ export async function createOrder(
         },
       });
       if (redemption) await tx.rewardRedemption.update({ where: { id: redemption.id }, data: { orderId: order.id } });
+      if (pointsToUse > 0) {
+        await tx.pointEntry.create({
+          data: {
+            userId,
+            sourceKey: `order-points-use:${order.id}`,
+            title: `結帳點數折抵現金（1點折NT$1 · 訂單 #${order.id.slice(0, 8)}）`,
+            points: -pointsToUse,
+          },
+        });
+      }
+      const earnedPoints = Math.floor(order.totalNt / 10);
+      if (earnedPoints > 0) {
+        await tx.pointEntry.createMany({
+          data: [
+            {
+              userId,
+              sourceKey: `order-10nt:${order.id}`,
+              title: `購物回饋（每滿 NT$10 贈 1 點 · 訂單 #${order.id.slice(0, 8)}）`,
+              points: earnedPoints,
+            },
+          ],
+          skipDuplicates: true,
+        });
+      }
       if (options?.familyGroupId) await tx.familyListItem.deleteMany({ where: { groupId: options.familyGroupId } });
       return order;
     },

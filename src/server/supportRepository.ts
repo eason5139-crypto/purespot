@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "./db";
+import { reconcilePoints } from "./membership";
 import {
   INITIAL_DEMO_THREADS,
   MEMBER_TIER_META,
@@ -39,30 +40,37 @@ async function getMembershipThresholds() {
 
 export async function getUserTierProfile(userId: string | null): Promise<{
   userId: string | null;
+  isLoggedIn: boolean;
   name: string;
   email: string;
   tier: MemberTierCode;
   tierLabel: string;
   priority: number;
   spentNt: number;
+  points: number;
+  nextTierNt: number | null;
   ordersCount: number;
 }> {
   if (!userId) {
     const meta = MEMBER_TIER_META.GUEST;
     return {
       userId: null,
+      isLoggedIn: false,
       name: "訪客飼主",
       email: "",
       tier: "GUEST",
       tierLabel: meta.label,
       priority: meta.priority,
       spentNt: 0,
+      points: 0,
+      nextTierNt: 3000,
       ordersCount: 0,
     };
   }
 
   try {
-    const [user, config] = await Promise.all([
+    await reconcilePoints(userId);
+    const [user, config, pointBalance] = await Promise.all([
       db.user.findUnique({
         where: { id: userId },
         include: {
@@ -75,46 +83,66 @@ export async function getUserTierProfile(userId: string | null): Promise<{
         },
       }),
       getMembershipThresholds(),
+      db.pointEntry.aggregate({
+        where: { userId },
+        _sum: { points: true },
+      }),
     ]);
 
     if (!user) {
       const meta = MEMBER_TIER_META.GUEST;
       return {
         userId: null,
+        isLoggedIn: false,
         name: "訪客飼主",
         email: "",
         tier: "GUEST",
         tierLabel: meta.label,
         priority: meta.priority,
         spentNt: 0,
+        points: 0,
+        nextTierNt: config.silverSpendNt,
         ordersCount: 0,
       };
     }
 
     const spentNt = user.orders.reduce((acc, o) => acc + o.totalNt, 0);
+    const points = Math.max(0, pointBalance._sum.points ?? 0);
     const tier = resolveMemberTier(spentNt, true, config);
     const meta = MEMBER_TIER_META[tier];
+    const nextTierNt =
+      spentNt < config.silverSpendNt
+        ? config.silverSpendNt
+        : spentNt < config.goldSpendNt
+          ? config.goldSpendNt
+          : null;
 
     return {
       userId: user.id,
+      isLoggedIn: true,
       name: user.name || user.email.split("@")[0] || "會員飼主",
       email: user.email,
       tier,
       tierLabel: meta.label,
       priority: meta.priority,
       spentNt,
+      points,
+      nextTierNt,
       ordersCount: user.orders.length,
     };
   } catch {
     const meta = MEMBER_TIER_META.MEMBER;
     return {
       userId,
+      isLoggedIn: true,
       name: "會員飼主",
       email: "",
       tier: "MEMBER",
       tierLabel: meta.label,
       priority: meta.priority,
       spentNt: 0,
+      points: 120,
+      nextTierNt: 3000,
       ordersCount: 0,
     };
   }
@@ -271,7 +299,6 @@ export async function listAllSupportThreads(): Promise<SupportThread[]> {
   }
 
   return Array.from(map.values()).sort((a, b) => {
-    // 未結案優先，其次依會員等級優先權（GOLD P1 -> SILVER P2 -> MEMBER P3 -> GUEST P4），再依更新時間
     const aOpen = a.status !== "RESOLVED" ? 0 : 1;
     const bOpen = b.status !== "RESOLVED" ? 0 : 1;
     if (aOpen !== bOpen) return aOpen - bOpen;
@@ -288,7 +315,6 @@ export async function listBuyerThreads(params: {
   return all.filter((t) => {
     if (params.userId && t.userId === params.userId) return true;
     if (params.clientToken && t.clientToken === params.clientToken) return true;
-    // 展示用：若買家尚未建立任何工單，保留第一筆 VIP 與第二筆暖心夥伴作為示範參考
     return false;
   });
 }
@@ -298,48 +324,27 @@ export async function createSupportThread(input: {
   clientToken: string;
   buyerName?: string;
   buyerEmail?: string;
-  simulatedTier?: MemberTierCode;
   category: SupportCategory;
   subject: string;
   message: string;
   orderId?: string | null;
   petSummary?: string | null;
 }): Promise<SupportThread> {
+  // 直接從真實會員帳戶讀取等級、累計消費與訂單數，絕不允許前端偽造或手選等級
   const profile = await getUserTierProfile(input.userId);
-  const tierCode: MemberTierCode =
-    input.simulatedTier && input.simulatedTier in MEMBER_TIER_META
-      ? input.simulatedTier
-      : profile.tier;
+  const tierCode: MemberTierCode = profile.tier;
   const meta = MEMBER_TIER_META[tierCode];
 
   const now = new Date().toISOString();
   const id = `chat-${randomUUID().slice(0, 12)}`;
   const buyerName =
-    input.buyerName?.trim() || profile.name || "台灣街坊毛孩飼主";
+    (profile.isLoggedIn ? profile.name : input.buyerName?.trim()) ||
+    profile.name ||
+    "台灣街坊毛孩飼主";
   const buyerEmail =
-    input.buyerEmail?.trim() || profile.email || "guest@purespot.tw";
-
-  const spentByTier =
-    profile.spentNt > 0
-      ? profile.spentNt
-      : tierCode === "GOLD"
-        ? 14800
-        : tierCode === "SILVER"
-          ? 5200
-          : tierCode === "MEMBER"
-            ? 1200
-            : 0;
-
-  const ordersByTier =
-    profile.ordersCount > 0
-      ? profile.ordersCount
-      : tierCode === "GOLD"
-        ? 6
-        : tierCode === "SILVER"
-          ? 3
-          : tierCode === "MEMBER"
-            ? 1
-            : 0;
+    (profile.isLoggedIn ? profile.email : input.buyerEmail?.trim()) ||
+    profile.email ||
+    "guest@purespot.tw";
 
   const thread: SupportThread = {
     id,
@@ -351,8 +356,8 @@ export async function createSupportThread(input: {
     memberTier: tierCode,
     memberTierLabel: meta.label,
     tierPriority: meta.priority,
-    totalSpentNt: spentByTier,
-    ordersCount: ordersByTier,
+    totalSpentNt: profile.spentNt,
+    ordersCount: profile.ordersCount,
     category: input.category,
     subject: input.subject.trim(),
     status: "OPEN",
@@ -457,7 +462,6 @@ export async function adminReplySupportThread(input: {
   const trimmed = input.response?.trim() || "";
 
   if (trimmed) {
-    // 避免同一內容重複推入
     const lastAdmin = [...nextMessages]
       .reverse()
       .find((m) => m.sender === "ADMIN");

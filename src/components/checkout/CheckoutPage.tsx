@@ -107,11 +107,26 @@ function CheckoutContent() {
   const [giftCard, setGiftCard] = useState<GiftCard>(defaultGiftCard);
   const [discountCode, setDiscountCode] = useState("");
   const [availableCodes, setAvailableCodes] = useState<{ code: string; discountNt: number; reward: { title: string } }[]>([]);
+  const [availablePoints, setAvailablePoints] = useState<number>(0);
+  const [memberTier, setMemberTier] = useState<string>("新朋友");
+  const [pointsToUse, setPointsToUse] = useState<number>(0);
 
   useEffect(() => {
     try { const stored = localStorage.getItem(giftCardStorageKey); if (stored) setGiftCard({ ...defaultGiftCard, ...JSON.parse(stored) }); } catch { /* 保留預設 */ }
   }, []);
-  useEffect(() => { if (user) { void useFamilyStore.getState().loadCloud(); void fetch("/api/account/membership", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((data) => { if (data?.redemptions) setAvailableCodes(data.redemptions); }).catch(() => {}); } }, [user?.id]);
+  useEffect(() => {
+    if (user) {
+      void useFamilyStore.getState().loadCloud();
+      void fetch("/api/account/membership", { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          if (data?.redemptions) setAvailableCodes(data.redemptions);
+          if (typeof data?.points === "number") setAvailablePoints(Math.max(0, data.points));
+          if (typeof data?.tier === "string") setMemberTier(data.tier);
+        })
+        .catch(() => {});
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -136,7 +151,10 @@ function CheckoutContent() {
 
   const shipping = isFamilyMode ? (subtotal >= 999 ? 0 : 80) : cartTotals(personalItems).shippingNt;
   const selectedDiscount = availableCodes.find((entry) => entry.code === discountCode)?.discountNt ?? 0;
-  const total = Math.max(0, subtotal + shipping - selectedDiscount);
+  const maxPointsUsable = Math.min(availablePoints, Math.max(0, subtotal - selectedDiscount));
+  const effectivePointsToUse = Math.min(pointsToUse, maxPointsUsable);
+  const total = Math.max(0, subtotal + shipping - selectedDiscount - effectivePointsToUse);
+  const estimatedEarnedPoints = Math.floor(total / 10);
   const stepIndex = steps.findIndex((s) => s.id === step);
 
   const hasItems = isFamilyMode ? sharedItems.length > 0 : personalItems.length > 0;
@@ -174,6 +192,7 @@ function CheckoutContent() {
           idempotencyKey: requestKey.current,
           paymentMethod: selectedPayment,
           discountCode: discountCode || undefined,
+          pointsToUse: effectivePointsToUse > 0 ? effectivePointsToUse : undefined,
           familyGroupId: isFamilyMode ? familyGroupId : undefined,
           giftCard,
           items,
@@ -343,7 +362,102 @@ function CheckoutContent() {
 
             {/* 摘要與右側結帳卡 */}
             <div className="panel p-6 h-fit bg-white">
-              <h3 className="font-semibold text-[#302b26] mb-4">訂單摘要</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-[#302b26]">訂單摘要</h3>
+                {user && (
+                  <span className="rounded-full border border-[#dfd0be] bg-[#faf4eb] px-2.5 py-0.5 text-xs font-bold text-[#935941]">
+                    {memberTier} · 現有 {availablePoints} 點
+                  </span>
+                )}
+              </div>
+
+              {/* 會員點數折抵現金控制器（1 點折 NT$1） */}
+              {user ? (
+                <div className="mb-4 rounded-2xl border border-[#dfd0be] bg-[#faf5ed] p-3.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#302b26]">
+                      會員點數折抵現金（1 點 = NT$1）
+                    </span>
+                    <Link
+                      href="/rewards"
+                      className="font-bold text-[#935941] hover:underline"
+                    >
+                      點數商店 →
+                    </Link>
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#6b5d50]">
+                    您目前可用 <strong className="font-mono text-[#935941]">{availablePoints} 點</strong>
+                    ，本單最高可折抵 <strong className="font-mono">{money(maxPointsUsable)}</strong>
+                  </p>
+                  {maxPointsUsable > 0 && (
+                    <div className="mt-2.5 space-y-2">
+                      <input
+                        type="range"
+                        min={0}
+                        max={maxPointsUsable}
+                        step={1}
+                        value={effectivePointsToUse}
+                        onChange={(e) => setPointsToUse(Number(e.target.value))}
+                        aria-label="選擇折抵點數"
+                        className="h-2 w-full cursor-pointer accent-[#935941]"
+                      />
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setPointsToUse(0)}
+                            className="rounded-lg border border-[#d8c8b4] bg-white px-2 py-1 text-[11px] font-semibold text-[#675e53] hover:border-[#935941]"
+                          >
+                            不折抵
+                          </button>
+                          {maxPointsUsable >= 50 && (
+                            <button
+                              type="button"
+                              onClick={() => setPointsToUse(50)}
+                              className="rounded-lg border border-[#d8c8b4] bg-white px-2 py-1 text-[11px] font-semibold text-[#675e53] hover:border-[#935941]"
+                            >
+                              折 50 點
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setPointsToUse(maxPointsUsable)}
+                            className="rounded-lg bg-[#935941] px-2.5 py-1 text-[11px] font-bold text-white"
+                          >
+                            全額折抵 ({maxPointsUsable} 點)
+                          </button>
+                        </div>
+                        <span className="font-mono font-bold text-[#4e6752]">
+                          折抵 -{money(effectivePointsToUse)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mb-4 rounded-xl border border-[#dfd0be] bg-[#faf5ed] p-3 text-xs text-[#675e53]">
+                  登入會員即可享<strong className="text-[#935941]">「消費 NT$10 累積 1 點、1 點折抵現金 NT$1」</strong>與新朋友開戶 120 點禮遇。
+                </div>
+              )}
+
+              {availableCodes.length > 0 && (
+                <label className="mb-4 block rounded-xl border border-[#e1d7cc] bg-[#fffdf9] p-3 text-xs font-semibold text-[#302b26]">
+                  套用點數商店兌換禮券
+                  <select
+                    className="input !mt-1.5 !min-h-9 !py-1 text-xs"
+                    value={discountCode}
+                    onChange={(event) => setDiscountCode(event.target.value)}
+                  >
+                    <option value="">不使用禮券</option>
+                    {availableCodes.map((entry) => (
+                      <option key={entry.code} value={entry.code}>
+                        {entry.reward.title} (-{money(entry.discountNt)}) · {entry.code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-[#675e53]">
                   <span>商品小計</span>
@@ -355,10 +469,25 @@ function CheckoutContent() {
                     {shipping === 0 ? "免運費 (滿額優惠)" : money(shipping)}
                   </span>
                 </div>
-                {selectedDiscount > 0 && <div className="flex justify-between text-[#4e6752]"><span>會員優惠折抵</span><span>-{money(selectedDiscount)}</span></div>}
+                {selectedDiscount > 0 && (
+                  <div className="flex justify-between text-[#4e6752]">
+                    <span>點數禮券折抵</span>
+                    <span className="font-mono">-{money(selectedDiscount)}</span>
+                  </div>
+                )}
+                {effectivePointsToUse > 0 && (
+                  <div className="flex justify-between text-[#4e6752]">
+                    <span>會員點數折抵 ({effectivePointsToUse} 點)</span>
+                    <span className="font-mono">-{money(effectivePointsToUse)}</span>
+                  </div>
+                )}
                 <div className="border-t border-[#e8ded3] pt-3 flex justify-between font-semibold text-[#302b26]">
                   <span>訂單總計</span>
                   <span className="font-mono text-[#935941] font-bold text-lg">{money(total)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl bg-[#eef4ef] px-3 py-2 text-xs font-semibold text-[#38573d]">
+                  <span>本單完成可獲回饋點數（NT$10 = 1點）</span>
+                  <span className="font-mono font-bold">+{estimatedEarnedPoints} 點</span>
                 </div>
               </div>
 
@@ -536,6 +665,28 @@ function CheckoutContent() {
               ))}
             </div>
 
+            {user && maxPointsUsable > 0 && (
+              <div className="mb-5 rounded-2xl border border-[#dfd0be] bg-[#faf5ed] p-4 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold text-[#302b26]">
+                    會員點數折抵現金（可用 {availablePoints} 點 · 1 點 = NT$1）
+                  </span>
+                  <span className="font-mono font-bold text-[#4e6752]">
+                    已折抵 -{money(effectivePointsToUse)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPointsUsable}
+                  step={1}
+                  value={effectivePointsToUse}
+                  onChange={(e) => setPointsToUse(Number(e.target.value))}
+                  aria-label="付款前調整折抵點數"
+                  className="mt-2.5 h-2 w-full cursor-pointer accent-[#935941]"
+                />
+              </div>
+            )}
             {availableCodes.length > 0 && <label className="mb-5 block rounded-2xl border border-[#e1d7cc] bg-white p-4 text-sm font-semibold text-[#302b26]">使用會員優惠<select className="input mt-2" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)}><option value="">這次不使用</option>{availableCodes.map((entry) => <option key={entry.code} value={entry.code}>{entry.reward.title} · {entry.code}</option>)}</select></label>}
             {giftCard.included && <div className="mb-5 rounded-2xl border border-[#e1d7cc] bg-[#fff9ef] p-4 text-sm"><strong className="text-[#935941]">隨箱問候卡</strong><p className="mt-1 text-[#675e53]">致 {giftCard.recipient}：{giftCard.message}</p><p className="mt-1 text-right text-xs text-[#675e53]">{giftCard.signature}</p></div>}
             <PaymentExperience method={selectedPayment} total={total} onReadyChange={setPaymentReady} />

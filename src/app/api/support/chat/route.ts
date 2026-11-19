@@ -33,7 +33,6 @@ export async function GET(request: Request) {
       listAllSupportThreads(),
     ]);
 
-    // 若買家尚無自己建立的對話，一併回傳公開示範對話方便即時預覽與體驗前後台連動
     const threads =
       ownThreads.length > 0 ? ownThreads : allThreads.slice(0, 2);
 
@@ -55,7 +54,6 @@ const createSchema = z
     clientToken: z.string().min(1).max(120),
     buyerName: z.string().trim().max(60).optional(),
     buyerEmail: z.string().trim().max(120).optional(),
-    simulatedTier: z.enum(["GOLD", "SILVER", "MEMBER", "GUEST"]).optional(),
     category: z.enum([
       "NUTRITION",
       "ALLERGY",
@@ -93,7 +91,6 @@ export async function POST(request: Request) {
         clientToken: input.clientToken,
         buyerName: input.buyerName,
         buyerEmail: input.buyerEmail,
-        simulatedTier: input.simulatedTier,
         category: input.category,
         subject: input.subject,
         message: input.message,
