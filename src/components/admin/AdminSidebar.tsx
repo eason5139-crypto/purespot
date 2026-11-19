@@ -23,7 +23,7 @@ const groups = [
   ] },
   { title: "交易與顧客", links: [
     { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
-    { href: "/admin/support", label: "線上客服與分級派單", icon: Headset },
+    { href: "/admin/support", label: "客服管理", icon: Headset },
     { href: "/admin/members", label: "會員管理", icon: Users },
     { href: "/admin/membership", label: "會員規則與優惠", icon: Award },
   ] },
@@ -86,14 +86,13 @@ export function AdminSidebar({ adminUsername }: { adminUsername: string }) {
       {mobileOpen && (
         <div className="fixed inset-x-0 top-14 z-40 max-h-[calc(100vh-3.5rem)] overflow-y-auto border-b border-[#e8ded3] bg-white p-4 shadow-2xl lg:hidden">
           <nav aria-label="後台導覽">{navigation}</nav>
-          <Link href="/" target="_blank" className="flex min-h-11 items-center gap-2 px-3 text-sm text-[#5e544a] hover:text-[#5B93C5]"><ExternalLink size={16} />開啟官網</Link>
+          <Link href="/" target="_blank" className="flex min-h-11 items-center gap-2 px-3 text-sm text-[#5e544a] hover:text-[#935941]"><ExternalLink size={16} />開啟官網</Link>
           <button type="button" onClick={() => void logout()} className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-[#5e544a] hover:text-rose-600"><LogOut size={16} />登出</button>
         </div>
       )}
       <aside className="hidden min-h-screen w-64 shrink-0 flex-col border-r border-[#e8ded3] bg-white lg:flex">
         <div className="border-b border-[#e8ded3] px-6 py-6">
           <Link href="/admin/dashboard" aria-label="PURESPOT 管理中心"><Image src="/images/brand-logo.png" alt="PURESPOT" width={140} height={35} className="h-auto w-[140px]" /></Link>
-          <p className="mt-1 text-xs text-[#8a7f75]">內容與營運管理中心</p>
         </div>
         <nav aria-label="後台導覽" className="flex-1 px-3 py-6">{navigation}</nav>
         <div className="border-t border-[#e8ded3] px-3 py-4 bg-[#fcfaf7]">

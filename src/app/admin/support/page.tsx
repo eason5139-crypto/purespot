@@ -178,29 +178,19 @@ export default function AdminSupportPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
-      {/* 頂部橫幅 */}
-      <header className="craft-letterpress rounded-[28px] p-7 sm:p-9">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-xs font-bold tracking-[0.18em] text-[#935941]">
-              TIERED CUSTOMER CONCIERGE · 分級分類客服中心
-            </p>
-            <h1 className="editorial-title mt-2 flex items-center gap-3 text-3xl font-bold text-[#302b26]">
-              <Headset size={28} className="text-[#935941]" />
-              線上客服與會員分級派單中心
-            </h1>
-            <p className="mt-2 text-sm text-[#675b4f]">
-              自動依買家問題分類（營養配方／換糧過敏／定期配／訂單物流／退換售後）與會員消費等級（P1
-              星光夥伴 VIP 優先佇列）進行分級排程與雙向對話。
-            </p>
-          </div>
+      <header className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="flex items-center gap-2.5 text-2xl font-bold text-[#302b26]">
+            <Headset size={24} className="text-[#935941]" />
+            客服管理
+          </h1>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#d8c8b4] bg-white px-4 py-2.5 text-xs font-bold text-[#5e5043] shadow-2xs transition-colors hover:bg-[#faf3e8]"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#d8c8b4] bg-white px-4 py-2 text-xs font-bold text-[#5e5043] transition-colors hover:bg-[#faf3e8]"
           >
             <RefreshCw size={14} />
-            同步最新訊息
+            更新
           </button>
         </div>
 
@@ -558,11 +548,10 @@ export default function AdminSupportPage() {
               })}
             </div>
 
-            {/* 針對該問題分類的快速專業回覆範本 */}
             <div className="rounded-2xl border border-[#e6d8c8] bg-[#fffaf2] p-4">
               <p className="flex items-center gap-1.5 text-xs font-bold text-[#935941]">
                 <Sparkles size={14} />
-                「{activeCategoryMeta.label}」職人快速回覆範本（點擊自動填入下方回覆框）：
+                快速回覆範本
               </p>
               <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
                 {activeCategoryMeta.adminTemplates.map((tpl, idx) => (

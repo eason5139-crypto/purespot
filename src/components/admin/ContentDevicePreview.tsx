@@ -80,19 +80,19 @@ export function ContentDevicePreview({ content, section, field }: { content: Sit
   return (
     <section className={`${expanded ? "fixed inset-3 z-[100] overflow-y-auto sm:inset-6" : "overflow-hidden lg:sticky lg:top-6"} rounded-[28px] border border-[#cbd7df] bg-[#e7eff5] shadow-[0_24px_65px_-40px_rgba(25,56,77,.55)]`}>
       <div className="border-b border-[#cbd7df] bg-[#f8fbfc] p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3"><p className="text-[11px] font-bold tracking-[.17em] text-[#5B93C5]">LIVE SITE PREVIEW</p><button type="button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "縮小預覽" : "放大預覽"} className="flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[#315F86] hover:bg-[#e6edf2]">{expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{expanded ? "縮小" : "放大"}</button></div>
-        <h2 className="mt-1 text-lg font-semibold text-[#263746]">網站即時預覽</h2>
+        <div className="flex items-start justify-between gap-3"><p className="text-[11px] font-bold tracking-[.17em] text-[#935941]">LIVE SITE PREVIEW</p><button type="button" onClick={() => setExpanded((value) => !value)} aria-label={expanded ? "縮小預覽" : "放大預覽"} className="flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[#935941] hover:bg-[#e6edf2]">{expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{expanded ? "縮小" : "放大"}</button></div>
+        <h2 className="mt-1 text-lg font-semibold text-[#302b26]">網站即時預覽</h2>
         <p className="mt-1 text-xs leading-5 text-[#65727a]">目前查看：{page === target.page ? target.label : pages.find((item) => item.path === page)?.label}。切換裝置，儲存前只有你看得到變動。</p>
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="預覽頁面">{pages.map((item) => <button key={item.path} type="button" aria-pressed={page === item.path} onClick={() => setPage(item.path)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${page === item.path ? "bg-[#315F86] text-white" : "bg-[#e6edf2] text-[#60707b] hover:bg-[#d6e5ef]"}`}>{item.label}</button>)}</div>
+        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="預覽頁面">{pages.map((item) => <button key={item.path} type="button" aria-pressed={page === item.path} onClick={() => setPage(item.path)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${page === item.path ? "bg-[#935941] text-white" : "bg-[#e6edf2] text-[#60707b] hover:bg-[#d6e5ef]"}`}>{item.label}</button>)}</div>
         <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-[#e6edf2] p-1" role="group" aria-label="預覽裝置">
           {(Object.entries(devices) as [Device, typeof selected][]).map(([key, item]) => {
             const Icon = item.icon;
-            return <button key={key} type="button" aria-pressed={device === key} onClick={() => setDevice(key)} className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-all ${device === key ? "bg-white text-[#315F86] shadow-sm" : "text-[#66747f] hover:bg-white/60"}`}><Icon size={15} />{item.label}</button>;
+            return <button key={key} type="button" aria-pressed={device === key} onClick={() => setDevice(key)} className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition-all ${device === key ? "bg-white text-[#935941] shadow-sm" : "text-[#66747f] hover:bg-white/60"}`}><Icon size={15} />{item.label}</button>;
           })}
         </div>
       </div>
       <div ref={containerRef} className="overflow-hidden p-3 sm:p-5">
-        <div className="mx-auto overflow-hidden rounded-[20px] border-[6px] border-[#263746] bg-white shadow-[0_18px_40px_-20px_rgba(25,48,65,.7)]" style={{ width: selected.width * scale + 12, height: selected.height * scale + 12 }}>
+        <div className="mx-auto overflow-hidden rounded-[20px] border-[6px] border-[#302b26] bg-white shadow-[0_18px_40px_-20px_rgba(25,48,65,.7)]" style={{ width: selected.width * scale + 12, height: selected.height * scale + 12 }}>
           <iframe
             key={`${device}-${page}`}
             ref={iframeRef}
@@ -103,7 +103,7 @@ export function ContentDevicePreview({ content, section, field }: { content: Sit
             style={{ width: selected.width, height: selected.height, transform: `scale(${scale})`, transformOrigin: "top left" }}
           />
         </div>
-        <p className="mt-3 text-center text-[11px] text-[#687985]">{selected.width} × {selected.height} · 可在預覽內捲動</p>
+        <p className="mt-3 text-center text-[11px] text-[#6e6257]">{selected.width} × {selected.height} · 可在預覽內捲動</p>
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import {
   TrendingUp,
@@ -37,7 +38,6 @@ interface AnalyticsData {
   inventorySpending: { procurementNt: number; lossNt: number; totalNt: number };
 }
 
-// 進度條元件
 function BarRow({
   label,
   pct,
@@ -53,14 +53,15 @@ function BarRow({
 }) {
   return (
     <div>
-      <div className="flex justify-between text-sm mb-1">
+      <div className="mb-1 flex justify-between text-sm">
         <span className="text-[#5e544a]">{label}</span>
         <span className="font-mono font-semibold" style={{ color }}>
-          {pct.toFixed(1)}%{amount > 0 ? ` (NT$ ${amount.toLocaleString()})` : ""}
+          {pct.toFixed(1)}%
+          {amount > 0 ? ` (NT$ ${amount.toLocaleString()})` : ""}
           {count !== undefined ? ` · ${count} 筆` : ""}
         </span>
       </div>
-      <div className="h-2 rounded-full bg-[#f0ece4] overflow-hidden">
+      <div className="h-2 overflow-hidden rounded-full bg-[#f0ece4]">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
@@ -70,8 +71,14 @@ function BarRow({
   );
 }
 
-// 配色輪換（大地色系）
-const PALETTE = ["#5B93C5", "#5b7b63", "#c98e3b", "#8a7f75", "#a8654c", "#315F86"];
+const PALETTE = [
+  "#935941",
+  "#4e6752",
+  "#b8823c",
+  "#8a7a6a",
+  "#a8654c",
+  "#6b7c6e",
+];
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -85,7 +92,9 @@ export default function AdminAnalyticsPage() {
     try {
       setLoading(true);
       setFetchError("");
-      const res = await fetch(`/api/admin/analytics?abcDays=${abcDays}`, { cache: "no-store" });
+      const res = await fetch(`/api/admin/analytics?abcDays=${abcDays}`, {
+        cache: "no-store",
+      });
       if (res.ok) {
         const json = await res.json();
         setData({
@@ -95,7 +104,11 @@ export default function AdminAnalyticsPage() {
           categoryBreakdown: json.categoryBreakdown || [],
           petTypeBreakdown: json.petTypeBreakdown || [],
           abcProducts: json.abcProducts || [],
-          inventorySpending: json.inventorySpending ?? { procurementNt: 0, lossNt: 0, totalNt: 0 },
+          inventorySpending: json.inventorySpending ?? {
+            procurementNt: 0,
+            lossNt: 0,
+            totalNt: 0,
+          },
           repeatDetail: json.repeatDetail ?? {
             totalBuyers: 0,
             repeatBuyers: 0,
@@ -104,7 +117,9 @@ export default function AdminAnalyticsPage() {
             avgDaysBetweenOrders: 0,
           },
         });
-      } else throw new Error("分析資料暫時無法載入");
+      } else {
+        throw new Error("分析資料暫時無法載入");
+      }
     } catch {
       setFetchError("分析資料暫時無法載入，請重新整理");
     } finally {
@@ -116,7 +131,6 @@ export default function AdminAnalyticsPage() {
     void fetchData();
   }, [abcDays]);
 
-  // 依選取時距過濾 history
   const filteredHistory = (() => {
     if (!data) return [];
     const days = timeRange === "7D" ? 7 : timeRange === "30D" ? 30 : 90;
@@ -126,32 +140,29 @@ export default function AdminAnalyticsPage() {
   const m = data?.metrics;
 
   return (
-    <div>
+    <div className="mx-auto max-w-7xl">
       {/* 頁首 */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <div>
-          <span className="eyebrow text-[#5B93C5]">管理端</span>
-          <h1 className="mt-2 text-2xl font-bold text-[#302b26]">營業分析與財務動態</h1>
-          <p className="mt-1 text-sm text-[#675e53]">
-            營收依已成立訂單統計，取消訂單不計入；品類與付款方式同步更新。
-          </p>
-        </div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-[#302b26]">數據分析</h1>
         <div className="flex items-center gap-3">
-          <div className="flex rounded-xl border border-[#e8ded3] bg-white p-1 shadow-sm">
-            {(["7D", "30D", "90D"] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setTimeRange(r)}
-                className={`px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all ${
-                  timeRange === r
-                    ? "bg-[#5B93C5] text-white font-semibold shadow-sm"
-                    : "text-[#675e53] hover:text-[#302b26]"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+          {activeTab === "overview" && (
+            <div className="flex rounded-xl border border-[#e5d8c8] bg-white p-1 shadow-2xs">
+              {(["7D", "30D", "90D"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setTimeRange(r)}
+                  className={`rounded-lg px-3 py-1 font-mono text-xs font-semibold transition-all ${
+                    timeRange === r
+                      ? "bg-[#935941] text-white"
+                      : "text-[#675e53] hover:text-[#302b26]"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -159,30 +170,35 @@ export default function AdminAnalyticsPage() {
             onClick={() => void fetchData()}
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            更新數據
+            更新
           </Button>
         </div>
       </div>
-      {fetchError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{fetchError}</p>}
 
-      {m && <div className="mb-6 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計訂單數</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{m.totalOrdersCount}</p></div>
-        <div className="rounded-2xl border border-[#bcd5e9] bg-[#eaf3fa] p-5"><p className="text-sm text-[#315F86]">累計營收</p><p className="mt-2 font-mono text-3xl font-bold text-[#253b4d]">{money(m.totalRevenueNt)}</p></div>
-      </div>}
-      {m && <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月進貨成本</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.procurementNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月耗損／負向校正</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.lossNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月庫存成本負擔</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{money(data?.inventorySpending.totalNt ?? 0)}</p></div><div className="rounded-2xl border border-[#cbdce7] bg-white p-5"><p className="text-xs text-[#687985]">本月商品毛利率</p><p className="mt-2 text-2xl font-bold text-[#315F86]">{m.monthGrossMarginPct == null ? "待補成本" : `${m.monthGrossMarginPct.toFixed(1)}%`}</p><p className="mt-1 text-[11px] text-[#8b918f]">成本覆蓋 {m.monthCostCoveragePct}%{m.monthCostEstimated ? " · 含估算" : ""}</p></div></div>}
+      {fetchError && (
+        <p
+          role="alert"
+          className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+        >
+          {fetchError}
+        </p>
+      )}
 
       {/* 頁籤切換 */}
-      <div className="flex gap-1 mb-6 bg-[#f8f5ef] rounded-xl p-1 w-fit border border-[#e8ded3]">
-        {([
-          { key: "overview", label: "總覽指標" },
-          { key: "abc", label: "商品 ABC 分析" },
-        ] as const).map((tab) => (
+      <div className="mb-6 flex w-fit gap-1 rounded-xl border border-[#e5d8c8] bg-[#f4ece2] p-1">
+        {(
+          [
+            { key: "overview", label: "營運指標" },
+            { key: "abc", label: "商品 ABC 分析" },
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
+            type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+            className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-all ${
               activeTab === tab.key
-                ? "bg-white text-[#302b26] shadow-sm border border-[#e8ded3]"
+                ? "bg-white text-[#935941] shadow-2xs"
                 : "text-[#675e53] hover:text-[#302b26]"
             }`}
           >
@@ -193,124 +209,115 @@ export default function AdminAnalyticsPage() {
 
       {loading ? (
         <div className="py-20 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
-          <p className="mt-4 text-sm text-[#8a7f75]">正在統計財務與商品結構數據...</p>
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
         </div>
       ) : activeTab === "overview" ? (
-        <div className="space-y-8">
-          {/* 四大指標卡 */}
+        <div className="space-y-6">
+          {/* 核心營運與成本摘要 */}
           {m && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="panel relative overflow-hidden p-6 bg-white border border-[#e8ded3] shadow-sm"
+                className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#5B93C5]">
-                  <span>累計總營業額</span>
-                  <DollarSign size={16} />
+                <div className="flex items-center justify-between text-xs font-semibold text-[#7c6d5e]">
+                  <span>累計營收</span>
+                  <DollarSign size={15} className="text-[#935941]" />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#302b26]">
+                <p className="mt-2 font-mono text-2xl font-bold text-[#302b26]">
                   {money(m.totalRevenueNt)}
                 </p>
-                <p className="mt-2 flex items-center gap-1 text-xs text-[#8a7f75]">
-                  {m.totalOrdersCount > 0
-                    ? `累計 ${m.totalOrdersCount} 筆訂單`
-                    : "尚無結算訂單"}
+                <p className="mt-1 text-xs text-[#8a7c6e]">
+                  {m.totalOrdersCount} 筆訂單
                 </p>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="panel p-6 bg-white border border-[#e8ded3] shadow-sm"
+                transition={{ delay: 0.04 }}
+                className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#675e53]">
-                  <span>平均客單價 (AOV)</span>
-                  <TrendingUp size={16} className="text-[#5B93C5]" />
+                <div className="flex items-center justify-between text-xs font-semibold text-[#7c6d5e]">
+                  <span>平均客單價</span>
+                  <TrendingUp size={15} className="text-[#935941]" />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#5B93C5]">
+                <p className="mt-2 font-mono text-2xl font-bold text-[#935941]">
                   {money(m.averageOrderValueNt)}
                 </p>
-                <p className="mt-2 text-xs text-[#8a7f75]">
-                  {m.totalOrdersCount > 0 ? "依真實訂單計算平均單價" : "尚無有效訂單"}
+                <p className="mt-1 text-xs text-[#8a7c6e]">
+                  本月毛利率{" "}
+                  {m.monthGrossMarginPct == null
+                    ? "—"
+                    : `${m.monthGrossMarginPct.toFixed(1)}%`}
                 </p>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="panel p-6 bg-white border border-[#78a6c9]/30 shadow-sm"
+                transition={{ delay: 0.08 }}
+                className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#315F86]">
-                  <span>定期配 (Autoship) 佔比</span>
-                  <Repeat2 size={16} />
+                <div className="flex items-center justify-between text-xs font-semibold text-[#7c6d5e]">
+                  <span>定期配佔比</span>
+                  <Repeat2 size={15} className="text-[#4e6752]" />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#315F86]">
+                <p className="mt-2 font-mono text-2xl font-bold text-[#4e6752]">
                   {m.autoshipRatio}%
                 </p>
-                <p className="mt-2 text-xs text-[#8a7f75]">定期訂閱制營收佔比</p>
+                <p className="mt-1 text-xs text-[#8a7c6e]">
+                  本月進貨 {money(data?.inventorySpending.procurementNt ?? 0)}
+                </p>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="panel p-6 bg-white border border-[#e2a84c]/30 shadow-sm"
+                transition={{ delay: 0.12 }}
+                className="rounded-2xl border border-[#e5d8c8] bg-white p-5 shadow-2xs"
               >
-                <div className="flex items-center justify-between text-xs font-semibold text-[#8a5a14]">
-                  <span>顧客回購留存率</span>
-                  <Percent size={16} />
+                <div className="flex items-center justify-between text-xs font-semibold text-[#7c6d5e]">
+                  <span>回購率</span>
+                  <Percent size={15} className="text-[#b8823c]" />
                 </div>
-                <p className="mt-2 text-3xl font-bold font-mono text-[#8a5a14]">
+                <p className="mt-2 font-mono text-2xl font-bold text-[#b8823c]">
                   {m.repeatPurchaseRate}%
                 </p>
-                <p className="mt-2 text-xs text-[#8a7f75]">
-                  {m.repeatPurchaseRate > 0 ? "多筆下單顧客佔比" : "尚未有重複購買記錄"}
+                <p className="mt-1 text-xs text-[#8a7c6e]">
+                  本月耗損 {money(data?.inventorySpending.lossNt ?? 0)}
                 </p>
               </motion.div>
             </div>
           )}
 
           {/* 走勢圖 */}
-          <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-[#302b26]">日營業額走勢分析</h2>
-                <p className="text-xs text-[#8a7f75]">
-                  TradingView Lightweight Charts 繪製，呈現每日結算營業額與波段趨勢
-                </p>
-              </div>
-            </div>
-            <RevenueTrendChart data={filteredHistory} />
-          </div>
+          <RevenueTrendChart data={filteredHistory} />
 
-          {/* 回購率詳細指標 */}
+          {/* 回購指標 */}
           {data?.repeatDetail && data.repeatDetail.totalBuyers > 0 && (
-            <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Users size={16} className="text-[#5B93C5]" />
-                <h3 className="text-base font-semibold text-[#302b26]">回購率詳細指標</h3>
-                <span className="text-xs text-[#8a7f75]">— 依真實訂單統計</span>
+            <div className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+              <div className="mb-4 flex items-center gap-2">
+                <Users size={16} className="text-[#935941]" />
+                <h2 className="text-base font-bold text-[#302b26]">回購指標</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   {
-                    label: "有購買記錄會員數",
+                    label: "購買會員數",
                     value: `${data.repeatDetail.totalBuyers.toLocaleString()} 人`,
                     color: "#302b26",
                   },
                   {
                     label: "回購會員數",
                     value: `${data.repeatDetail.repeatBuyers.toLocaleString()} 人`,
-                    color: "#5B93C5",
+                    color: "#935941",
                   },
                   {
                     label: "平均回購次數",
                     value: `${data.repeatDetail.avgOrdersPerRepeatBuyer} 次`,
-                    color: "#5b7b63",
+                    color: "#4e6752",
                   },
                   {
                     label: "平均回購間隔",
@@ -318,16 +325,16 @@ export default function AdminAnalyticsPage() {
                       data.repeatDetail.avgDaysBetweenOrders > 0
                         ? `${data.repeatDetail.avgDaysBetweenOrders} 天`
                         : "—",
-                    color: "#8a5a14",
+                    color: "#b8823c",
                   },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-xl border border-[#e8ded3] p-4 bg-[#fdfcfa]"
+                    className="rounded-xl border border-[#ece0d1] bg-[#faf6f0] p-4"
                   >
-                    <p className="text-xs text-[#8a7f75] mb-1">{item.label}</p>
+                    <p className="mb-1 text-xs text-[#7c6d5e]">{item.label}</p>
                     <p
-                      className="text-2xl font-bold font-mono"
+                      className="font-mono text-2xl font-bold"
                       style={{ color: item.color }}
                     >
                       {item.value}
@@ -338,13 +345,14 @@ export default function AdminAnalyticsPage() {
             </div>
           )}
 
-          {/* 品類 + 付款方式 */}
+          {/* 品類與付款方式 */}
           <div className="grid gap-6 md:grid-cols-2">
-            {/* 品類銷售貢獻 */}
-            <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart2 size={16} className="text-[#5B93C5]" />
-                <h3 className="text-base font-semibold text-[#302b26]">品類銷售貢獻</h3>
+            <div className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+              <div className="mb-4 flex items-center gap-2">
+                <BarChart2 size={16} className="text-[#935941]" />
+                <h2 className="text-base font-bold text-[#302b26]">
+                  品類銷售占比
+                </h2>
               </div>
               {data?.categoryBreakdown && data.categoryBreakdown.length > 0 ? (
                 <div className="space-y-4">
@@ -359,17 +367,18 @@ export default function AdminAnalyticsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#8a7f75] py-4 text-center">
-                  尚無品類銷售資料
+                <p className="py-4 text-center text-sm text-[#8a7f75]">
+                  尚無資料
                 </p>
               )}
             </div>
 
-            {/* 付款方式比例 */}
-            <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard size={16} className="text-[#5b7b63]" />
-                <h3 className="text-base font-semibold text-[#302b26]">付款方式比例</h3>
+            <div className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+              <div className="mb-4 flex items-center gap-2">
+                <CreditCard size={16} className="text-[#4e6752]" />
+                <h2 className="text-base font-bold text-[#302b26]">
+                  付款方式占比
+                </h2>
               </div>
               {data?.paymentBreakdown && data.paymentBreakdown.length > 0 ? (
                 <div className="space-y-4">
@@ -385,8 +394,8 @@ export default function AdminAnalyticsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#8a7f75] py-4 text-center">
-                  尚無付款記錄資料
+                <p className="py-4 text-center text-sm text-[#8a7f75]">
+                  尚無資料
                 </p>
               )}
             </div>
@@ -394,26 +403,27 @@ export default function AdminAnalyticsPage() {
 
           {/* 寵物類型分佈 */}
           {data?.petTypeBreakdown && data.petTypeBreakdown.length > 0 && (
-            <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <PawPrint size={16} className="text-[#5B93C5]" />
-                <h3 className="text-base font-semibold text-[#302b26]">寵物類型銷售分佈</h3>
-                <span className="text-xs text-[#8a7f75]">— 依訂單品項歸屬統計</span>
+            <div className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+              <div className="mb-4 flex items-center gap-2">
+                <PawPrint size={16} className="text-[#935941]" />
+                <h2 className="text-base font-bold text-[#302b26]">
+                  物種銷售分佈
+                </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {data.petTypeBreakdown.map((pt, i) => (
                   <div
                     key={pt.type}
-                    className="rounded-xl border border-[#e8ded3] p-4 bg-[#fdfcfa]"
+                    className="rounded-xl border border-[#ece0d1] bg-[#faf6f0] p-4"
                   >
-                    <p className="text-xs text-[#8a7f75] mb-1">{pt.label}</p>
+                    <p className="mb-1 text-xs text-[#7c6d5e]">{pt.label}</p>
                     <p
-                      className="text-2xl font-bold font-mono"
+                      className="font-mono text-2xl font-bold"
                       style={{ color: PALETTE[i % PALETTE.length]! }}
                     >
                       {pt.pct.toFixed(1)}%
                     </p>
-                    <p className="text-xs text-[#8a7f75] mt-1">
+                    <p className="mt-1 font-mono text-xs text-[#8a7c6e]">
                       NT$ {pt.amountNt.toLocaleString()}
                     </p>
                   </div>
@@ -423,18 +433,11 @@ export default function AdminAnalyticsPage() {
           )}
         </div>
       ) : (
-        /* ABC 分析頁籤 */
-        <div className="space-y-4">
-          <div className="panel p-6 bg-white border border-[#e8ded3] shadow-sm">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-[#302b26]">商品 ABC 矩陣分析</h2>
-              <p className="text-xs text-[#8a7f75] mt-1">
-                依商品營收累積占比分類，期間與 A／B 門檻可於下方調整。
-              </p>
-            </div>
-            <ProductABCChart rawData={data?.abcProducts ?? []} days={abcDays} onDaysChange={setAbcDays} />
-          </div>
-        </div>
+        <ProductABCChart
+          rawData={data?.abcProducts ?? []}
+          days={abcDays}
+          onDaysChange={setAbcDays}
+        />
       )}
     </div>
   );

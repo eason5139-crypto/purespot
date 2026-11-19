@@ -7,12 +7,12 @@ import type { RevenueMetric } from "@/lib/adminTypes";
 import { money } from "@/lib/utils";
 
 const shortcuts = [
-  { href: "/admin/content", label: "編輯網站文案與照片", detail: "首頁、商城、透明資訊與頁尾", icon: FilePenLine },
-  { href: "/admin/products", label: "維護商品", detail: "詳細資訊、圖片、售價與上架", icon: Package },
-  { href: "/admin/orders", label: "處理訂單", detail: "查看與更新訂單狀態", icon: ShoppingCart },
-  { href: "/admin/members", label: "管理會員", detail: "搜尋與檢視顧客資料", icon: Users },
-  { href: "/admin/community", label: "審核社群內容", detail: "日記投稿、檢舉與留言", icon: MessageCircle },
-  { href: "/admin/promotions", label: "安排站內活動", detail: "首頁與商城的活動卡片", icon: Megaphone },
+  { href: "/admin/content", label: "網站內容", icon: FilePenLine },
+  { href: "/admin/products", label: "商品管理", icon: Package },
+  { href: "/admin/orders", label: "訂單管理", icon: ShoppingCart },
+  { href: "/admin/members", label: "會員管理", icon: Users },
+  { href: "/admin/community", label: "社群審核", icon: MessageCircle },
+  { href: "/admin/promotions", label: "站內活動", icon: Megaphone },
 ];
 
 export default function AdminPage() {
@@ -31,12 +31,10 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <span className="eyebrow text-[#5B93C5]">PURESPOT OPERATIONS</span>
-      <h1 className="mt-3 text-3xl font-semibold text-[#302b26]">營運總覽</h1>
-      <p className="mt-2 text-sm text-[#675e53]">從這裡選擇工作，頁面內容與商品資料已各自分類。</p>
+      <h1 className="text-2xl font-bold text-[#302b26]">營運總覽</h1>
       {error && <p role="alert" className="mt-5 rounded-xl bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">{error}</p>}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[
           ["今日營收", metrics ? money(metrics.todayRevenueNt) : "—"],
           ["本月營收", metrics ? money(metrics.monthRevenueNt) : "—"],
@@ -45,28 +43,25 @@ export default function AdminPage() {
           ["累計營收", metrics ? money(metrics.totalRevenueNt) : "—"],
           ["累計訂單", metrics ? String(metrics.totalOrdersCount) : "—"],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-2xl border border-[#e8ded3] bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-[#8a7f75]">{label}</p>
-            <p className="mt-4 text-3xl font-semibold font-mono text-[#302b26]">{value}</p>
+          <div key={label} className="rounded-2xl border border-[#e5d8c8] bg-white p-6 shadow-2xs">
+            <p className="text-sm font-medium text-[#7c6d5e]">{label}</p>
+            <p className="mt-3 text-3xl font-semibold font-mono text-[#302b26]">{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-10 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-[#302b26]">常用工作</h2>
-        <Link href="/admin/analytics" className="inline-flex items-center gap-1 text-sm font-semibold text-[#5B93C5] hover:text-[#376F9F]">
-          <BarChart3 size={16} />完整分析
+      <div className="mt-8 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-[#302b26]">快捷入口</h2>
+        <Link href="/admin/analytics" className="inline-flex items-center gap-1 text-sm font-semibold text-[#935941] hover:text-[#7a4733]">
+          <BarChart3 size={16} />數據分析
         </Link>
       </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shortcuts.map((item) => (
-          <Link key={item.href} href={item.href} className="group flex items-center gap-4 rounded-2xl border border-[#e8ded3] bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-[#5B93C5]/40 hover:shadow-md">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#5B93C5]/10 text-[#5B93C5]"><item.icon size={22} /></span>
-            <span className="flex-1">
-              <strong className="block text-[#302b26]">{item.label}</strong>
-              <span className="mt-1 block text-sm text-[#8a7f75]">{item.detail}</span>
-            </span>
-            <ArrowUpRight size={18} className="text-[#8a7f75] transition-transform group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-[#5B93C5]" />
+          <Link key={item.href} href={item.href} className="group flex items-center gap-3.5 rounded-2xl border border-[#e5d8c8] bg-white p-4 shadow-2xs transition-all hover:-translate-y-0.5 hover:border-[#935941]/50">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#935941]/10 text-[#935941]"><item.icon size={19} /></span>
+            <strong className="flex-1 text-sm text-[#302b26]">{item.label}</strong>
+            <ArrowUpRight size={17} className="text-[#8a7f75] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#935941]" />
           </Link>
         ))}
       </div>

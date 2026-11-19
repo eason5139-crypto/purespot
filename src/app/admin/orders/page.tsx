@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<
   },
   PAID: {
     label: "已付款",
-    color: "text-[#5b7b63] bg-[#e8f1f8] border-[#78a6c9]/30",
+    color: "text-[#5b7b63] bg-[#fdf5ec] border-[#935941]/30",
     icon: CheckCircle2,
   },
   PROCESSING: {
@@ -63,12 +63,12 @@ const STATUS_CONFIG: Record<
   },
   DISPATCHED: {
     label: "已出貨",
-    color: "text-[#5B93C5] bg-[#5B93C5]/10 border-[#5B93C5]/30",
+    color: "text-[#935941] bg-[#935941]/10 border-[#935941]/30",
     icon: Truck,
   },
   COMPLETED: {
     label: "已完成",
-    color: "text-[#315F86] bg-[#e8f1f8] border-[#78a6c9]/30",
+    color: "text-[#935941] bg-[#fdf5ec] border-[#935941]/30",
     icon: CheckCircle2,
   },
   CANCELLED: {
@@ -202,14 +202,8 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <div>
-          <span className="eyebrow text-[#5B93C5]">管理端</span>
-          <h1 className="mt-2 text-2xl font-bold text-[#302b26]">訂單管理</h1>
-          <p className="mt-1 text-sm text-[#675e53]">
-            查看、篩選並更新訂單狀態；取消未出貨訂單時同步回補庫存。
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h1 className="text-2xl font-bold text-[#302b26]">訂單管理</h1>
         <div className="flex items-center gap-3">
           <Button variant="secondary" size="sm" className="gap-1.5" onClick={() => void completePage()} disabled={batchSaving || loading || completableIds.length === 0}><ListChecks size={14}/>{batchSaving ? "處理中..." : `批次完成本頁 (${completableIds.length})`}</Button>
           <Button
@@ -268,7 +262,7 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <div className="py-20 text-center">
-          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#5B93C5] border-t-transparent" />
+          <div className="mx-auto size-10 animate-spin rounded-full border-2 border-[#935941] border-t-transparent" />
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-[#e8ded3] bg-white shadow-sm">
@@ -323,7 +317,7 @@ export default function AdminOrdersPage() {
                           {cfg.label}
                         </span>
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-[#5B93C5]">
+                      <td className="p-4 text-right font-mono font-semibold text-[#935941]">
                         {money(order.totalNt)}
                       </td>
                       <td className="p-4 text-right">
