@@ -30,6 +30,7 @@ import { getProduct } from "@/lib/catalog";
 import type { SavedAddress } from "@/lib/accountTypes";
 import { PaymentExperience } from "./PaymentExperience";
 import { defaultGiftCard, giftCardStorageKey, type GiftCard } from "@/lib/giftCard";
+import { DEFAULT_TIERS, priceForMember, type TierRule } from "@/lib/memberPolicy";
 
 type Step = "cart" | "address" | "payment" | "confirm";
 
@@ -105,8 +106,9 @@ function CheckoutContent() {
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [giftCard, setGiftCard] = useState<GiftCard>(defaultGiftCard);
-  const [discountCode, setDiscountCode] = useState("");
-  const [availableCodes, setAvailableCodes] = useState<{ code: string; discountNt: number; reward: { title: string } }[]>([]);
+  const [discountCode, setDiscountCode] = useState(searchParams.get("coupon")??"");
+  const [availableCodes, setAvailableCodes] = useState<{ code: string; discountNt: number; minSpendNt?:number; status?:string; expiresAt?:string; reward: { title: string } }[]>([]);
+  const [tierRule,setTierRule] = useState<TierRule>(DEFAULT_TIERS[0]!);
   const [availablePoints, setAvailablePoints] = useState<number>(0);
   const [memberTier, setMemberTier] = useState<string>("新朋友");
   const [pointsToUse, setPointsToUse] = useState<number>(0);
@@ -120,7 +122,8 @@ function CheckoutContent() {
       void fetch("/api/account/membership", { cache: "no-store" })
         .then((response) => (response.ok ? response.json() : null))
         .then((data) => {
-          if (data?.redemptions) setAvailableCodes(data.redemptions);
+          if (data?.redemptions) setAvailableCodes(data.redemptions.filter((r:{status?:string})=>!r.status||r.status==="AVAILABLE"));
+          if(data?.membership?.current) setTierRule(data.membership.current);
           if (typeof data?.points === "number") setAvailablePoints(Math.max(0, data.points));
           if (typeof data?.tier === "string") setMemberTier(data.tier);
         })
@@ -146,15 +149,17 @@ function CheckoutContent() {
   }, [user?.id]);
 
   const subtotal = isFamilyMode
-    ? sharedItems.reduce((acc, i) => acc + (getProduct(i.productId)?.priceNt ?? i.priceNt) * i.quantity, 0)
-    : cartTotals(personalItems).subtotalNt;
+    ? sharedItems.reduce((acc, i) => acc + priceForMember(getProduct(i.productId)?.priceNt ?? i.priceNt,false,tierRule) * i.quantity, 0)
+    : personalItems.reduce((sum,item)=>sum+priceForMember(getProduct(item.productId)?.priceNt??0,item.mode==="AUTOSHIP",tierRule)*item.quantity,0);
 
-  const shipping = isFamilyMode ? (subtotal >= 999 ? 0 : 80) : cartTotals(personalItems).shippingNt;
-  const selectedDiscount = availableCodes.find((entry) => entry.code === discountCode)?.discountNt ?? 0;
-  const maxPointsUsable = Math.min(availablePoints, Math.max(0, subtotal - selectedDiscount));
+  const shippingThreshold = Math.min(tierRule.freeShippingNt,!isFamilyMode && personalItems.length>0 && personalItems.every(i=>i.mode==="AUTOSHIP")?699:999);
+  const shipping = subtotal>=shippingThreshold || subtotal===0 ? 0:80;
+  const selectedCoupon=availableCodes.find(e=>e.code===discountCode && subtotal>=(e.minSpendNt??0));
+  const selectedDiscount = selectedCoupon?.discountNt ?? 0;
+  const maxPointsUsable = Math.min(availablePoints, Math.floor(Math.max(0, subtotal - selectedDiscount)*tierRule.maxRedeemRatio));
   const effectivePointsToUse = Math.min(pointsToUse, maxPointsUsable);
   const total = Math.max(0, subtotal + shipping - selectedDiscount - effectivePointsToUse);
-  const estimatedEarnedPoints = Math.floor(total / 10);
+  const estimatedEarnedPoints = Math.floor(Math.max(0,subtotal-selectedDiscount-effectivePointsToUse)*tierRule.earnPercent/100);
   const stepIndex = steps.findIndex((s) => s.id === step);
 
   const hasItems = isFamilyMode ? sharedItems.length > 0 : personalItems.length > 0;
@@ -191,7 +196,7 @@ function CheckoutContent() {
         body: JSON.stringify({
           idempotencyKey: requestKey.current,
           paymentMethod: selectedPayment,
-          discountCode: discountCode || undefined,
+          discountCode: selectedCoupon?.code || undefined,
           pointsToUse: effectivePointsToUse > 0 ? effectivePointsToUse : undefined,
           familyGroupId: isFamilyMode ? familyGroupId : undefined,
           giftCard,
@@ -436,7 +441,7 @@ function CheckoutContent() {
                 </div>
               ) : (
                 <div className="mb-4 rounded-xl border border-[#dfd0be] bg-[#faf5ed] p-3 text-xs text-[#675e53]">
-                  登入會員即可享<strong className="text-[#935941]">「消費 NT$10 累積 1 點、1 點折抵現金 NT$1」</strong>與新朋友開戶 120 點禮遇。
+                  登入後依會員等級享 3% 至 15% 點數回饋，1 點折 1 元；回饋在訂單完成後入帳。
                 </div>
               )}
 
@@ -450,8 +455,8 @@ function CheckoutContent() {
                   >
                     <option value="">不使用禮券</option>
                     {availableCodes.map((entry) => (
-                      <option key={entry.code} value={entry.code}>
-                        {entry.reward.title} (-{money(entry.discountNt)}) · {entry.code}
+                      <option key={entry.code} value={entry.code} disabled={subtotal<(entry.minSpendNt??0)}>
+                        {entry.reward.title} (-{money(entry.discountNt)}) · 滿 {money(entry.minSpendNt??0)} 可用
                       </option>
                     ))}
                   </select>
@@ -486,7 +491,7 @@ function CheckoutContent() {
                   <span className="font-mono text-[#935941] font-bold text-lg">{money(total)}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-xl bg-[#eef4ef] px-3 py-2 text-xs font-semibold text-[#38573d]">
-                  <span>本單完成可獲回饋點數（NT$10 = 1點）</span>
+                  <span>本單完成可獲回饋點數（{tierRule.earnPercent}%）</span>
                   <span className="font-mono font-bold">+{estimatedEarnedPoints} 點</span>
                 </div>
               </div>
@@ -687,7 +692,7 @@ function CheckoutContent() {
                 />
               </div>
             )}
-            {availableCodes.length > 0 && <label className="mb-5 block rounded-2xl border border-[#e1d7cc] bg-white p-4 text-sm font-semibold text-[#302b26]">使用會員優惠<select className="input mt-2" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)}><option value="">這次不使用</option>{availableCodes.map((entry) => <option key={entry.code} value={entry.code}>{entry.reward.title} · {entry.code}</option>)}</select></label>}
+            {availableCodes.length > 0 && <label className="mb-5 block rounded-2xl border border-[#e1d7cc] bg-white p-4 text-sm font-semibold text-[#302b26]">使用會員優惠<select className="input mt-2" value={discountCode} onChange={(event) => setDiscountCode(event.target.value)}><option value="">這次不使用</option>{availableCodes.map((entry) => <option key={entry.code} value={entry.code}>{entry.reward.title} · 滿 {money(entry.minSpendNt??0)} 可用</option>)}</select></label>}
             {giftCard.included && <div className="mb-5 rounded-2xl border border-[#e1d7cc] bg-[#fff9ef] p-4 text-sm"><strong className="text-[#935941]">隨箱問候卡</strong><p className="mt-1 text-[#675e53]">致 {giftCard.recipient}：{giftCard.message}</p><p className="mt-1 text-right text-xs text-[#675e53]">{giftCard.signature}</p></div>}
             <PaymentExperience method={selectedPayment} total={total} onReadyChange={setPaymentReady} />
 

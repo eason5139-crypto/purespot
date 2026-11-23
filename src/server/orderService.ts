@@ -5,6 +5,8 @@ import { z } from "zod";
 import { db } from "./db";
 import { ApiError } from "./http";
 import { reconcilePoints } from "./membership";
+import { memberStatus, serializable } from "./memberPolicyRepository";
+import { priceForMember } from "@/lib/memberPolicy";
 export const orderInputSchema = z
   .object({
     idempotencyKey: z.uuid(),
@@ -48,6 +50,7 @@ export async function createOrder(
   },
 ) {
   await reconcilePoints(userId);
+  const membership = await memberStatus(userId);
   const requestHash = createHash("sha256")
     .update(
       JSON.stringify({
@@ -67,7 +70,7 @@ export async function createOrder(
       throw new ApiError(409, "重試識別碼與訂單內容不一致");
     return existing;
   }
-  return db.$transaction(
+  return serializable(
     async (tx) => {
       const variants = await tx.productVariant.findMany({
         where: { id: { in: input.items.map((i) => i.variantId) } },
@@ -112,12 +115,7 @@ export async function createOrder(
         demand.set(variant.id, qty);
         if (qty > variant.stock)
           throw new ApiError(409, "商品庫存不足，請調整數量");
-        const unitPriceNt = item.intervalDays
-          ? new Prisma.Decimal(variant.priceNt)
-              .mul(p.autoshipDiscountRate)
-              .toDecimalPlaces(0, Prisma.Decimal.ROUND_HALF_UP)
-              .toNumber()
-          : variant.priceNt;
+        const unitPriceNt = priceForMember(variant.priceNt,Boolean(item.intervalDays),membership.current,Number(p.autoshipDiscountRate));
         return {
           variantId: variant.id,
           petId: pet.id,
@@ -134,15 +132,22 @@ export async function createOrder(
         (s, i) => s + i.unitPriceNt * i.quantity,
         0,
       );
-      const threshold = lines.every((i) => i.isAutoship) ? 699 : 999;
+      const threshold = Math.min(membership.current.freeShippingNt,lines.every((i) => i.isAutoship) ? 699 : 999);
       const shippingNt = subtotalNt >= threshold ? 0 : 80;
       const redemption = options?.discountCode ? await tx.rewardRedemption.findFirst({ where: { code: options.discountCode.toUpperCase(), userId, orderId: null } }) : null;
       if (options?.discountCode && !redemption) throw new ApiError(400, "優惠代碼無效或已使用");
+      if(redemption) {
+        const row=await tx.outboxEvent.findUnique({where:{dedupeKey:`COUPON_META:${redemption.id}`}});
+        const meta=row?.payload as {minSpendNt?:number;expiresAt?:string}|undefined;
+        if(meta?.expiresAt && new Date(meta.expiresAt)<=new Date()) throw new ApiError(400,"這張票券已到期");
+        if(subtotalNt<(meta?.minSpendNt??0)) throw new ApiError(400,`這張票券須滿 NT$${meta?.minSpendNt} 才能使用`);
+      }
       const pointsToUse = Math.max(0, Math.floor(options?.pointsToUse ?? 0));
       if (pointsToUse > 0) {
         const balance = await tx.pointEntry.aggregate({ where: { userId }, _sum: { points: true } });
         const currentPoints = Math.max(0, balance._sum.points ?? 0);
         if (pointsToUse > currentPoints) throw new ApiError(400, "會員可用點數不足，請調整折抵點數");
+        if(pointsToUse>Math.floor(Math.max(0,subtotalNt-(redemption?.discountNt??0))*membership.current.maxRedeemRatio)) throw new ApiError(400,"超過目前會員等級的點數折抵上限");
       }
       const couponDiscountNt = redemption?.discountNt ?? 0;
       const discountNt = couponDiscountNt + pointsToUse;
@@ -158,6 +163,8 @@ export async function createOrder(
           await tx.favorite.updateMany({ where: { productId: variant.productId, watchRestock: true }, data: { savedOutOfStock: true } });
         }
       }
+      const pendingGifts=(await tx.outboxEvent.findMany({where:{type:"POINTS_SHOP_ITEM",payload:{path:["userId"],equals:userId}}})).filter(r=>(r.payload as {status?:string}).status==="PENDING");
+      const pointsGifts=pendingGifts.map(r=>(r.payload as {title:string}).title);
       const order = await tx.order.create({
         data: {
           userId,
@@ -169,13 +176,14 @@ export async function createOrder(
           discountNt,
           familyGroupId: options?.familyGroupId,
           ...(options?.giftCard ? { giftCard: options.giftCard } : {}),
-          shippingAddress: input.shippingAddress,
+          shippingAddress: {...input.shippingAddress,...(pointsGifts.length?{pointsGifts}:{})},
           paymentReference,
           status: "PAID",
           expiresAt: new Date(Date.now() + 30 * 60_000),
           items: { create: lines },
         },
       });
+      for(const gift of pendingGifts) await tx.outboxEvent.update({where:{id:gift.id},data:{payload:{...gift.payload as Prisma.JsonObject,status:"ATTACHED",orderId:order.id}}});
       if (redemption) await tx.rewardRedemption.update({ where: { id: redemption.id }, data: { orderId: order.id } });
       if (pointsToUse > 0) {
         await tx.pointEntry.create({
@@ -187,23 +195,15 @@ export async function createOrder(
           },
         });
       }
-      const earnedPoints = Math.floor(order.totalNt / 10);
-      if (earnedPoints > 0) {
-        await tx.pointEntry.createMany({
-          data: [
-            {
-              userId,
-              sourceKey: `order-10nt:${order.id}`,
-              title: `購物回饋（每滿 NT$10 贈 1 點 · 訂單 #${order.id.slice(0, 8)}）`,
-              points: earnedPoints,
-            },
-          ],
-          skipDuplicates: true,
-        });
+      await tx.outboxEvent.create({data:{dedupeKey:`ORDER_MEMBER_PRICING:${order.id}`,type:"ORDER_MEMBER_PRICING",payload:{userId,orderId:order.id,tierCode:membership.current.code,earnPercent:membership.current.earnPercent,discountPercent:membership.current.discountPercent},processedAt:new Date()}});
+      for (const days of [14,28,42,56] as const) {
+        const scheduled=lines.filter(line=>line.intervalDays===days);
+        if(!scheduled.length) continue;
+        const frequency=days===14?"EVERY_2_WEEKS":days===28?"EVERY_4_WEEKS":days===42?"EVERY_6_WEEKS":"EVERY_8_WEEKS";
+        await tx.autoshipPlan.create({data:{userId,frequency,nextBillingDate:new Date(Date.now()+days*86400000),shippingAddress:input.shippingAddress,paymentMethodToken:paymentReference,status:"ACTIVE",isActive:true,items:{create:scheduled.map(line=>({variantId:line.variantId,petId:line.petId,quantity:line.quantity}))}}});
       }
       if (options?.familyGroupId) await tx.familyListItem.deleteMany({ where: { groupId: options.familyGroupId } });
       return order;
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }

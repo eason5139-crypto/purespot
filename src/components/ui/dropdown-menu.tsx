@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 
 export const DropdownMenu = DropdownPrimitive.Root;
 export const DropdownMenuTrigger = DropdownPrimitive.Trigger;
+export const DropdownMenuSub = DropdownPrimitive.Sub;
+export const DropdownMenuSubTrigger = DropdownPrimitive.SubTrigger;
+export const DropdownMenuSubContent = DropdownPrimitive.SubContent;
 
 export const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownPrimitive.Content>,
@@ -15,7 +18,7 @@ export const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-56 rounded-2xl border border-[#e8ded3] bg-white p-2 text-[#302b26] shadow-xl",
+        "z-50 min-w-56 rounded-2xl border border-[#d3e0e7] bg-white p-2 text-[#18344c] shadow-xl",
         className,
       )}
       {...props}
@@ -31,7 +34,7 @@ export const DropdownMenuItem = React.forwardRef<
   <DropdownPrimitive.Item
     ref={ref}
     className={cn(
-      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition-colors focus:bg-[#f5ede3] text-[#302b26] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none transition-colors focus:bg-[#eaf1f5] text-[#18344c] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className,
     )}
     {...props}
@@ -40,5 +43,5 @@ export const DropdownMenuItem = React.forwardRef<
 DropdownMenuItem.displayName = "選單項目";
 
 export const DropdownMenuSeparator = () => (
-  <DropdownPrimitive.Separator className="my-1 h-px bg-[#e8ded3]" />
+  <DropdownPrimitive.Separator className="my-1 h-px bg-[#d3e0e7]" />
 );

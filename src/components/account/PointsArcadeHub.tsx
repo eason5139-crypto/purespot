@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   CalendarCheck2,
@@ -27,6 +27,7 @@ import {
   type WheelPrize,
 } from "@/lib/pointsArcadeConfig";
 import { accountJson, jsonRequest } from "@/lib/accountTypes";
+import {useArcadeFeedback,PawCompanion} from "./ArcadeFeedback";
 import { triggerPawBurst } from "@/lib/flyToCart";
 
 export type CheckInStatus = {
@@ -56,6 +57,7 @@ export type ArcadeTaskStatus = {
 };
 
 interface PointsArcadeHubProps {
+  mode?:"tasks"|"games";
   isLoggedIn: boolean;
   points: number;
   arcadeConfig: PointsArcadeConfig;
@@ -77,7 +79,7 @@ const BALL_STYLE: Record<
   { fill: string; border: string; text: string }
 > = {
   GOLD: { fill: "#d8a848", border: "#9a701e", text: "#422b04" },
-  CLAY: { fill: "#935941", border: "#663926", text: "#ffffff" },
+  CLAY: { fill: "#315f86", border: "#663926", text: "#ffffff" },
   JADE: { fill: "#4e6752", border: "#324735", text: "#ffffff" },
   WOOD: { fill: "#a98360", border: "#76573b", text: "#ffffff" },
   SAND: { fill: "#cbb79e", border: "#988269", text: "#3d3228" },
@@ -127,9 +129,9 @@ function InteractiveScratchCard({
 
     // 繪製質感香檳金塗層
     const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, "#d7b988");
-    grad.addColorStop(0.5, "#e6cfa4");
-    grad.addColorStop(1, "#c4a067");
+    grad.addColorStop(0, "#81aac4");
+    grad.addColorStop(0.5, "#bad2e1");
+    grad.addColorStop(1, "#6895b6");
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -143,10 +145,10 @@ function InteractiveScratchCard({
       ctx.lineTo(i + canvas.height, canvas.height);
       ctx.stroke();
     }
-    ctx.fillStyle = "#6c4e24";
+    ctx.fillStyle = "#18344c";
     ctx.font = "bold 16px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("按住滑動刮開金箔塗層", canvas.width / 2, canvas.height / 2 + 6);
+    ctx.fillText("按住滑動，揭開今天的小驚喜", canvas.width / 2, canvas.height / 2 + 6);
     setRevealed(false);
     strokesRef.current = 0;
   }, [prize.id, code]);
@@ -197,12 +199,12 @@ function InteractiveScratchCard({
       <div className="relative mx-auto h-40 w-full max-w-[340px] overflow-hidden rounded-2xl border-2 border-[#d4b687] bg-[#fffaf1] shadow-inner">
         {/* 底層揭曉獎項 */}
         <div className="flex h-full flex-col items-center justify-center px-5 text-center">
-          <span className="rounded-full bg-[#fdf2e3] px-2.5 py-0.5 text-[11px] font-bold text-[#935941]">
+          <span className="rounded-full bg-[#fdf2e3] px-2.5 py-0.5 text-[11px] font-bold text-[#315f86]">
             {prize.kind === "POINTS" ? "點數回饋" : "結帳折抵券"}
           </span>
-          <p className="mt-2 text-lg font-bold text-[#302b26]">{prize.label}</p>
+          <p className="mt-2 text-lg font-bold text-[#18344c]">{prize.label}</p>
           {code ? (
-            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-[#e5d8c8] bg-white px-2.5 py-1 font-mono text-xs font-bold text-[#935941]">
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-[#d3e0e7] bg-white px-2.5 py-1 font-mono text-xs font-bold text-[#315f86]">
               <span>{code}</span>
               <button
                 type="button"
@@ -210,7 +212,7 @@ function InteractiveScratchCard({
                   void navigator.clipboard.writeText(code);
                   toast.success("已複製折抵代碼");
                 }}
-                className="text-[#6e6257] hover:text-[#935941]"
+                className="text-[#6e6257] hover:text-[#315f86]"
               >
                 <Copy size={12} />
               </button>
@@ -248,7 +250,7 @@ function InteractiveScratchCard({
           <button
             type="button"
             onClick={revealAll}
-            className="text-xs font-bold text-[#935941] hover:underline"
+            className="text-xs font-bold text-[#315f86] hover:underline"
           >
             快速全部刮開
           </button>
@@ -259,6 +261,7 @@ function InteractiveScratchCard({
 }
 
 export function PointsArcadeHub({
+  mode="games",
   isLoggedIn,
   points,
   arcadeConfig = DEFAULT_ARCADE_CONFIG,
@@ -268,6 +271,12 @@ export function PointsArcadeHub({
   onRequireAuth,
   onRefresh,
 }: PointsArcadeHubProps) {
+  const feedback=useArcadeFeedback();
+  const reduceMotion=useReducedMotion();
+  const timers=useRef<number[]>([]);
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;timers.current.forEach(clearTimeout);};},[]);
+  const later=(fn:()=>void,ms:number)=>{if(mounted.current)timers.current.push(window.setTimeout(()=>{if(mounted.current)fn();},ms));};
   const [activeGame, setActiveGame] = useState<"wheel" | "fukubiki" | "scratch">(
     "wheel",
   );
@@ -340,6 +349,7 @@ export function PointsArcadeHub({
           isStreak7: boolean;
         };
       }>("/api/account/membership", jsonRequest("POST", { action: "check_in" }));
+      feedback.win();
       await onRefresh();
       toast.success(
         res.checkIn.isStreak7
@@ -358,7 +368,7 @@ export function PointsArcadeHub({
       onRequireAuth();
       return;
     }
-    if (wheelSpinning) return;
+    if (wheelSpinning || fukubikiSpinning || busy) return;
     if (points < currentWheel.costPoints) {
       toast.error(
         `點數不足，目前 ${points} 點（需要 ${currentWheel.costPoints} 點）`,
@@ -366,6 +376,7 @@ export function PointsArcadeHub({
       return;
     }
 
+    feedback.spin();
     setWheelSpinning(true);
     setWheelOutcome(null);
     triggerPawBurst(e.currentTarget);
@@ -399,7 +410,8 @@ export function PointsArcadeHub({
 
       setWheelRotation(nextAngle);
 
-      window.setTimeout(async () => {
+      later(async () => {
+        feedback.win();
         setWheelSpinning(false);
         setWheelOutcome({
           wheelTitle: res.result.wheelTitle,
@@ -413,8 +425,9 @@ export function PointsArcadeHub({
             ? `恭喜抽中「${res.result.prize.label}」！兌換碼已存入票券夾`
             : `恭喜獲得 ${res.result.prize.label}！`,
         );
-      }, 4250);
+      }, reduceMotion ? 0 : 4250);
     } catch (err) {
+      feedback.stop();
       setWheelSpinning(false);
       toast.error(err instanceof Error ? err.message : "轉盤抽獎失敗");
     }
@@ -425,13 +438,14 @@ export function PointsArcadeHub({
       onRequireAuth();
       return;
     }
-    if (fukubikiSpinning) return;
+    if (wheelSpinning || fukubikiSpinning || busy) return;
     if (points < arcadeConfig.fukubiki.costPoints) {
       toast.error(
         `點數不足，需要 ${arcadeConfig.fukubiki.costPoints} 點`,
       );
       return;
     }
+    feedback.spin();
     setFukubikiSpinning(true);
     setFukubikiOutcome(null);
     triggerPawBurst(e.currentTarget);
@@ -447,7 +461,8 @@ export function PointsArcadeHub({
         };
       }>("/api/account/membership", jsonRequest("POST", { action: "play_fukubiki" }));
 
-      window.setTimeout(async () => {
+      later(async () => {
+        feedback.win();
         setFukubikiSpinning(false);
         setFukubikiOutcome(res.result);
         await onRefresh();
@@ -456,6 +471,7 @@ export function PointsArcadeHub({
         );
       }, 1150);
     } catch (err) {
+      feedback.stop();
       setFukubikiSpinning(false);
       toast.error(err instanceof Error ? err.message : "搖獎失敗");
     }
@@ -512,6 +528,7 @@ export function PointsArcadeHub({
           taskKey: task.key,
         }),
       );
+      feedback.win();
       await onRefresh();
       toast.success(`已領取「${task.title}」獎勵 +${task.points} 點`);
     } catch (err) {
@@ -522,21 +539,23 @@ export function PointsArcadeHub({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="arcade-room space-y-6">
+      <div className="arcade-welcome"><div><h2>{mode==="games"?"今天，玩一點小驚喜。":"每天一小步，留下陪伴的記號。"}</h2><p>{mode==="games"?"獎項與花費先看清楚，再開始你的這一回合。":"簽到與任務分開記錄，每筆回饋都找得到。"}</p>{feedback.controls}</div><PawCompanion wins={feedback.wins}/></div>
+      {mode==="tasks" && <>
       {/* 1. 每日登入簽到（固定 +10 點，連簽 7 天額外 +30 點） */}
-      <section className="rounded-3xl border border-[#e5d8c8] bg-white p-5 shadow-2xs sm:p-6">
+      <section className="rounded-3xl border border-[#d3e0e7] bg-white p-5 shadow-2xs sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#fdf3ec] text-[#935941]">
+            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#eaf1f5] text-[#315f86]">
               <CalendarCheck2 size={20} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#302b26]">
+              <h3 className="text-base font-bold text-[#18344c]">
                 每日登入簽到
               </h3>
               <p className="text-xs text-[#6e6257]">
                 每日簽到固定領{" "}
-                <strong className="font-mono text-[#935941]">
+                <strong className="font-mono text-[#315f86]">
                   +{checkInStatus.dailyPoints} 點
                 </strong>
                 ，連續第 7 天加碼{" "}
@@ -554,7 +573,7 @@ export function PointsArcadeHub({
             className={`inline-flex min-h-10 items-center gap-1.5 rounded-xl px-4 text-xs font-bold transition-all ${
               checkInStatus.claimedToday
                 ? "bg-[#eef5ef] text-[#3d5c43]"
-                : "bg-[#935941] text-white shadow-xs hover:bg-[#7d4934] disabled:opacity-50"
+                : "bg-[#315f86] text-white shadow-xs hover:bg-[#244d70] disabled:opacity-50"
             }`}
           >
             {checkInStatus.claimedToday ? (
@@ -594,13 +613,13 @@ export function PointsArcadeHub({
                   done
                     ? "border-[#bcd0bf] bg-[#eef5ef]"
                     : isNext
-                      ? "border-[#935941] bg-[#fdf5ec]"
+                      ? "border-[#315f86] bg-[#eaf1f5]"
                       : isDay7
                         ? "border-[#e2c896] bg-[#fcf6e8]"
-                        : "border-[#ede2d5] bg-[#faf6f0]"
+                        : "border-[#ede2d5] bg-[#f1f5f7]"
                 }`}
               >
-                <span className="font-mono text-[10px] font-bold text-[#7a6d60]">
+                <span className="font-mono text-[10px] font-bold text-[#647581]">
                   Day {day}
                 </span>
                 <div className="my-1 flex size-7 items-center justify-center rounded-full">
@@ -613,7 +632,7 @@ export function PointsArcadeHub({
                       <Gift size={14} />
                     </span>
                   ) : (
-                    <span className="flex size-7 items-center justify-center rounded-full bg-white font-mono text-[11px] font-bold text-[#935941] border border-[#e5d8c8]">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-white font-mono text-[11px] font-bold text-[#315f86] border border-[#d3e0e7]">
                       +{checkInStatus.dailyPoints}
                     </span>
                   )}
@@ -629,19 +648,21 @@ export function PointsArcadeHub({
         </div>
       </section>
 
+      </>}
+      {mode==="games" && <>
       {/* 2. 點數遊樂中心（三款互動遊戲切換） */}
-      <section className="rounded-3xl border border-[#e5d8c8] bg-white p-5 shadow-2xs sm:p-6">
+      <section className="rounded-3xl border border-[#d3e0e7] bg-white p-5 shadow-2xs sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0e6da] pb-4">
           <div className="flex items-center gap-2.5">
-            <h3 className="text-base font-bold text-[#302b26]">點數遊樂場</h3>
+            <h3 className="text-base font-bold text-[#18344c]">點數遊樂場</h3>
             {isLoggedIn && (
-              <span className="rounded-full bg-[#faf6f0] px-3 py-1 font-mono text-xs font-bold text-[#935941]">
+              <span className="rounded-full bg-[#f1f5f7] px-3 py-1 font-mono text-xs font-bold text-[#315f86]">
                 目前可用：{points.toLocaleString()} 點
               </span>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-1.5 rounded-xl border border-[#e5d8c8] bg-[#faf6f0] p-1">
+          <div className="flex flex-wrap gap-1.5 rounded-xl border border-[#d3e0e7] bg-[#f1f5f7] p-1">
             {(
               [
                 ["wheel", "寵物分類轉盤", RotateCw],
@@ -652,11 +673,12 @@ export function PointsArcadeHub({
               <button
                 key={id}
                 type="button"
-                onClick={() => setActiveGame(id)}
+                disabled={wheelSpinning||fukubikiSpinning||Boolean(busy)}
+                onClick={() => {feedback.click();setActiveGame(id);}}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                   activeGame === id
-                    ? "bg-[#302b26] text-white shadow-2xs"
-                    : "text-[#675b4f] hover:text-[#302b26]"
+                    ? "bg-[#18344c] text-white shadow-2xs"
+                    : "text-[#647581] hover:text-[#18344c]"
                 }`}
               >
                 <Icon size={13} />
@@ -694,8 +716,8 @@ export function PointsArcadeHub({
                         }}
                         className={`rounded-xl border px-4 py-2 text-xs font-bold transition-all disabled:opacity-50 ${
                           active
-                            ? "border-[#935941] bg-[#fdf3ec] text-[#935941]"
-                            : "border-[#e5d8c8] bg-[#faf6f0] text-[#675b4f] hover:border-[#c8b6a2]"
+                            ? "border-[#315f86] bg-[#eaf1f5] text-[#315f86]"
+                            : "border-[#d3e0e7] bg-[#f1f5f7] text-[#647581] hover:border-[#c8b6a2]"
                         }`}
                       >
                         {w.title || WHEEL_TAB_LABEL[key]}
@@ -706,7 +728,7 @@ export function PointsArcadeHub({
                     );
                   })}
                 </div>
-                <span className="text-xs text-[#7a6d60]">
+                <span className="text-xs text-[#647581]">
                   抽中商品兌換券自動存入票券夾，結帳直接折抵
                 </span>
               </div>
@@ -725,7 +747,7 @@ export function PointsArcadeHub({
                       >
                         <path
                           d="M16 35 L4 10 A12 12 0 1 1 28 10 Z"
-                          fill="#935941"
+                          fill="#315f86"
                           stroke="#ffffff"
                           strokeWidth="2.5"
                         />
@@ -734,11 +756,11 @@ export function PointsArcadeHub({
                     </div>
 
                     {/* 外框木紋輪盤與內部旋轉扇形 */}
-                    <div className="relative size-[300px] rounded-full border-[10px] border-[#4b382a] bg-[#faf3e8] p-1 shadow-[0_18px_40px_-18px_rgba(70,40,20,0.45)] sm:size-[340px]">
+                    <div className="relative size-[300px] rounded-full border-[10px] border-[#315f86] bg-[#f0f5f7] p-1 shadow-[0_18px_40px_-18px_rgba(70,40,20,0.45)] sm:size-[340px]">
                       <motion.div
                         animate={{ rotate: wheelRotation }}
                         transition={{
-                          duration: 4.2,
+                          duration: reduceMotion ? 0 : 4.2,
                           ease: [0.14, 0.86, 0.18, 1],
                         }}
                         className="size-full"
@@ -776,7 +798,7 @@ export function PointsArcadeHub({
                                     y="0"
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    fill={isLight ? "#302b26" : "#ffffff"}
+                                    fill={isLight ? "#18344c" : "#ffffff"}
                                     fontSize="11.5"
                                     fontWeight="800"
                                   >
@@ -812,7 +834,7 @@ export function PointsArcadeHub({
                         type="button"
                         disabled={wheelSpinning}
                         onClick={handleSpinWheel}
-                        className="absolute left-1/2 top-1/2 z-10 flex size-20 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-4 border-[#fff6ea] bg-[#302b26] text-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-70"
+                        className="absolute left-1/2 top-1/2 z-10 flex size-20 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-4 border-[#fff6ea] bg-[#18344c] text-white shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-70"
                       >
                         <span className="text-xs font-black tracking-wide">
                           {wheelSpinning ? "旋轉中" : "立即抽"}
@@ -831,22 +853,22 @@ export function PointsArcadeHub({
                     <motion.div
                       initial={{ opacity: 0, scale: 0.96 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="rounded-2xl border-2 border-[#935941] bg-[#fdf5ec] p-4"
+                      className="rounded-2xl border-2 border-[#315f86] bg-[#eaf1f5] p-4"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#935941]">
+                        <span className="text-xs font-bold text-[#315f86]">
                           {wheelOutcome.wheelTitle}中獎結果
                         </span>
-                        <span className="font-mono text-[11px] text-[#7a6d60]">
+                        <span className="font-mono text-[11px] text-[#647581]">
                           投入 {wheelOutcome.costPoints} 點
                         </span>
                       </div>
-                      <p className="mt-1.5 text-base font-bold text-[#302b26]">
+                      <p className="mt-1.5 text-base font-bold text-[#18344c]">
                         {wheelOutcome.prize.label}
                       </p>
                       {wheelOutcome.code ? (
                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <span className="rounded-lg border border-[#dfb89a] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#935941]">
+                          <span className="rounded-lg border border-[#dfb89a] bg-white px-3 py-1.5 font-mono text-xs font-bold text-[#315f86]">
                             {wheelOutcome.code}
                           </span>
                           <button
@@ -857,14 +879,14 @@ export function PointsArcadeHub({
                               );
                               toast.success("已複製兌換碼");
                             }}
-                            className="inline-flex items-center gap-1 rounded-lg border border-[#dfd0be] bg-white px-2.5 py-1.5 text-xs font-bold text-[#5e4d3f] hover:border-[#935941]"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#dfd0be] bg-white px-2.5 py-1.5 text-xs font-bold text-[#5e4d3f] hover:border-[#315f86]"
                           >
                             <Copy size={12} />
                             複製
                           </button>
                           <Link
                             href="/checkout"
-                            className="inline-flex items-center gap-1 rounded-lg bg-[#935941] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#7d4934]"
+                            className="inline-flex items-center gap-1 rounded-lg bg-[#315f86] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#244d70]"
                           >
                             前往結帳折抵
                             <ArrowRight size={12} />
@@ -878,7 +900,7 @@ export function PointsArcadeHub({
                     </motion.div>
                   )}
 
-                  <div className="rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-4">
+                  <div className="rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-4">
                     <div className="mb-2.5 flex items-center justify-between text-xs font-bold text-[#5e5246]">
                       <span>{currentWheel.title}獎池與機率</span>
                       <span className="font-mono text-[11px] text-[#8a7c6e]">
@@ -898,11 +920,11 @@ export function PointsArcadeHub({
                                 className="size-2.5 shrink-0 rounded-full"
                                 style={{ backgroundColor: p.color }}
                               />
-                              <span className="truncate font-semibold text-[#302b26]">
+                              <span className="truncate font-semibold text-[#18344c]">
                                 {p.label}
                               </span>
                             </div>
-                            <span className="ml-2 shrink-0 font-mono text-[11px] font-bold text-[#7a6d60]">
+                            <span className="ml-2 shrink-0 font-mono text-[11px] font-bold text-[#647581]">
                               {prob.toFixed(1)}%
                             </span>
                           </div>
@@ -925,10 +947,10 @@ export function PointsArcadeHub({
               transition={{ duration: 0.2 }}
               className="mt-5 grid items-center gap-6 lg:grid-cols-[0.9fr_1.1fr]"
             >
-              <div className="flex flex-col items-center rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-6 text-center">
+              <div className="flex flex-col items-center rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-6 text-center">
                 <motion.div
                   animate={
-                    fukubikiSpinning
+                    fukubikiSpinning && !reduceMotion
                       ? { rotate: [0, 360, 720, 1080] }
                       : { rotate: 0 }
                   }
@@ -938,22 +960,22 @@ export function PointsArcadeHub({
                   <svg width="116" height="116" viewBox="0 0 120 120">
                     <polygon
                       points="42,14 78,14 106,42 106,78 78,106 42,106 14,78 14,42"
-                      fill="#e7d2b5"
-                      stroke="#6d4c32"
+                      fill="#bed3e0"
+                      stroke="#315f86"
                       strokeWidth="5"
                     />
                     <polygon
                       points="46,24 74,24 96,46 96,74 74,96 46,96 24,74 24,46"
-                      fill="#f8efe2"
-                      stroke="#b89872"
+                      fill="#edf4f7"
+                      stroke="#7ba0bb"
                       strokeWidth="2"
                     />
                     <circle
                       cx="60"
                       cy="60"
                       r="14"
-                      fill="#c9964f"
-                      stroke="#6d4c32"
+                      fill="#4f8ab8"
+                      stroke="#315f86"
                       strokeWidth="3"
                     />
                     <line
@@ -961,22 +983,22 @@ export function PointsArcadeHub({
                       y1="60"
                       x2="88"
                       y2="60"
-                      stroke="#6d4c32"
+                      stroke="#315f86"
                       strokeWidth="5"
                       strokeLinecap="round"
                     />
-                    <circle cx="90" cy="60" r="6" fill="#935941" />
+                    <circle cx="90" cy="60" r="6" fill="#315f86" />
                   </svg>
                 </motion.div>
 
-                <p className="text-sm font-bold text-[#302b26]">
+                <p className="text-sm font-bold text-[#18344c]">
                   投入{" "}
-                  <span className="font-mono text-[#935941]">
+                  <span className="font-mono text-[#315f86]">
                     {arcadeConfig.fukubiki.costPoints} 點
                   </span>{" "}
                   博高倍點數
                 </p>
-                <p className="mt-1 font-mono text-xs text-[#7a6d60]">
+                <p className="mt-1 font-mono text-xs text-[#647581]">
                   今日已搖 {arcadeLimits.fukubikiUsedToday} /{" "}
                   {arcadeLimits.fukubikiDailyLimit} 次
                 </p>
@@ -989,7 +1011,7 @@ export function PointsArcadeHub({
                       arcadeLimits.fukubikiDailyLimit
                   }
                   onClick={handlePlayFukubiki}
-                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#935941] px-6 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#7d4934] disabled:opacity-45"
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#315f86] px-6 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#244d70] disabled:opacity-45"
                 >
                   <Sparkles size={15} />
                   {fukubikiSpinning
@@ -1008,19 +1030,19 @@ export function PointsArcadeHub({
                         className="size-4 rounded-full border"
                         style={{
                           backgroundColor:
-                            BALL_STYLE[fukubikiOutcome.ball]?.fill ?? "#935941",
+                            BALL_STYLE[fukubikiOutcome.ball]?.fill ?? "#315f86",
                           borderColor:
                             BALL_STYLE[fukubikiOutcome.ball]?.border ??
                             "#663926",
                         }}
                       />
-                      <strong className="text-sm text-[#302b26]">
+                      <strong className="text-sm text-[#18344c]">
                         {fukubikiOutcome.rank}
                       </strong>
                     </div>
                     <p className="mt-1 font-mono text-base font-black text-[#4e6752]">
                       獲得 +{fukubikiOutcome.pointsWon} 點
-                      <span className="ml-2 text-xs font-bold text-[#7a6d60]">
+                      <span className="ml-2 text-xs font-bold text-[#647581]">
                         （淨{fukubikiOutcome.netPoints >= 0 ? "+" : ""}
                         {fukubikiOutcome.netPoints} 點）
                       </span>
@@ -1029,7 +1051,7 @@ export function PointsArcadeHub({
                 )}
               </div>
 
-              <div className="space-y-2 rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-4">
+              <div className="space-y-2 rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-4">
                 <p className="text-xs font-bold text-[#5e5246]">
                   彩球獎項與公開機率
                 </p>
@@ -1049,15 +1071,15 @@ export function PointsArcadeHub({
                             borderColor: st.border,
                           }}
                         />
-                        <span className="font-bold text-[#302b26]">
+                        <span className="font-bold text-[#18344c]">
                           {p.rank}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 font-mono">
-                        <strong className="text-[#935941]">
+                        <strong className="text-[#315f86]">
                           +{p.points} 點
                         </strong>
-                        <span className="w-12 text-right text-[11px] text-[#7a6d60]">
+                        <span className="w-12 text-right text-[11px] text-[#647581]">
                           {prob.toFixed(1)}%
                         </span>
                       </div>
@@ -1078,7 +1100,7 @@ export function PointsArcadeHub({
               transition={{ duration: 0.2 }}
               className="mt-5 grid items-center gap-6 lg:grid-cols-[1.05fr_0.95fr]"
             >
-              <div className="rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-6 text-center">
+              <div className="rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-6 text-center">
                 {scratchCard ? (
                   <div className="space-y-4">
                     <InteractiveScratchCard
@@ -1088,6 +1110,7 @@ export function PointsArcadeHub({
                         setScratchCard((prev) =>
                           prev ? { ...prev, revealed: true } : null,
                         );
+                        feedback.win();
                         toast.success(`刮出「${scratchCard.prize.label}」！`);
                       }}
                     />
@@ -1100,7 +1123,7 @@ export function PointsArcadeHub({
                             arcadeLimits.scratchDailyLimit
                         }
                         onClick={handleBuyScratchCard}
-                        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#935941] px-5 text-xs font-bold text-white hover:bg-[#7d4934] disabled:opacity-45"
+                        className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-[#315f86] px-5 text-xs font-bold text-white hover:bg-[#244d70] disabled:opacity-45"
                       >
                         再刮一張（-{arcadeConfig.scratch.costPoints} 點）
                       </button>
@@ -1111,14 +1134,14 @@ export function PointsArcadeHub({
                     <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#fcf2df] text-[#b8823c]">
                       <Ticket size={28} />
                     </div>
-                    <p className="mt-3 text-sm font-bold text-[#302b26]">
+                    <p className="mt-3 text-sm font-bold text-[#18344c]">
                       投入{" "}
-                      <span className="font-mono text-[#935941]">
+                      <span className="font-mono text-[#315f86]">
                         {arcadeConfig.scratch.costPoints} 點
                       </span>{" "}
                       開啟一張金箔刮刮卡
                     </p>
-                    <p className="mt-1 font-mono text-xs text-[#7a6d60]">
+                    <p className="mt-1 font-mono text-xs text-[#647581]">
                       今日已刮 {arcadeLimits.scratchUsedToday} /{" "}
                       {arcadeLimits.scratchDailyLimit} 張
                     </p>
@@ -1130,7 +1153,7 @@ export function PointsArcadeHub({
                           arcadeLimits.scratchDailyLimit
                       }
                       onClick={handleBuyScratchCard}
-                      className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#935941] px-6 text-xs font-bold text-white shadow-xs hover:bg-[#7d4934] disabled:opacity-45"
+                      className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#315f86] px-6 text-xs font-bold text-white shadow-xs hover:bg-[#244d70] disabled:opacity-45"
                     >
                       {busy === "scratch"
                         ? "準備刮刮卡中…"
@@ -1140,7 +1163,7 @@ export function PointsArcadeHub({
                 )}
               </div>
 
-              <div className="space-y-2 rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-4">
+              <div className="space-y-2 rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-4">
                 <p className="text-xs font-bold text-[#5e5246]">刮刮樂獎池</p>
                 {arcadeConfig.scratch.prizes.map((p) => {
                   const totalW = arcadeConfig.scratch.prizes.reduce(
@@ -1153,10 +1176,10 @@ export function PointsArcadeHub({
                       key={p.id}
                       className="flex items-center justify-between rounded-xl bg-white px-3.5 py-2.5 text-xs"
                     >
-                      <span className="font-bold text-[#302b26]">
+                      <span className="font-bold text-[#18344c]">
                         {p.label}
                       </span>
-                      <span className="font-mono text-[11px] font-bold text-[#7a6d60]">
+                      <span className="font-mono text-[11px] font-bold text-[#647581]">
                         {prob.toFixed(1)}%
                       </span>
                     </div>
@@ -1168,18 +1191,20 @@ export function PointsArcadeHub({
         </AnimatePresence>
       </section>
 
+      </>}
+      {mode==="tasks" && <>
       {/* 3. 雙軌任務賺點中心（每日任務 ＋ 里程碑任務） */}
-      <section className="rounded-3xl border border-[#e5d8c8] bg-white p-5 shadow-2xs sm:p-6">
+      <section className="rounded-3xl border border-[#d3e0e7] bg-white p-5 shadow-2xs sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#f0e6da] pb-3.5">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-[#302b26]">任務賺點中心</h3>
+            <h3 className="text-base font-bold text-[#18344c]">任務賺點中心</h3>
             {claimableCount > 0 && (
-              <span className="rounded-full bg-[#935941] px-2.5 py-0.5 font-mono text-[11px] font-bold text-white">
+              <span className="rounded-full bg-[#315f86] px-2.5 py-0.5 font-mono text-[11px] font-bold text-white">
                 {claimableCount} 項可領取
               </span>
             )}
           </div>
-          <span className="text-xs text-[#7a6d60]">
+          <span className="text-xs text-[#647581]">
             完成站內互動即可領點，每筆均採合理額度發放
           </span>
         </div>
@@ -1187,20 +1212,20 @@ export function PointsArcadeHub({
         <div className="mt-4 grid gap-5 lg:grid-cols-2">
           {/* 每日任務 */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold text-[#935941]">
+            <p className="text-xs font-bold text-[#315f86]">
               每日循環任務（每日重置）
             </p>
             {dailyTasks.map((task) => (
               <div
                 key={task.key}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-3.5"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-3.5"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <strong className="text-xs font-bold text-[#302b26]">
+                    <strong className="text-xs font-bold text-[#18344c]">
                       {task.title}
                     </strong>
-                    <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#935941]">
+                    <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#315f86]">
                       +{task.points} 點
                     </span>
                   </div>
@@ -1219,14 +1244,14 @@ export function PointsArcadeHub({
                     type="button"
                     disabled={busy === `task:${task.key}`}
                     onClick={(e) => handleClaimTask(task, e)}
-                    className="shrink-0 rounded-xl bg-[#935941] px-3.5 py-1.5 text-[11px] font-bold text-white hover:bg-[#7d4934] disabled:opacity-50"
+                    className="shrink-0 rounded-xl bg-[#315f86] px-3.5 py-1.5 text-[11px] font-bold text-white hover:bg-[#244d70] disabled:opacity-50"
                   >
                     領取 +{task.points}
                   </button>
                 ) : (
                   <Link
                     href={task.href}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#dfd0be] bg-white px-3 py-1.5 text-[11px] font-bold text-[#5e4d3f] hover:border-[#935941] hover:text-[#935941]"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[#dfd0be] bg-white px-3 py-1.5 text-[11px] font-bold text-[#5e4d3f] hover:border-[#315f86] hover:text-[#315f86]"
                   >
                     前往
                     <ArrowRight size={12} />
@@ -1244,11 +1269,11 @@ export function PointsArcadeHub({
             {milestoneTasks.map((task) => (
               <div
                 key={task.key}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-[#ece1d4] bg-[#faf6f0] p-3.5"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#ece1d4] bg-[#f1f5f7] p-3.5"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <strong className="text-xs font-bold text-[#302b26]">
+                    <strong className="text-xs font-bold text-[#18344c]">
                       {task.title}
                     </strong>
                     <span className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#4e6752]">
@@ -1288,6 +1313,7 @@ export function PointsArcadeHub({
           </div>
         </div>
       </section>
+      </>}
     </div>
   );
 }

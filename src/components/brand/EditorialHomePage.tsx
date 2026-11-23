@@ -48,7 +48,7 @@ export function EditorialHomePage({ content }: { content: SiteContent }) {
     </section>
 
     <section className="border-y border-[#dce4e7] bg-[#f0f4f4] py-12 sm:py-16" aria-label="選物工具">
-      <div className="page-shell"><div className="mb-7 flex items-end justify-between gap-4"><h2 className="editorial-title text-3xl sm:text-4xl">先找到方法，再挑喜歡的。</h2><Link href="/care" className="text-link hidden sm:inline-flex">全部工具<ArrowUpRight size={18} /></Link></div>
+      <div className="page-shell"><div className="mb-7 flex items-end justify-between gap-4"><h2 className="editorial-title text-3xl sm:text-4xl">先找到方法，再挑喜歡的。</h2><Link href="/care/compass" className="text-link hidden sm:inline-flex">開始選物<ArrowUpRight size={18} /></Link></div>
         <div className="grid gap-5 md:grid-cols-3">{tools.map((tool, i) => <motion.div key={tool.href} {...reveal}>
           <Link href={tool.href} className="tool-story group block h-full overflow-hidden rounded-2xl bg-[#fffefa]">
             <div className="relative aspect-[1.65] overflow-hidden"><Image src={tool.image} alt="" fill sizes="(max-width:768px) 100vw,33vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />

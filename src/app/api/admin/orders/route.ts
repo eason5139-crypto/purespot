@@ -110,6 +110,14 @@ export async function PATCH(request: Request) {
           await tx.productVariant.update({ where: { id: variantId }, data: { stock: { increment: quantity } } });
         }
       }
+      if(status==="CANCELLED" && current.paymentReference) await tx.autoshipPlan.updateMany({where:{userId:current.userId,paymentMethodToken:current.paymentReference},data:{status:"CANCELLED",isActive:false,revision:{increment:1}}});
+      if(status==="CANCELLED") {
+        const used=await tx.pointEntry.findUnique({where:{sourceKey:`order-points-use:${orderId}`}});
+        if(used) await tx.pointEntry.createMany({data:[{userId:current.userId,sourceKey:`cancel-points-refund:${orderId}`,title:`取消訂單退回折抵點數（${orderId.slice(0,8)}）`,points:Math.abs(used.points)}],skipDuplicates:true});
+        await tx.rewardRedemption.updateMany({where:{userId:current.userId,orderId},data:{orderId:null}});
+        const gifts=await tx.outboxEvent.findMany({where:{type:"POINTS_SHOP_ITEM",payload:{path:["orderId"],equals:orderId}}});
+        for(const gift of gifts)await tx.outboxEvent.update({where:{id:gift.id},data:{payload:{...gift.payload as Prisma.JsonObject,status:"PENDING",orderId:null}}});
+      }
       return tx.order.findUniqueOrThrow({ where: { id: orderId } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 

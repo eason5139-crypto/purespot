@@ -1,4 +1,5 @@
 import type { MemberTierCode } from "./supportTypes";
+import { DEFAULT_TIERS } from "./memberPolicy";
 
 export type PointsItemCategory =
   | "TASTER_PACK"
@@ -29,43 +30,7 @@ export const POINTS_RULE = {
   ntPerPointRedeem: 1, // 結帳每 1 點折抵現金 NT$1
 } as const;
 
-export const TIER_POINTS_PERKS: {
-  tier: MemberTierCode;
-  name: string;
-  thresholdText: string;
-  earnRateText: string;
-  shopDiscountRate: number; // 點數商店換購折扣 (1 = 原價, 0.9 = 9折, 0.85 = 85折)
-  maxRedeemRatio: number; // 單筆結帳最高折抵比例
-  supportSla: string;
-}[] = [
-  {
-    tier: "MEMBER",
-    name: "新朋友會員",
-    thresholdText: "註冊即享（累計消費 NT$0 起）",
-    earnRateText: "每消費 NT$10 累積 1 點（1 點折 NT$1）",
-    shopDiscountRate: 1,
-    maxRedeemRatio: 0.5,
-    supportSla: "P3 標準會員客服通道",
-  },
-  {
-    tier: "SILVER",
-    name: "暖心夥伴",
-    thresholdText: "累計消費滿 NT$3,000 自動升等",
-    earnRateText: "每消費 NT$10 累積 1 點 ＋ 點數商店換購 9 折優惠",
-    shopDiscountRate: 0.9,
-    maxRedeemRatio: 0.8,
-    supportSla: "P2 進階優先客服通道（1 小時內）",
-  },
-  {
-    tier: "GOLD",
-    name: "星光夥伴 VIP",
-    thresholdText: "累計消費滿 NT$12,000 自動升等",
-    earnRateText: "每消費 NT$10 累積 1 點 ＋ 點數商店換購 85 折 ＋ 專屬限定器物",
-    shopDiscountRate: 0.85,
-    maxRedeemRatio: 1.0,
-    supportSla: "P1 尊榮最優先客服通道（15 分鐘內）",
-  },
-];
+export const TIER_POINTS_PERKS = DEFAULT_TIERS.map(t=>({tier:t.code,name:t.name,thresholdText:`近六個月消費滿 NT$${t.spendNt}，續等 NT$${t.retainNt}`,earnRateText:`購物回饋 ${t.earnPercent}%`,shopDiscountRate:t.shopRate,maxRedeemRatio:t.maxRedeemRatio,supportSla:t.support}));
 
 export const POINTS_SHOP_CATEGORIES: {
   id: "ALL" | PointsItemCategory;
@@ -234,6 +199,8 @@ export function canUnlockByTier(
     MEMBER: 1,
     SILVER: 2,
     GOLD: 3,
+    PLATINUM: 4,
+    DIAMOND: 5,
   };
   return rank[userTier] >= rank[requiredTier];
 }
@@ -242,7 +209,6 @@ export function discountedPointsCost(
   basePoints: number,
   userTier: MemberTierCode,
 ): number {
-  const perk = TIER_POINTS_PERKS.find((p) => p.tier === userTier);
-  const rate = perk?.shopDiscountRate ?? 1;
+  const rate = DEFAULT_TIERS.find((p) => p.code === userTier)?.shopRate ?? 1;
   return Math.max(1, Math.round(basePoints * rate));
 }

@@ -40,6 +40,7 @@ interface Order {
   customerName?: string;
   customerEmail?: string;
   paymentMethod?: string | null;
+  shippingAddress?:{pointsGifts?:string[]};
 }
 
 const STATUS_CONFIG: Record<
@@ -339,6 +340,7 @@ export default function AdminOrdersPage() {
                               <p className="text-xs font-semibold text-[#8a7f75] mb-2">
                                 訂購品項
                               </p>
+                              {order.shippingAddress?.pointsGifts?.map((gift,i)=><p key={i} className="mb-2 rounded-lg bg-[#eaf1f5] p-3 text-sm text-[#315f86]">隨箱兌換商品：{gift} × 1</p>)}
                               {order.items.map((item) => (
                                 <div
                                   key={item.id}

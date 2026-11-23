@@ -20,6 +20,7 @@ import {
   listUserCertificates,
 } from "./pointsArcadeRepository";
 import type { MemberTierCode } from "@/lib/supportTypes";
+import { memberStatus, serializable } from "./memberPolicyRepository";
 
 export async function membershipConfig() {
   const cfg = await db.membershipConfig.upsert({
@@ -32,18 +33,17 @@ export async function membershipConfig() {
     },
     update: {},
   });
-  if (cfg.pointsPerHundred < 10) {
-    return db.membershipConfig.update({
-      where: { id: "main" },
-      data: { pointsPerHundred: 10 },
-    });
-  }
   return cfg;
 }
 
 export async function reconcilePoints(userId: string) {
   const config = await membershipConfig();
-  const effectivePointsPerHundred = Math.max(10, config.pointsPerHundred);
+  const membership = await memberStatus(userId);
+  const policy = membership.policy;
+  const legacyEarned = await db.pointEntry.findMany({where:{userId,sourceKey:{startsWith:"order-10nt:"}},select:{sourceKey:true}});
+  const legacyKeys = new Set(legacyEarned.map(e=>e.sourceKey));
+  const pricingRows = await db.outboxEvent.findMany({where:{type:"ORDER_MEMBER_PRICING",payload:{path:["userId"],equals:userId}},select:{dedupeKey:true,payload:true}});
+  const pricing = new Map(pricingRows.map(r=>[r.dedupeKey,r.payload as {earnPercent:number}]));
 
   const [
     orders,
@@ -56,7 +56,7 @@ export async function reconcilePoints(userId: string) {
   ] = await Promise.all([
     db.order.findMany({
       where: { userId },
-      select: { id: true, status: true, totalNt: true },
+      select: { id: true, status: true, totalNt: true, shippingNt:true, createdAt:true },
     }),
     db.pet.count({ where: { userId } }),
     db.careRecord.count({ where: { userId } }),
@@ -84,17 +84,16 @@ export async function reconcilePoints(userId: string) {
   ];
 
   for (const order of orders) {
-    if (
-      ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status)
-    ) {
-      const earned = Math.floor(
-        (order.totalNt * effectivePointsPerHundred) / 100,
-      );
+    const legacy = order.createdAt < new Date(policy.activatedAt);
+    if (legacyKeys.has(`order-10nt:${order.id}`)) continue;
+    if (legacy ? ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status) : order.status === "COMPLETED") {
+      const rate = legacy ? 10 : pricing.get(`ORDER_MEMBER_PRICING:${order.id}`)?.earnPercent ?? membership.current.earnPercent;
+      const earned = Math.floor((legacy ? order.totalNt : Math.max(0,order.totalNt-order.shippingNt))*rate/100);
       if (earned > 0) {
         entries.push({
           userId,
-          sourceKey: `order-10nt:${order.id}`,
-          title: `購物回饋（每滿 NT$10 贈 1 點 · 訂單 #${order.id.slice(0, 8)}）`,
+          sourceKey: legacy ? `order-10nt:${order.id}` : `order-v2:${order.id}`,
+          title: `購物回饋（${rate}% · 訂單 #${order.id.slice(0, 8)}）`,
           points: earned,
         });
       }
@@ -124,7 +123,7 @@ export async function reconcilePoints(userId: string) {
   }
 
   const awarded = await db.pointEntry.findMany({
-    where: { userId, sourceKey: { startsWith: "order-10nt:" } },
+    where: { userId, OR:[{sourceKey: { startsWith: "order-10nt:" }},{sourceKey: { startsWith: "order-v2:" }}] },
     select: { sourceKey: true, points: true },
   });
   const cancelled = new Set(
@@ -133,10 +132,10 @@ export async function reconcilePoints(userId: string) {
       .map((order) => order.id),
   );
   const reversals = awarded
-    .filter((entry) => cancelled.has(entry.sourceKey.slice(11)))
+    .filter((entry) => cancelled.has(entry.sourceKey.split(":")[1]!))
     .map((entry) => ({
       userId,
-      sourceKey: `reversal-10nt:${entry.sourceKey.slice(11)}`,
+      sourceKey: `reversal-${entry.sourceKey.startsWith("order-v2:")?"v2":"10nt"}:${entry.sourceKey.split(":")[1]}`,
       title: "取消訂單點數退回",
       points: -entry.points,
     }));
@@ -213,6 +212,7 @@ export async function membershipSnapshot(userId: string) {
   ]);
 
   const todayKey = getTaipeiDateKey();
+  const membership = await memberStatus(userId);
 
   const [
     entries,
@@ -253,11 +253,11 @@ export async function membershipSnapshot(userId: string) {
       select: { totalNt: true },
     }),
     db.reward.findMany({
-      where: { isActive: true },
+      where: { isActive: true,id:{notIn:POINTS_SHOP_CATALOG.map(p=>p.id)} },
       orderBy: { pointsCost: "asc" },
     }),
     db.rewardRedemption.findMany({
-      where: { userId, orderId: null },
+      where: { userId },
       include: { reward: { select: { title: true } } },
       orderBy: { createdAt: "desc" },
     }),
@@ -304,26 +304,13 @@ export async function membershipSnapshot(userId: string) {
     hasTaskSignal(userId, "mile_nutrition_calc", false),
   ]);
 
-  const spentNt = orders.reduce((sum, order) => sum + order.totalNt, 0);
+  const spentNt = membership.spendNt;
   const points = Math.max(0, balance._sum.points ?? 0);
-  const tierCode: MemberTierCode =
-    spentNt >= config.goldSpendNt
-      ? "GOLD"
-      : spentNt >= config.silverSpendNt
-        ? "SILVER"
-        : "MEMBER";
-  const tier =
-    tierCode === "GOLD"
-      ? "星光夥伴"
-      : tierCode === "SILVER"
-        ? "暖心夥伴"
-        : "新朋友";
-  const nextTierNt =
-    spentNt < config.silverSpendNt
-      ? config.silverSpendNt
-      : spentNt < config.goldSpendNt
-        ? config.goldSpendNt
-        : null;
+  const tierCode = membership.current.code;
+  const tier = membership.current.name;
+  const nextTierNt = membership.next?.spendNt ?? null;
+  const couponRows = await db.outboxEvent.findMany({where:{type:"COUPON_META",payload:{path:["userId"],equals:userId}},select:{dedupeKey:true,payload:true}});
+  const couponMap = new Map(couponRows.map(r=>[r.dedupeKey,r.payload as {minSpendNt:number;expiresAt:string;source:string}]));
 
   const checkInDateSet = new Set(
     checkInEntries.map((e) => e.sourceKey.split(":").pop() ?? ""),
@@ -366,6 +353,7 @@ export async function membershipSnapshot(userId: string) {
 
   return {
     config,
+    membership,
     points,
     spentNt,
     tier,
@@ -390,7 +378,7 @@ export async function membershipSnapshot(userId: string) {
     shopExchanges,
     entries,
     rewards,
-    redemptions,
+    redemptions: redemptions.map(r=>{const meta=couponMap.get(`COUPON_META:${r.id}`);return {...r,...meta,status:r.orderId?"USED":meta?.expiresAt && new Date(meta.expiresAt)<new Date()?"EXPIRED":"AVAILABLE"};}),
     notifications,
     badges: memberMissions
       .filter(
@@ -834,17 +822,16 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
   if (!canUnlockByTier(snapshot.tierCode, catalogItem.requiredTier)) {
     throw new ApiError(
       403,
-      `此選物為「${catalogItem.requiredTier === "GOLD" ? "星光夥伴 VIP" : "暖心夥伴"}」以上等級專屬`,
+      `此選物為「${catalogItem.requiredTier === "GOLD" ? "暖心夥伴" : "日常夥伴"}」以上等級專屬`,
     );
   }
 
-  const finalPointsCost = discountedPointsCost(
-    catalogItem.pointsCost,
-    snapshot.tierCode,
-  );
+  const finalPointsCost = Math.max(1,Math.round(catalogItem.pointsCost*snapshot.membership.current.shopRate));
 
-  return db.$transaction(
+  return serializable(
     async (tx) => {
+      const exchanged=await tx.pointEntry.count({where:{sourceKey:{startsWith:"shop-exchange:"},title:{startsWith:`點數商店換購：${catalogItem.title}（`}}});
+      if(exchanged>=catalogItem.stock) throw new ApiError(409,"這項換購目前已額滿，請選其他商品");
       const balance = await tx.pointEntry.aggregate({
         where: { userId },
         _sum: { points: true },
@@ -870,7 +857,7 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
             title: catalogItem.title,
             pointsCost: finalPointsCost,
             discountNt: catalogItem.voucherDiscountNt,
-            isActive: true,
+            isActive: false,
           },
           update: {
             title: catalogItem.title,
@@ -879,7 +866,7 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
           },
         });
 
-        await tx.rewardRedemption.create({
+        const coupon=await tx.rewardRedemption.create({
           data: {
             userId,
             rewardId: reward.id,
@@ -888,7 +875,10 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
             discountNt: catalogItem.voucherDiscountNt,
           },
         });
+        await tx.outboxEvent.create({data:{dedupeKey:`COUPON_META:${coupon.id}`,type:"COUPON_META",payload:{userId,minSpendNt:catalogItem.voucherDiscountNt,expiresAt:new Date(Date.now()+60*86400000).toISOString(),source:"點數商店兌換"},processedAt:new Date()}});
       }
+
+      if(["TASTER_PACK","CRAFT_GOODS"].includes(catalogItem.category)) await tx.outboxEvent.create({data:{dedupeKey:`SHOP_ITEM:${exchangeCode}`,type:"POINTS_SHOP_ITEM",payload:{userId,itemId,title:catalogItem.title,specNote:catalogItem.specNote,exchangeCode,status:"PENDING",orderId:null},processedAt:new Date()}});
 
       await tx.pointEntry.create({
         data: {
@@ -912,7 +902,7 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
               : catalogItem.category === "CHARITY_MEAL"
                 ? `已為您登記認捐 ${catalogItem.charityGrams}g 主糧（憑證：${exchangeCode}）`
                 : `已為您保留換購商品（憑證代碼：${exchangeCode}），將隨您的下一筆訂單免費隨箱寄出。`,
-          href: "/rewards",
+          href: "/account?tab=tickets",
         },
       });
 
@@ -922,11 +912,11 @@ export async function exchangePointsShopItem(userId: string, itemId: string) {
         pointsSpent: finalPointsCost,
       };
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
 
 export async function redeemReward(userId: string, rewardId: string) {
+  if(POINTS_SHOP_CATALOG.some(p=>p.id===rewardId))throw new ApiError(400,"請由點數商店的商品換購入口兌換");
   await reconcilePoints(userId);
   return db.$transaction(
     async (tx) => {

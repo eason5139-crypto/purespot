@@ -8,7 +8,7 @@ export type AccountOrder = {
   giftCard?: { included: boolean; recipient: string; message: string; signature: string; font: string; tone: string } | null;
   familyGroupId?: string | null;
   createdAt: string; updatedAt: string; paymentMethod: string | null;
-  shippingAddress: { name?: string; phone?: string; postalCode?: string; address?: string };
+  shippingAddress: { name?: string; phone?: string; postalCode?: string; address?: string;pointsGifts?:string[] };
   items: { id: string; productName: string; quantity: number; unitPriceNt: number; petId: string; petName: string; productId: string; slug: string; image: string }[];
   supportRequests: { id: string; kind: string; status: string; message: string; response: string | null; createdAt: string }[];
 };

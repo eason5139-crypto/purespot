@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Award, Gift, KeyRound, Save } from "lucide-react";
+import { MemberPolicyEditor } from "@/components/admin/MemberPolicyEditor";
 import { AdminArcadeEditor } from "@/components/admin/AdminArcadeEditor";
 import {
   DEFAULT_ARCADE_CONFIG,
@@ -99,45 +100,7 @@ export default function AdminMembershipPage() {
         }
       />
 
-      <section className="rounded-2xl border border-[#e5d8c8] bg-white p-6">
-        <h2 className="flex items-center gap-2 text-base font-bold text-[#302b26]">
-          <Award size={18} className="text-[#935941]" />
-          等級門檻與累點比例
-        </h2>
-        {config && (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {(
-              [
-                ["silverSpendNt", "暖心夥伴門檻（NT$）"],
-                ["goldSpendNt", "星光夥伴門檻（NT$）"],
-                ["pointsPerHundred", "每消費 NT$100 獲點"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="text-xs font-semibold text-[#6e6257]">
-                {label}
-                <input
-                  className="input mt-2"
-                  type="number"
-                  min={0}
-                  value={config[key]}
-                  onChange={(e) =>
-                    setConfig({ ...config, [key]: Number(e.target.value) })
-                  }
-                />
-              </label>
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          disabled={!config || busy}
-          onClick={() => config && void save({ action: "config", ...config })}
-          className="mt-5 flex min-h-11 items-center gap-2 rounded-xl bg-[#935941] px-5 text-sm font-semibold text-white hover:bg-[#7a4733] disabled:opacity-40"
-        >
-          <Save size={16} />
-          儲存規則
-        </button>
-      </section>
+      <MemberPolicyEditor />
 
       <section className="rounded-2xl border border-[#e5d8c8] bg-white p-6">
         <h2 className="text-base font-bold text-[#302b26]">成就徽章規則</h2>

@@ -4,11 +4,11 @@
   "footerNotice": "讓每一份選擇，都更貼近毛孩的日常。",
   "heroEyebrow": "為毛孩多想一步的生活提案",
   "heroTitle": "懂牠，",
-  "heroAccent": "從每一口開始。",
-  "heroDescription": "把成分、來源、日常與家人的照顧放在一起。從專屬配糧到共享購物車，讓每次選擇都更安心，也更像生活。",
-  "heroImage": "/images/cat-life.png",
-  "heroImageAlt": "毛孩在溫暖的家中享用餐食",
-  "heroPrimaryLabel": "為毛孩挑主食",
+  "heroAccent": "從每一天開始。",
+  "heroDescription": "從一餐飯、一件玩具，到陪牠自在休息的角落。把選物、照顧與家人的日常整理好，讓相處的時間更有溫度。",
+  "heroImage": "/images/editorial/home-living-v2.png",
+  "heroImageAlt": "午後陽光下在家相伴的貓、狗與家人",
+  "heroPrimaryLabel": "探索牠的日常",
   "heroSecondaryLabel": "試算每日份量",
   "benefitsTitle": "資訊很完整，感受可以很輕鬆。",
   "benefitsDescription": "我們把透明、適配與連結，整理成四個自然的使用步驟。",
@@ -24,13 +24,53 @@
   "familyDescription": "用家庭群組、共享購物車與合併結帳，把照顧毛孩變成家人一起完成的事。",
   "communityTitle": "毛孩的日常，也能遇見同好。",
   "communityDescription": "看見喜歡的日常，不需要離開內容就能查看商品或加入家庭清單。",
-  "communityImage": "/images/chicken-dog.png",
+  "communityImage": "/images/editorial/small-friends-v2.png",
   "finalTitle": "今天，先從更懂牠開始。",
   "finalDescription": "輸入毛孩資料，看看適合的份量、主食與補貨週期。",
-  "shopBadge": "專屬營養，從理解開始",
+  "shopBadge": "從餐桌，到每個日常",
   "shopTitleAccent": "多想一步。",
-  "shopDescription": "從避開過敏原到剛剛好的份量，把複雜的選擇，變成簡單的日常。",
-  "shopImage": "/images/cat-life.png",
+  "shopDescription": "食物、玩具、居家與外出用品，依毛孩與生活場景慢慢挑。每個細節，都值得用心。",
+  "shopImage": "/images/editorial/shop-living-v2.png",
   "transparencyTitle": "成分透明，讓愛有據可查",
-  "transparencyDescription": "查看商品的原料、營養保證值與示範批次資料。正式報告會在核實來源後提供下載。"
+  "transparencyDescription": "查看商品的原料、營養保證值與示範批次資料。正式報告會在核實來源後提供下載。",
+  "promotions": [
+    {
+      "id": "product-selection-v3",
+      "title": "先看成分，再選牠的日常。",
+      "description": "鮭魚低敏成貓糧，每包 NT$980。先比較原料與毛孩條件，再決定適不適合；已知魚類過敏請另選配方。",
+      "image": "/images/campaigns/product-v3.webp",
+      "ctaLabel": "比較商品成分",
+      "href": "/care/ingredients",
+      "enabled": true
+    },
+    {
+      "id": "autoship-v3",
+      "title": "下一包，照牠的步調送到。",
+      "description": "定期配送享商品 9 折，每 2／4／6／8 週自由選；可暫停或順延。全單定期配送滿 NT$699 免運，會員免運優惠擇優。",
+      "image": "/images/campaigns/autoship-v3.webp",
+      "ctaLabel": "安排定期配送",
+      "href": "/autoship",
+      "enabled": true
+    },
+    {
+      "id": "pet-survey-v3",
+      "title": "聊聊牠的日常，回饋你 30 點。",
+      "description": "約 2 分鐘，告訴我們毛孩喜好與選物習慣。登入後填答，完成即可領 30 點；每位會員限領一次。",
+      "image": "/images/campaigns/survey-v3.webp",
+      "ctaLabel": "填問卷領 30 點",
+      "href": "/surveys/pet-preferences",
+      "enabled": true
+    },
+    {
+      "id": "feedback-survey-v3",
+      "title": "這裡好不好用，想聽你說。",
+      "description": "完成網站使用回饋，領 50 元購物券。折後商品滿 NT$600 可用，有效 30 天；每位會員限領一次。",
+      "image": "/images/campaigns/survey-v3.webp",
+      "ctaLabel": "分享使用感受",
+      "href": "/surveys/site-feedback",
+      "enabled": true
+    }
+  ],
+  "promotionAutoplay": true,
+  "promotionIntervalSeconds": 7
 }

@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { reconcilePoints } from "./membership";
+import { getMemberPolicy, memberStatus } from "./memberPolicyRepository";
+import {evaluateCycle,type MemberCycle} from "@/lib/memberPolicy";
 import {
   INITIAL_DEMO_THREADS,
   MEMBER_TIER_META,
@@ -23,129 +25,14 @@ const memoryFallback = new Map<string, SupportThread>(
   INITIAL_DEMO_THREADS.map((t) => [t.id, t]),
 );
 
-async function getMembershipThresholds() {
-  try {
-    const cfg = await db.membershipConfig.findUnique({ where: { id: "main" } });
-    if (cfg) {
-      return {
-        silverSpendNt: cfg.silverSpendNt,
-        goldSpendNt: cfg.goldSpendNt,
-      };
-    }
-  } catch {
-    // fallback default thresholds
-  }
-  return { silverSpendNt: 3000, goldSpendNt: 12000 };
-}
-
-export async function getUserTierProfile(userId: string | null): Promise<{
-  userId: string | null;
-  isLoggedIn: boolean;
-  name: string;
-  email: string;
-  tier: MemberTierCode;
-  tierLabel: string;
-  priority: number;
-  spentNt: number;
-  points: number;
-  nextTierNt: number | null;
-  ordersCount: number;
-}> {
-  if (!userId) {
-    const meta = MEMBER_TIER_META.GUEST;
-    return {
-      userId: null,
-      isLoggedIn: false,
-      name: "訪客飼主",
-      email: "",
-      tier: "GUEST",
-      tierLabel: meta.label,
-      priority: meta.priority,
-      spentNt: 0,
-      points: 0,
-      nextTierNt: 3000,
-      ordersCount: 0,
-    };
-  }
-
-  try {
-    await reconcilePoints(userId);
-    const [user, config, pointBalance] = await Promise.all([
-      db.user.findUnique({
-        where: { id: userId },
-        include: {
-          orders: {
-            where: {
-              status: { in: ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"] },
-            },
-            select: { totalNt: true },
-          },
-        },
-      }),
-      getMembershipThresholds(),
-      db.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      }),
-    ]);
-
-    if (!user) {
-      const meta = MEMBER_TIER_META.GUEST;
-      return {
-        userId: null,
-        isLoggedIn: false,
-        name: "訪客飼主",
-        email: "",
-        tier: "GUEST",
-        tierLabel: meta.label,
-        priority: meta.priority,
-        spentNt: 0,
-        points: 0,
-        nextTierNt: config.silverSpendNt,
-        ordersCount: 0,
-      };
-    }
-
-    const spentNt = user.orders.reduce((acc, o) => acc + o.totalNt, 0);
-    const points = Math.max(0, pointBalance._sum.points ?? 0);
-    const tier = resolveMemberTier(spentNt, true, config);
-    const meta = MEMBER_TIER_META[tier];
-    const nextTierNt =
-      spentNt < config.silverSpendNt
-        ? config.silverSpendNt
-        : spentNt < config.goldSpendNt
-          ? config.goldSpendNt
-          : null;
-
-    return {
-      userId: user.id,
-      isLoggedIn: true,
-      name: user.name || user.email.split("@")[0] || "會員飼主",
-      email: user.email,
-      tier,
-      tierLabel: meta.label,
-      priority: meta.priority,
-      spentNt,
-      points,
-      nextTierNt,
-      ordersCount: user.orders.length,
-    };
-  } catch {
-    const meta = MEMBER_TIER_META.MEMBER;
-    return {
-      userId,
-      isLoggedIn: true,
-      name: "會員飼主",
-      email: "",
-      tier: "MEMBER",
-      tierLabel: meta.label,
-      priority: meta.priority,
-      spentNt: 0,
-      points: 120,
-      nextTierNt: 3000,
-      ordersCount: 0,
-    };
-  }
+export async function getUserTierProfile(userId: string | null) {
+  if (!userId) { const m=MEMBER_TIER_META.GUEST; return {userId:null,isLoggedIn:false,name:"訪客",email:"",tier:"GUEST" as MemberTierCode,tierLabel:m.label,priority:m.priority,spentNt:0,points:0,nextTierNt:3000,ordersCount:0}; }
+  await reconcilePoints(userId);
+  const [user, membership, balance, ordersCount]=await Promise.all([
+    db.user.findUniqueOrThrow({where:{id:userId},select:{id:true,name:true,email:true}}),memberStatus(userId),
+    db.pointEntry.aggregate({where:{userId},_sum:{points:true}}),db.order.count({where:{userId,status:"COMPLETED"}}),
+  ]);
+  return {userId:user.id,isLoggedIn:true,name:user.name||user.email.split("@")[0],email:user.email,tier:membership.current.code as MemberTierCode,tierLabel:membership.current.name,priority:MEMBER_TIER_META[membership.current.code].priority,spentNt:membership.spendNt,points:Math.max(0,balance._sum.points??0),nextTierNt:membership.next?.spendNt??null,ordersCount};
 }
 
 async function ensureSeedThreads() {
@@ -223,7 +110,7 @@ export async function listAllSupportThreads(): Promise<SupportThread[]> {
                     in: ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"],
                   },
                 },
-                select: { totalNt: true },
+                select: { createdAt:true,status:true,totalNt: true,shippingNt:true },
               },
             },
           },
@@ -232,7 +119,7 @@ export async function listAllSupportThreads(): Promise<SupportThread[]> {
         orderBy: { createdAt: "desc" },
         take: 150,
       }),
-      getMembershipThresholds(),
+      getMemberPolicy(),
     ]);
 
     for (const ev of events) {
@@ -242,10 +129,13 @@ export async function listAllSupportThreads(): Promise<SupportThread[]> {
       }
     }
 
+    const cycleRows=await db.outboxEvent.findMany({where:{dedupeKey:{in:[...new Set(legacyRequests.map(r=>`MEMBER_CYCLE:${r.userId}`))]}},select:{dedupeKey:true,payload:true}});
+    const cycleByUser=new Map(cycleRows.map(r=>[r.dedupeKey,r.payload as MemberCycle]));
     for (const req of legacyRequests) {
       if (map.has(req.id)) continue;
-      const spentNt = req.user.orders.reduce((sum, o) => sum + o.totalNt, 0);
-      const tier = resolveMemberTier(spentNt, true, config);
+      const membership = evaluateCycle(config,cycleByUser.get(`MEMBER_CYCLE:${req.userId}`)??null,req.user.orders);
+      const spentNt = membership.spendNt;
+      const tier = membership.current.code;
       const meta = MEMBER_TIER_META[tier];
       const category = mapLegacyKindToCategory(req.kind);
       const catMeta =

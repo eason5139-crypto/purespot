@@ -194,83 +194,7 @@ export default function AdminSupportPage() {
           </button>
         </div>
 
-        {/* 會員等級分級優先佇列指標卡 */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-4">
-          <div className="rounded-2xl border border-[#dfb86c] bg-[#fcf5e3] p-4">
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#8a5812]">
-                <Crown size={13} />
-                P1 · 星光夥伴 VIP
-              </span>
-              <span className="rounded-full bg-[#8a5812] px-2 py-0.5 font-mono text-[10px] font-bold text-white">
-                最優先
-              </span>
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-[#302b26]">
-              {stats.goldPending} <span className="text-xs font-normal">件待辦</span>
-            </p>
-            <p className="mt-0.5 text-[11px] text-[#7c5c28]">
-              累計消費滿 NT$12,000 · 15 分鐘 SLA
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-[#b8ceb9] bg-[#f1f7f2] p-4">
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#3d5c43]">
-                <Award size={13} />
-                P2 · 暖心夥伴
-              </span>
-              <span className="rounded-full bg-[#4e6752] px-2 py-0.5 font-mono text-[10px] font-bold text-white">
-                優先處理
-              </span>
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-[#302b26]">
-              {stats.silverPending}{" "}
-              <span className="text-xs font-normal">件待辦</span>
-            </p>
-            <p className="mt-0.5 text-[11px] text-[#526d57]">
-              累計消費滿 NT$3,000 · 1 小時 SLA
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-[#dec7b0] bg-[#faf3eb] p-4">
-            <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold text-[#935941]">
-                P3/P4 · 新朋友與訪客
-              </span>
-              <span className="rounded-full bg-[#935941]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#935941]">
-                標準佇列
-              </span>
-            </div>
-            <p className="mt-2 font-mono text-2xl font-bold text-[#302b26]">
-              {stats.memberPending}{" "}
-              <span className="text-xs font-normal">件待辦</span>
-            </p>
-            <p className="mt-0.5 text-[11px] text-[#7a634f]">
-              一般會員與售前營養諮詢
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-[#e3d5c4] bg-white p-4">
-            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#6e5f50]">
-              <Layers size={13} className="text-[#935941]" />
-              五大問題分類分布
-            </span>
-            <div className="mt-2 space-y-1">
-              {stats.byCategory.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between text-[11px]"
-                >
-                  <span className="text-[#5e5145]">{c.shortLabel}</span>
-                  <span className="font-mono font-bold text-[#935941]">
-                    {c.count} 件
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">{(['DIAMOND','PLATINUM','GOLD','SILVER','MEMBER','GUEST'] as const).map(code=><div key={code} className="rounded-2xl border border-[#d3e0e7] bg-[#f1f6f8] p-4"><p className="text-xs font-semibold text-[#315f86]">P{MEMBER_TIER_META[code].priority} · {MEMBER_TIER_META[code].label}</p><strong className="mt-3 block text-2xl text-[#18344c]">{threads.filter(t=>t.memberTier===code&&t.status!=='RESOLVED').length}<span className="ml-2 text-xs font-normal">件待辦</span></strong></div>)}</div>
       </header>
 
       {/* 雙層篩選工具列：第一排依會員等級、第二排依問題分類與處理狀態 */}
@@ -283,10 +207,12 @@ export default function AdminSupportPage() {
           {(
             [
               ["ALL", "全部等級"],
-              ["GOLD", "P1 星光夥伴 VIP"],
-              ["SILVER", "P2 暖心夥伴"],
-              ["MEMBER", "P3 新朋友會員"],
-              ["GUEST", "P4 訪客諮詢"],
+              ["DIAMOND", "P1 星光家人"],
+              ["PLATINUM", "P2 摯愛夥伴"],
+              ["GOLD", "P3 暖心夥伴"],
+              ["SILVER", "P4 日常夥伴"],
+              ["MEMBER", "P5 初見會員"],
+              ["GUEST", "P6 訪客諮詢"],
             ] as const
           ).map(([code, label]) => (
             <button

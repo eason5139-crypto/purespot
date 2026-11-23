@@ -26,6 +26,7 @@ interface Member {
   totalSpentNt: number;
   status: "ACTIVE" | "SUSPENDED";
   petCount: number;
+  tierName?:string;sixMonthSpendNt?:number;expiresAt?:string;
 }
 
 export default function AdminMembersPage() {
@@ -172,7 +173,7 @@ export default function AdminMembersPage() {
           <thead className="border-b border-[#e8ded3] bg-[#fcfaf7] text-xs font-semibold text-[#675e53]">
             <tr>
               <th className="p-4">會員資訊</th>
-              <th className="p-4">加入日期</th>
+              <th className="p-4">加入日期／會員等級</th>
               <th className="p-4 text-center">毛孩數</th>
               <th className="p-4 text-center">訂單數</th>
               <th className="p-4 text-right">累計消費</th>
@@ -211,6 +212,7 @@ export default function AdminMembersPage() {
                     </div>
                   </td>
                   <td className="p-4 text-xs text-[#8a7f75]">
+                    {m.tierName&&<p className="mb-2 font-semibold text-[#315f86]">{m.tierName} · 半年 {money(m.sixMonthSpendNt??0)}</p>}
                     {dateLabel(m.joinedAt)}
                   </td>
                   <td className="p-4 text-center font-mono text-[#675e53]">
@@ -297,10 +299,10 @@ export default function AdminMembersPage() {
                   <input
                     type="password"
                     required
-                    minLength={8}
+                    minLength={12}
                     value={newMember.password}
                     onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
-                    placeholder="至少 8 碼"
+                    placeholder="至少 12 碼"
                     className="input font-mono"
                   />
                 </div>

@@ -1,0 +1,24 @@
+<Rive version="1" kind="fragment">
+  <Artboard width="360" height="300" name="PURESPOT Paw" id="0:2" styleId="0:5">
+    <LayoutComponentStyle name="Artboard Style" id="0:5"/>
+    <Node x="180" y="160" name="Paw" id="0:14">
+      <Shape x="0" y="22" name="Pad"><Ellipse width="90" height="68"/><Fill><SolidColor colorValue="FF315F86"/></Fill></Shape>
+      <Shape x="-50" y="-24" rotation="-0.4" name="Toe left"><Ellipse width="30" height="43"/><Fill><SolidColor colorValue="FF4F8AB8"/></Fill></Shape>
+      <Shape x="-18" y="-49" rotation="-0.15" name="Toe inner left"><Ellipse width="30" height="43"/><Fill><SolidColor colorValue="FF4F8AB8"/></Fill></Shape>
+      <Shape x="18" y="-49" rotation="0.15" name="Toe inner right"><Ellipse width="30" height="43"/><Fill><SolidColor colorValue="FF4F8AB8"/></Fill></Shape>
+      <Shape x="50" y="-24" rotation="0.4" name="Toe right"><Ellipse width="30" height="43"/><Fill><SolidColor colorValue="FF4F8AB8"/></Fill></Shape>
+    </Node>
+    <Shape x="275" y="85" opacity="0" name="Sparkle" id="0:15"><Star width="28" height="28" points="4" innerRadius="0.3"/><Fill><SolidColor colorValue="FFD6B477"/></Fill></Shape>
+    <Shape x="180" y="250" name="Shadow"><Ellipse width="100" height="12"/><Fill><SolidColor colorValue="1A315F86"/></Fill></Shape>
+    <LinearAnimation duration="120" loopValue="loop" name="Idle" id="0:6">
+      <KeyedObject objectId="0:14"><KeyedProperty property="y"><KeyFrameDouble frame="0" value="160" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble><KeyFrameDouble frame="60" value="153" interpolationType="cubic"><CubicEaseInterpolator x1="0.42" y1="0" x2="0.58" y2="1"/></KeyFrameDouble><KeyFrameDouble frame="120" value="160"/></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation duration="72" loopValue="oneShot" name="Celebrate" id="0:16">
+      <KeyedObject objectId="0:14">
+        <KeyedProperty property="y"><KeyFrameDouble frame="0" value="160" interpolationType="linear"/><KeyFrameDouble frame="18" value="138" interpolationType="linear"/><KeyFrameDouble frame="38" value="160" interpolationType="linear"/><KeyFrameDouble frame="52" value="150" interpolationType="linear"/><KeyFrameDouble frame="72" value="160"/></KeyedProperty>
+        <KeyedProperty property="rotation"><KeyFrameDouble frame="0" value="0" interpolationType="linear"/><KeyFrameDouble frame="18" value="0.13" interpolationType="linear"/><KeyFrameDouble frame="38" value="-0.1" interpolationType="linear"/><KeyFrameDouble frame="72" value="0"/></KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:15"><KeyedProperty property="opacity"><KeyFrameDouble frame="0" value="0" interpolationType="linear"/><KeyFrameDouble frame="12" value="1" interpolationType="linear"/><KeyFrameDouble frame="50" value="1" interpolationType="linear"/><KeyFrameDouble frame="72" value="0"/></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+  </Artboard>
+</Rive>

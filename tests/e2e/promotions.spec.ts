@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-test("首頁活動、商品比較與四項導覽可直接使用", async ({ page }) => {
+test("首頁活動、商品比較與五項導覽可直接使用", async ({ page }) => {
   await page.goto("/");
   const carousel = page.getByRole("region", { name: "本期活動" });
   await expect(carousel).toBeVisible();
   expect((await carousel.boundingBox())!.y).toBeLessThan(170);
   await expect(page.getByRole("dialog", { name: "PURESPOT 站內活動" })).toHaveCount(0);
-  await expect(page.getByRole("navigation", { name: "主要導覽", exact: true }).getByRole("link")).toHaveText(["首頁", "選物本舖", "點數商店", "毛孩生活圈"]);
+  await expect(page.getByRole("navigation", { name: "主要導覽", exact: true }).getByRole("link")).toHaveText(["首頁", "選物本舖", "點數商店", "毛孩生活圈", "定期配送"]);
   const title = carousel.locator("h2").last();
   const original = await title.innerText();
   await expect(title).not.toHaveText(original, { timeout: 9000 });
@@ -21,8 +21,8 @@ test("首頁活動、商品比較與四項導覽可直接使用", async ({ page 
   const comparison = page.getByRole("region", { name: "商品比較桌" });
   const first = comparison.getByLabel("第一款商品", { exact: true });
   const options = await first.locator("option").evaluateAll((els) => els.map((el) => (el as HTMLOptionElement).value));
-  await first.selectOption(options[2]);
-  await expect(first).toHaveValue(options[2]);
+  await first.selectOption(options[2]!);
+  await expect(first).toHaveValue(options[2]!);
   const second = comparison.getByLabel("第二款商品", { exact: true });
   expect(await first.inputValue()).not.toEqual(await second.inputValue());
   const add = comparison.getByRole("button", { name: /加入購物車/ }).first();

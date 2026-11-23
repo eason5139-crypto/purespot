@@ -18,6 +18,7 @@ const groups = [
     { href: "/admin/content", label: "網站內容", icon: FilePenLine },
     { href: "/admin/media", label: "網站圖片", icon: Images },
     { href: "/admin/promotions", label: "站內活動", icon: Megaphone },
+    { href: "/admin/surveys", label: "問卷與回饋", icon: FilePenLine },
     { href: "/admin/products", label: "商品管理", icon: Package },
     { href: "/admin/inventory", label: "庫存管理", icon: Boxes },
   ] },

@@ -16,7 +16,9 @@ export function ActivityCarousel({ promotions, autoplay = true, intervalSeconds 
   promotions: Promotion[]; autoplay?: boolean; intervalSeconds?: number;
   selectedId?: string; preview?: boolean;
 }) {
-  const slides = preview ? promotions : promotions.filter((item) => item.enabled);
+  const [openSurveys,setOpenSurveys]=useState<string[]>([]);
+  useEffect(()=>{if(preview)return;let active=true;void fetch('/api/surveys',{cache:'no-store'}).then(async r=>{if(!r.ok)return;const d=await r.json();if(active)setOpenSurveys(d.surveys.map((s:{id:string})=>s.id));}).catch(()=>{});return()=>{active=false;};},[preview]);
+  const slides = preview ? promotions : promotions.filter((item) => item.enabled && (!item.href.startsWith('/surveys/')||openSurveys.includes(item.href.split('/')[2]??'')));
   const [activeId, setActiveId] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);

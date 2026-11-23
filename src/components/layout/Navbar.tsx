@@ -32,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 
 const links = [
@@ -39,6 +40,7 @@ const links = [
   { href: "/shop", label: "選物本舖" },
   { href: "/rewards", label: "點數商店" },
   { href: "/community", label: "毛孩生活圈" },
+  { href: "/autoship", label: "定期配送" },
 ];
 
 export function Navbar({ announcement }: { announcement: string }) {
@@ -78,12 +80,12 @@ export function Navbar({ announcement }: { announcement: string }) {
   return (
     <header className="site-header sticky top-0 z-40 border-b border-[#dce4e7] bg-[#fffefa]/95 backdrop-blur-xl">
       <div className="flex min-h-8 items-center justify-center gap-2 bg-[#e5eef3] px-3 py-1 text-xs font-medium text-[#315f86]">
-        <Repeat2 size={13} className="shrink-0 text-[#935941]" />
+        <Repeat2 size={13} className="shrink-0 text-[#315f86]" />
         <span className="truncate">{announcement}</span>
         <span className="hidden text-[#c2b09c] sm:inline">｜</span>
         <Link
           href="/autoship"
-          className="hidden items-center gap-1 rounded-full bg-[#fffaf2] px-2.5 py-0.5 text-[11px] font-bold text-[#935941] shadow-2xs transition-transform hover:scale-105 sm:inline-flex"
+          className="hidden items-center gap-1 rounded-full bg-[#fffefa] px-2.5 py-0.5 text-[11px] font-bold text-[#315f86] shadow-2xs transition-transform hover:scale-105 sm:inline-flex"
         >
           <Sparkles size={11} />
           定期配糧 9 折・滿 $699 免運送到家
@@ -106,7 +108,7 @@ export function Navbar({ announcement }: { announcement: string }) {
         </Link>
         <nav
           aria-label="主要導覽"
-          className="hidden h-full shrink-0 items-center gap-1 xl:gap-4 lg:flex"
+          className="hidden h-full shrink-0 items-center gap-1 xl:gap-3 lg:flex"
         >
           {links.map((link) => {
             const active = link.href === "/" ? path === "/" : path.startsWith(link.href);
@@ -115,17 +117,17 @@ export function Navbar({ announcement }: { announcement: string }) {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors ${
+                className={`group relative flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-2 xl:px-3 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-[#f5ebe0] font-semibold text-[#935941]"
-                    : "text-[#5e544a] hover:bg-[#f9f3eb] hover:text-[#935941]"
+                    ? "bg-[#f5ebe0] font-semibold text-[#315f86]"
+                    : "text-[#5e544a] hover:bg-[#f9f3eb] hover:text-[#315f86]"
                 }`}
               >
                 <span>{link.label}</span>
                 {active && (
                   <motion.span
                     layoutId="nav-indicator"
-                    className="absolute inset-x-3 -bottom-2 h-0.5 rounded-full bg-[#935941]"
+                    className="absolute inset-x-3 -bottom-2 h-0.5 rounded-full bg-[#315f86]"
                   />
                 )}
               </Link>
@@ -137,10 +139,10 @@ export function Navbar({ announcement }: { announcement: string }) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
-                className="gap-2 rounded-full px-2.5 sm:px-3.5 !border-[#dfd0be] !bg-[#fffaf2] !text-[#302b26] shadow-[0_2px_0_#dfd0be] hover:!bg-[#f7efe4] active:translate-y-0.5"
+                className="gap-2 rounded-full px-2.5 sm:px-3.5 !border-[#cbdbe5] !bg-[#fffefa] !text-[#18344c] shadow-[0_2px_0_#cbdbe5] hover:!bg-[#edf3f7] active:translate-y-0.5"
                 aria-label="切換毛孩"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-[#935941]/15 text-[#935941]">
+                <span className="flex size-7 items-center justify-center rounded-full bg-[#315f86]/15 text-[#315f86]">
                   <PetIcon size={16} />
                 </span>
                 <span className="hidden sm:inline text-xs text-[#8a7f75]">陪著</span>
@@ -150,7 +152,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                     initial={{ y: 4, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -4, opacity: 0 }}
-                    className="hidden max-w-24 truncate min-[420px]:inline font-semibold text-[#302b26]"
+                    className="hidden max-w-24 truncate min-[420px]:inline font-semibold text-[#18344c]"
                   >
                     {pet.name}
                   </motion.span>
@@ -169,7 +171,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                     </span>
                   </span>
                   {p.id === pet.id && (
-                    <Check size={16} className="text-[#935941]" />
+                    <Check size={16} className="text-[#315f86]" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -200,7 +202,7 @@ export function Navbar({ announcement }: { announcement: string }) {
               aria-label={`購物車，${count} 件商品`}
               onClick={() => setCartOpen(true)}
             >
-              <ShoppingBag className="size-4.5 text-[#935941]" />
+              <ShoppingBag className="size-4.5 text-[#315f86]" />
               <span className="hidden text-xs font-bold sm:inline">購物籃</span>
               {count > 0 && (
                 <motion.span
@@ -208,7 +210,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                   initial={{ scale: 0.4, y: -4 }}
                   animate={{ scale: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 450, damping: 16 }}
-                  className="flex min-w-5 items-center justify-center rounded-full bg-[#935941] px-1.5 text-xs font-bold leading-5 text-white shadow-xs"
+                  className="flex min-w-5 items-center justify-center rounded-full bg-[#315f86] px-1.5 text-xs font-bold leading-5 text-white shadow-xs"
                 >
                   {count}
                 </motion.span>
@@ -221,7 +223,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                   initial={{ opacity: 0, y: 8, scale: 0.85 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.9 }}
-                  className="pointer-events-none absolute right-0 top-13 z-50 flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#935941]/30 bg-[#302b26] px-3 py-1 text-[11px] font-semibold text-[#fffaf2] shadow-lg"
+                  className="pointer-events-none absolute right-0 top-13 z-50 flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#315f86]/30 bg-[#18344c] px-3 py-1 text-[11px] font-semibold text-[#fffefa] shadow-lg"
                 >
                   <PawPrint size={12} className="text-[#e2a84c]" />
                   <span>{bumpLabel}</span>
@@ -236,7 +238,7 @@ export function Navbar({ announcement }: { announcement: string }) {
                   variant="ghost"
                   size="icon"
                   aria-label="會員選單"
-                  className="rounded-full !text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#935941]"
+                  className="rounded-full !text-[#5e544a] hover:!bg-[#f5ebe0] hover:!text-[#315f86]"
                 >
                   <User className="!size-5" />
                 </Button>
@@ -246,7 +248,9 @@ export function Navbar({ announcement }: { announcement: string }) {
                 <DropdownMenuSeparator />
                 {authUser ? <DropdownMenuItem asChild><Link href="/account"><User size={16} />我的帳戶</Link></DropdownMenuItem>
                   : <DropdownMenuItem onSelect={() => setAuthOpen(true)}><User size={16} />登入或建立帳戶</DropdownMenuItem>}
-                <DropdownMenuItem asChild><Link href="/care"><Compass size={16} />照顧工具</Link></DropdownMenuItem>
+                <DropdownMenuSub><DropdownMenuSubTrigger className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm outline-none focus:bg-[#edf3f6] data-[state=open]:bg-[#edf3f6]"><Compass size={16}/>照顧工具<ChevronDown size={14} className="ml-auto -rotate-90"/></DropdownMenuSubTrigger><DropdownMenuSubContent className="z-50 max-h-[70vh] min-w-52 overflow-y-auto rounded-2xl border border-[#d3e0e7] bg-white p-2 text-[#18344c] shadow-xl" sideOffset={6}>{[["/care/compass","選物羅盤"],["/care/ingredients","成分放大鏡"],["/care/packing","旅前打包桌"],["/care/selection","選物實驗室"],["/care/feeding","一日餵食時鐘"],["/care/refill","存糧週期預報"],["/care/transition","七日換糧陪跑"],["/care/missions","探索任務手冊"],["/health","毛孩健康手札"]].map(([href,label])=><DropdownMenuItem key={href} asChild><Link href={href!}>{label}</Link></DropdownMenuItem>)}</DropdownMenuSubContent></DropdownMenuSub>
+                <DropdownMenuItem asChild><Link href="/account?tab=tasks"><Check size={16}/>簽到與任務</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/account?tab=games"><Sparkles size={16}/>遊戲室</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/transparency"><ScanSearch size={16} />成分與批次資料</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/health"><PawPrint size={16} />毛孩健康手札</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link href="/autoship"><CalendarDays size={16} />定期配糧</Link></DropdownMenuItem>
@@ -262,8 +266,8 @@ export function Navbar({ announcement }: { announcement: string }) {
             </DropdownMenu>
         </div>
       </div>
-      <nav aria-label="行動版主要導覽" className="page-shell grid grid-cols-4 gap-1 border-t border-[#edf1f1] py-2 lg:hidden">{links.map((link) => <Link key={link.href} href={link.href}
-        aria-current={path === link.href ? "page" : undefined} className={`whitespace-nowrap rounded-full px-1 py-2 text-center text-[13px] font-medium ${path === link.href ? "bg-[#e5eef3] text-[#315f86]" : "text-[#4f6574]"}`}>{link.label}</Link>)}</nav>
+      <nav aria-label="行動版主要導覽" className="page-shell grid grid-cols-5 gap-0.5 border-t border-[#edf1f1] py-2 lg:hidden">{links.map((link) => <Link key={link.href} href={link.href}
+        aria-current={path === link.href ? "page" : undefined} className={`whitespace-nowrap rounded-full px-0.5 py-2 text-center text-[11px] min-[400px]:text-xs font-medium ${path === link.href ? "bg-[#e5eef3] text-[#315f86]" : "text-[#4f6574]"}`}>{link.label}</Link>)}</nav>
     </header>
   );
 }

@@ -4,13 +4,15 @@ import { apiError, readBody, verifyOrigin } from "@/server/http";
 import { hashPassword } from "@/server/auth";
 import { requireAdminSession } from "@/server/adminAuth";
 import { z } from "zod";
+import {getMemberPolicy} from "@/server/memberPolicyRepository";
+import {evaluateCycle,type MemberCycle} from "@/lib/memberPolicy";
 
 export const runtime = "nodejs";
 
 const createMemberSchema = z.object({
   name: z.string().trim().min(1, "請輸入姓名"),
   email: z.string().email("請輸入有效 Email").toLowerCase(),
-  password: z.string().min(8, "密碼長度至少需 8 碼"),
+  password: z.string().min(12, "密碼長度至少需 12 碼"),
   phone: z.string().optional(),
 });
 
@@ -22,11 +24,14 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         pets: { select: { id: true } },
-        orders: { select: { id: true, totalNt: true, status: true } },
+        orders: { select: { id: true, totalNt: true, status: true, createdAt:true,shippingNt:true } },
       },
     });
 
+    const [policy,cycles]=await Promise.all([getMemberPolicy(),db.outboxEvent.findMany({where:{dedupeKey:{in:users.map(u=>`MEMBER_CYCLE:${u.id}`)}},select:{dedupeKey:true,payload:true}})]);
+    const cycleMap=new Map(cycles.map(c=>[c.dedupeKey,c.payload as MemberCycle]));
     const members = users.map((u) => {
+      const membership=evaluateCycle(policy,cycleMap.get(`MEMBER_CYCLE:${u.id}`)??null,u.orders);
       const activeOrders = u.orders.filter((order) => ["PAID", "PROCESSING", "DISPATCHED", "COMPLETED"].includes(order.status));
       const ordersCount = activeOrders.length;
       const totalSpentNt = activeOrders.reduce((acc, o) => acc + o.totalNt, 0);
@@ -41,6 +46,7 @@ export async function GET() {
         totalSpentNt,
         status: "ACTIVE" as const,
         petCount: u.pets.length,
+        tierName:membership.current.name,tierCode:membership.current.code,sixMonthSpendNt:membership.spendNt,expiresAt:membership.cycle.expiresAt,
       };
     });
 

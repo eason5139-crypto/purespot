@@ -32,6 +32,7 @@ export function verifyOrigin(request: Request) {
 export async function readBody<T>(
   request: Request,
   schema: ZodType<T>,
+  maxBytes = 32_768,
 ): Promise<T> {
   if (!request.headers.get("content-type")?.includes("application/json"))
     throw new ApiError(415, "請使用 JSON 格式提交");
@@ -44,7 +45,7 @@ export async function readBody<T>(
       const { done, value } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > 32_768) {
+      if (length > maxBytes) {
         await reader.cancel();
         throw new ApiError(413, "提交內容過大");
       }

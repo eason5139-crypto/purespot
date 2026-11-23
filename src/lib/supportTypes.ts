@@ -5,7 +5,7 @@ export type SupportCategory =
   | "ORDER"
   | "AFTER_SALES";
 
-export type MemberTierCode = "GOLD" | "SILVER" | "MEMBER" | "GUEST";
+export type MemberTierCode = "DIAMOND" | "PLATINUM" | "GOLD" | "SILVER" | "MEMBER" | "GUEST";
 
 export type SupportTicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED";
 
@@ -137,29 +137,31 @@ export const MEMBER_TIER_META: Record<
     badgeBorder: string;
   }
 > = {
+  DIAMOND: { code:"DIAMOND", label:"星光家人", priority:1, slaText:"最高優先客服", badgeBg:"bg-[#e4edf5]", badgeText:"text-[#18344c]", badgeBorder:"border-[#6e96b6]" },
+  PLATINUM: { code:"PLATINUM", label:"摯愛夥伴", priority:2, slaText:"高階優先客服", badgeBg:"bg-[#e9e7f2]", badgeText:"text-[#615578]", badgeBorder:"border-[#b6adc6]" },
   GOLD: {
     code: "GOLD",
-    label: "星光夥伴 VIP",
-    priority: 1,
-    slaText: "P1 尊榮最優先（15 分鐘內專人響應）",
+    label: "暖心夥伴",
+    priority: 3,
+    slaText: "進階優先客服",
     badgeBg: "bg-[#fcf3dc]",
     badgeText: "text-[#8a5812]",
     badgeBorder: "border-[#dfb86c]",
   },
   SILVER: {
     code: "SILVER",
-    label: "暖心夥伴",
-    priority: 2,
-    slaText: "P2 進階優先（1 小時內優先處理）",
+    label: "日常夥伴",
+    priority: 4,
+    slaText: "會員優先排隊",
     badgeBg: "bg-[#eef4ef]",
     badgeText: "text-[#3d5c43]",
     badgeBorder: "border-[#b8ceb9]",
   },
   MEMBER: {
     code: "MEMBER",
-    label: "新朋友會員",
-    priority: 3,
-    slaText: "P3 標準會員通道（4 小時內回覆）",
+    label: "初見會員",
+    priority: 5,
+    slaText: "標準會員客服",
     badgeBg: "bg-[#f7efe6]",
     badgeText: "text-[#935941]",
     badgeBorder: "border-[#dec7b0]",
@@ -167,7 +169,7 @@ export const MEMBER_TIER_META: Record<
   GUEST: {
     code: "GUEST",
     label: "訪客諮詢",
-    priority: 4,
+    priority: 6,
     slaText: "P4 一般諮詢通道（24 小時內回覆）",
     badgeBg: "bg-[#f3EFEA]",
     badgeText: "text-[#6e6257]",
