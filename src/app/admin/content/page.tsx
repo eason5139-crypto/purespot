@@ -8,7 +8,7 @@ import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { ContentDevicePreview } from "@/components/admin/ContentDevicePreview";
 import { defaultSiteContent, type SiteContent } from "@/lib/siteContent";
 
-type ContentKey = Exclude<keyof SiteContent, "promotions">;
+type ContentKey = { [Key in keyof SiteContent]: SiteContent[Key] extends string ? Key : never }[keyof SiteContent];
 type Field = { key: ContentKey; label: string; kind?: "long" | "image"; help?: string };
 type Section = { id: string; title: string; description: string; fields: Field[] };
 

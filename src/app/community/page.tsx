@@ -270,15 +270,13 @@ export default function CommunityPage() {
           <div>
             <p className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd0be] bg-[#fffaf2] px-3.5 py-1 text-xs font-bold tracking-wider text-[#935941]">
               <PawPrint size={13} />
-              PURESPOT · 台灣街坊生活誌
+              PURESPOT · 毛孩生活圈
             </p>
             <h1 className="editorial-title mt-5 text-[clamp(3rem,6.5vw,5.4rem)] font-bold leading-[1.08] tracking-[-.05em] text-[#302b26]">
-              每一種陪伴，
-              <br />
-              <span className="text-[#935941]">都有街坊回聲。</span>
+              毛孩生活圈
             </h1>
             <p className="mt-6 max-w-lg text-base leading-8 text-[#5f5246]">
-              記錄安穩的一餐飯、一次巷口散步，以及彼此相處的細微片刻。為毛孩印製專屬的活版印刷里民銘牌，認識步調相近的台灣飼主家庭。
+              分享一餐飯、一次散步或牠今天的小進步，認識也喜歡毛孩的朋友。
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button
@@ -286,7 +284,7 @@ export default function CommunityPage() {
                 className="gap-2 bg-[#935941] px-6 text-white hover:bg-[#7d4934]"
               >
                 <Plus size={17} />
-                貼一張拍立得日記
+                分享毛孩日常
               </Button>
               <a
                 href="#id-card-studio"

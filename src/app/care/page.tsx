@@ -23,6 +23,9 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  { href: "/care/ingredients", number: "01", title: "成分放大鏡", subtitle: "食品資料並排看", description: "查看配方與過敏原，並排比較兩款食品。", icon: ScanSearch, color: "bg-[#e5eef3]" },
+  { href: "/care/packing", number: "02", title: "旅前打包桌", subtitle: "外出清單一起整理", description: "依毛孩與出門情境準備用品，缺少的物品再回商城挑。", icon: Luggage, color: "bg-[#edf2e9]" },
+  { href: "/care/feeding", number: "03", title: "一日餵食時鐘", subtitle: "安排乾濕配比與餐次", description: "選擇餵食時段，依每日熱量估算乾濕配餐份量。", icon: Utensils, color: "bg-[#e5eef3]" },
   {
     href: "/shop#bento-builder",
     number: "04",

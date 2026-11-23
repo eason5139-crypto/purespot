@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ShieldCheck,
   TriangleAlert,
@@ -28,26 +28,9 @@ import { money, packageSize } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import { petLabels, supportsFoodCalculator } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { NtdCoinSvg } from "@/components/ui/CraftEmblems";
-
-function getIngredientVernacular(product: Product): string {
-  const joined = product.ingredients.join("、");
-  if (product.kind === "SUPPLIES") {
-    return "符合台灣居家住宅尺度的生活道具，導圓修邊且便於日常擦拭養護。";
-  }
-  if (joined.includes("鮭魚") || joined.includes("魚")) {
-    return "富含冷壓深海魚油 Omega-3，兼顧皮毛保水度與日常皮膚屏障穩定。";
-  }
-  if (joined.includes("鹿") || joined.includes("鴨") || joined.includes("羊")) {
-    return "選用單一新型態低敏肉源，減輕敏弱體質的消化負擔。";
-  }
-  if (joined.includes("草") || joined.includes("牧草")) {
-    return "足量天然植物粗纖維支持臼齒磨耗與消化道規律蠕動。";
-  }
-  return "以高比例鮮肉為第一順位基底，低溫慢焙保留原肉香氣，無人工誘食添加。";
-}
 
 export function ProductCard({ product }: { product: Product }) {
+  const reducedMotion = useReducedMotion();
   const router = useRouter();
   const pet = useActivePet();
   const fit = matchProduct(product, pet);
@@ -73,6 +56,7 @@ export function ProductCard({ product }: { product: Product }) {
   }>({ rx: 0, ry: 0, gx: 50, gy: 50, active: false });
 
   function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
+    if (reducedMotion || e.pointerType === "touch") return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const px = (e.clientX - rect.left) / rect.width;
@@ -117,15 +101,10 @@ export function ProductCard({ product }: { product: Product }) {
     toast.success(isFavorite ? "已從願望清單移除" : "已收入毛孩願望清單");
   }
 
-  const pickyScore =
-    product.kind === "SUPPLIES"
-      ? 92
-      : Math.min(98, Math.max(84, 72 + Math.round(product.proteinMin * 0.6)));
-
   return (
     <motion.article
       layout
-      whileHover={{ y: -6 }}
+      whileHover={reducedMotion ? undefined : { y: -3 }}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       style={{
@@ -232,29 +211,25 @@ export function ProductCard({ product }: { product: Product }) {
                 <div className="flex items-center justify-between border-b border-[#e8dac9] pb-2">
                   <span className="inline-flex items-center gap-1 font-bold text-[#935941]">
                     <Sparkles size={13} />
-                    產地溯源手記
+                    商品資料
                   </span>
                   <span className="rounded-full bg-[#eef2eb] px-2 py-0.5 font-mono text-[10px] font-bold text-[#4e6752]">
-                    適口完食率 {pickyScore}%
+                    {petLabels[product.type]}適用
                   </span>
                 </div>
                 <p className="mt-2.5 leading-5 text-[#5a4e43]">
-                  {getIngredientVernacular(product)}
+                  {product.description}
                 </p>
 
                 {product.kind !== "SUPPLIES" ? (
                   <div className="mt-3 rounded-xl border border-[#e6d7c5] bg-[#faf4eb] p-2.5">
                     <p className="font-mono text-[10px] font-bold text-[#755843]">
-                      SCALE SPEC · 台灣壹圓 (20mm) 實體比例對照
+                      營養標示
                     </p>
                     <div className="mt-2 flex items-center gap-3">
-                      <NtdCoinSvg size={28} />
-                      <span
-                        className="flex size-3.5 items-center justify-center rounded-full bg-[#7c4f38] shadow-xs"
-                        aria-hidden="true"
-                      />
                       <span className="text-[11px] text-[#66584b]">
-                        約 8.5–10mm 扁圓顆粒，好咬不卡牙
+                        粗蛋白 {product.proteinMin}% · 水分 {product.moistureMax}%
+                        <br />{product.kcalPer100g} kcal / 100g
                       </span>
                     </div>
                   </div>
@@ -262,10 +237,10 @@ export function ProductCard({ product }: { product: Product }) {
                   <div className="mt-3 rounded-xl border border-[#e6d7c5] bg-[#faf4eb] p-2.5">
                     <p className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-[#755843]">
                       <Sparkles size={11} />
-                      WORKSHOP NOTE · 居家實測回饋
+                      材質與商品資訊
                     </p>
                     <p className="mt-1 text-[11px] text-[#66584b]">
-                      手感溫潤耐看，自然融入現代台灣居家的暖大地色調空間。
+                      {product.ingredients.join("、") || "查看商品詳情了解規格"}
                     </p>
                   </div>
                 )}

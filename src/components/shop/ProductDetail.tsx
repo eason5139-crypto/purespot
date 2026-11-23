@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { NutritionalTrendChart } from "@/components/analytics/NutritionalTrendChart";
-import { MacroKibbleViewer } from "@/components/shop/MacroKibbleViewer";
+import { ProductDecisionDesk } from "@/components/shop/ProductDecisionDesk";
 import { useActivePet } from "@/store/usePetContextStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -145,7 +145,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
             {/* 互動式食材剖面與微距檢視器 */}
             <div className="mt-6">
-              <MacroKibbleViewer product={product} />
+              <ProductDecisionDesk initialProduct={product} />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">

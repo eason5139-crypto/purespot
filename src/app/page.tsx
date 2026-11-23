@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { WarmBrandHomePage } from "@/components/brand/WarmBrandHomePage";
+import { EditorialHomePage } from "@/components/brand/EditorialHomePage";
 import { readSiteContent } from "@/server/siteContentRepository";
 
 export const metadata: Metadata = {
@@ -15,5 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  return <WarmBrandHomePage content={await readSiteContent()} />;
+  return <EditorialHomePage content={await readSiteContent()} />;
 }

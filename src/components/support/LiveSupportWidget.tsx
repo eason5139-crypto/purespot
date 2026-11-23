@@ -281,14 +281,14 @@ export function LiveSupportWidget() {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="開啟職人線上客服中心"
-          className="group relative flex items-center gap-3 rounded-2xl border-2 border-[#935941] bg-[#fffdf8] px-4 py-3 text-left shadow-[0_12px_28px_-10px_rgba(95,55,30,0.35),0_3px_0_#6e3f2c] transition-colors hover:bg-[#fdf5ea]"
+          className="group relative flex items-center gap-3 rounded-full border border-[#b8cedd] bg-[#fffefa] p-2 text-left shadow-lg transition-colors hover:bg-[#edf3f6] sm:px-4 sm:py-2"
         >
           <span className="flex size-10 items-center justify-center rounded-xl bg-[#935941] text-white shadow-inner">
             <Headset size={20} />
           </span>
-          <div className="pr-1">
+          <div className="hidden pr-1 sm:block">
             <span className="block font-mono text-[10px] font-bold tracking-wider text-[#935941]">
-              CRAFT CONCIERGE · 線上客服
+              線上客服
             </span>
             <span className="block text-xs font-bold text-[#302b26]">
               {user ? `${currentTierMeta.label}專線` : "分類諮詢・即時傳訊"}

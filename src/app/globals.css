@@ -4,7 +4,7 @@
   --color-background: #faf6f0;
   --color-foreground: #302b26;
   --color-card: #ffffff;
-  --color-primary: #935941;
+  --color-primary: #315f86;
   --font-sans:
     "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", ui-sans-serif,
     system-ui, sans-serif;
@@ -270,4 +270,68 @@ summary {
 .public-site .warm-eyebrow,
 .public-site :is(p, span, div)[class*="tracking-"]:has(+ :is(h1, h2, h3)) {
   display: none;
+}
+
+/* Shared storefront direction: warm paper, brand blue, quiet edges. */
+.public-site { color: #18344c; background: #f8f6f1; }
+.public-site h1 { font-size: clamp(2rem, 4.3vw, 3.7rem); line-height: 1.25; overflow-wrap: anywhere; }
+.public-site .craft-letterpress, .public-site .polaroid-card { border-color: #dce4e7; box-shadow: none; background: #fffefa; }
+.public-site .washi-tape { display: none; }
+.public-site .btn-tactile { border-radius: 999px; box-shadow: none; }
+.public-site [class~="bg-[#935941]"] { background-color: #315f86; }
+.public-site [class~="text-[#935941]"], .public-site [class~="text-[#7c4d38]"] { color: #315f86; }
+.public-site [class~="border-[#935941]"] { border-color: #315f86; }
+.public-site [class~="hover:bg-[#7d4934]"]:hover { background-color: #244b6b; }
+.public-site [class~="hover:text-[#935941]"]:hover { color: #315f86; }
+.public-site [class~="bg-[#f5ebe0]"] { background-color: #e5eef3; }
+.public-site [class~="bg-[#f3eadf]"] { background-color: #eef2f2; }
+.public-site [class~="text-[#302b26]"] { color: #18344c; }
+.public-site .panel, .public-site .warm-card { box-shadow: 0 12px 35px -28px #18344c35; border-color: #dce4e7; }
+.public-site .site-header a, .public-site .site-header button { white-space: nowrap; }
+.public-site .text-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #315f86; }
+.public-site .text-link:hover svg { transform: translate(2px, -2px); }
+.text-link svg { transition: transform .2s ease; }
+.product-shelf { scrollbar-color: #bdced7 transparent; scrollbar-width: thin; }
+.decision-desk { scroll-margin-top: 145px; }
+.tool-story { border: 1px solid #dce4e7; transition: border-color .25s, transform .25s; }
+.tool-story:hover { border-color: #7fa3bb; transform: translateY(-4px); }
+
+.activity-carousel { width: 100%; color: #18344c; background: #f8f6f1; }
+.activity-stage { display: grid; overflow: hidden; }
+.activity-slide { grid-area: 1 / 1; display: grid; grid-template-columns: 1fr; background: #f8f6f1; }
+.activity-image { position: relative; min-height: 215px; overflow: hidden; }
+.activity-label { position: absolute; left: 20px; top: 20px; padding: 8px 14px; border-radius: 999px; background: #fffefaed; font-size: 12px; font-weight: 600; color: #18344c; }
+.activity-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 25px 24px 30px; }
+.activity-counter { margin-bottom: 15px; font-size: 12px; font-variant-numeric: tabular-nums; color: #315f86; }
+.activity-counter > span { color: #8b9ba5; margin-left: 10px; }
+.activity-copy h2 { margin: 0; max-width: 100%; overflow-wrap: anywhere; text-wrap: balance; font-family: Georgia, "Noto Serif TC", "Songti TC", serif; font-size: clamp(25px, 3.5cqw, 42px); line-height: 1.35; font-weight: 500; letter-spacing: -.025em; }
+.activity-copy p { margin: 18px 0 0; color: #647581; font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.activity-cta { display: inline-flex; align-items: center; justify-content: center; gap: 20px; min-height: 46px; margin-top: 24px; padding: 12px 24px; border-radius: 999px; background: #315f86; color: white; font-size: 14px; font-weight: 600; transition: background .2s; }
+.activity-cta:hover { background: #244b6b; }
+.activity-controls { display: flex; gap: 18px; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #dce4e7; background: #fffefa; }
+.activity-tabs { display: flex; flex: 1; gap: 12px; min-width: 0; }
+.activity-tabs > button { position: relative; flex: 1; min-width: 0; padding: 6px 0 10px; text-align: left; color: #8596a1; }
+.activity-tabs > button.is-active { color: #18344c; }
+.activity-tab-number { font-size: 11px; }
+.activity-tab-title { display: none; }
+.activity-track { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: #e2e9ec; overflow: hidden; }
+.activity-track > span { display: block; width: 100%; height: 100%; background: #315f86; transform-origin: left; }
+.activity-arrows { display: flex; gap: 6px; }
+.activity-arrows button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #d3e0e7; border-radius: 50%; color: #315f86; }
+.activity-arrows button:hover { background: #e5eef3; }
+.activity-arrows button:disabled { opacity: .35; }
+@container (min-width: 700px) {
+  .activity-slide { grid-template-columns: 57% 43%; min-height: 430px; }
+  .activity-image { min-height: 430px; }
+  .activity-copy { padding: 35px clamp(28px, 4cqw, 70px); }
+  .activity-copy h2 { font-size: clamp(28px, 3.1cqw, 48px); }
+  .activity-label { left: 30px; top: 30px; }
+  .activity-controls { padding: 16px max(24px, calc((100cqw - 1320px) / 2)); }
+  .activity-tabs { max-width: 850px; gap: 28px; }
+  .activity-tab-title { display: inline; margin-left: 10px; font-size: 12px; }
+  .activity-tabs > button { display: flex; align-items: baseline; }
+  .activity-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-story:hover, .text-link:hover svg { transform: none; }
 }

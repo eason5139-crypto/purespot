@@ -53,6 +53,8 @@ export const siteContentSchema = z.object({
   transparencyTitle: z.string().trim().min(1).max(100),
   transparencyDescription: z.string().trim().min(1).max(300),
   promotions: z.array(promotionSchema).max(6).default(defaultPromotions),
+  promotionAutoplay: z.boolean().default(true),
+  promotionIntervalSeconds: z.number().int().min(3).max(15).default(5),
 }).strict();
 
 export type SiteContent = z.infer<typeof siteContentSchema>;
@@ -93,4 +95,6 @@ export const defaultSiteContent: SiteContent = {
   transparencyTitle: "成分透明，讓愛有據可查",
   transparencyDescription: "查看商品的原料、營養保證值與示範批次資料。正式報告會在核實來源後提供下載。",
   promotions: defaultPromotions,
+  promotionAutoplay: true,
+  promotionIntervalSeconds: 5,
 };
