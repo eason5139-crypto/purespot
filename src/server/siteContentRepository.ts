@@ -3,7 +3,7 @@ import "server-only";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { get, put } from "@vercel/blob";
+import { BlobNotFoundError, get, head, put } from "@vercel/blob";
 import { defaultSiteContent, siteContentSchema, type SiteContent } from "@/lib/siteContent";
 
 const contentPath = join(process.cwd(), "data", "site-content.json");
@@ -32,7 +32,16 @@ function usesBlob() {
 
 export async function readSiteContent(): Promise<SiteContent> {
   if (usesBlob()) {
-    const result = await get(blobPath, { access: "public", useCache: false });
+    // Public Blob reads are CDN cached; useCache:false only bypasses private
+    // blobs in the SDK. Read fresh metadata and key the public URL by version.
+    let metadata;
+    try {metadata=await head(blobPath);} catch(error) {
+      if(error instanceof BlobNotFoundError)return defaultSiteContent;
+      throw error;
+    }
+    const versionedUrl=new URL(metadata.url);
+    versionedUrl.searchParams.set("v",metadata.etag||metadata.uploadedAt.toISOString());
+    const result = await get(versionedUrl.toString(), { access: "public", useCache: false });
     if (!result || result.statusCode !== 200) return defaultSiteContent;
     return refreshLegacyArt(siteContentSchema.parse(JSON.parse(await new Response(result.stream).text())));
   }
@@ -51,7 +60,9 @@ export function saveSiteContent(content: SiteContent): Promise<void> {
     if (usesBlob()) {
       await put(blobPath, JSON.stringify(validated, null, 2) + "\n", {
         access: "public",
+        addRandomSuffix: false,
         allowOverwrite: true,
+        cacheControlMaxAge: 60,
         contentType: "application/json",
       });
       return;

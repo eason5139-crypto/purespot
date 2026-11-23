@@ -12,9 +12,10 @@ export const promotionSchema = z.object({
 }).strict();
 
 export const defaultPromotions = [
-  { id: "daily-selection", title: "為牠，挑一件剛剛好的日常。", description: "從一餐飯到一件玩具，慢慢找到適合你們的生活選物。", image: "/images/editorial/shop-living-v2.png", ctaLabel: "探索商城", href: "/shop", enabled: true },
-  { id: "same-rhythm", title: "毛孩的故事，能遇見同頻的人。", description: "分享生活裡的小片刻，看看其他家庭怎麼陪牠長大。", image: "/images/editorial/small-friends-v2.png", ctaLabel: "走進交流圈", href: "/community", enabled: true },
-  { id: "care-tools", title: "把照顧，排進舒服的節奏。", description: "食量、補貨與換糧，一步一步陪你整理好。", image: "/images/editorial/home-living-v2.png", ctaLabel: "看看照顧工具", href: "/care", enabled: true },
+  { id:"product-selection-v3", title:"先看成分，再選牠的日常。", description:"鮭魚低敏成貓糧，每包 NT$980。先比較原料與毛孩條件，再決定適不適合；已知魚類過敏請另選配方。", image:"/images/campaigns/product-v3.webp", ctaLabel:"比較商品成分", href:"/care/ingredients", enabled:true },
+  { id:"autoship-v3", title:"下一包，照牠的步調送到。", description:"定期配送享商品 9 折，每 2／4／6／8 週自由選；可暫停或順延。全單定期配送滿 NT$699 免運，會員免運優惠擇優。", image:"/images/campaigns/autoship-v3.webp", ctaLabel:"安排定期配送", href:"/autoship", enabled:true },
+  { id:"pet-survey-v3", title:"聊聊牠的日常，回饋你 30 點。", description:"約 2 分鐘，告訴我們毛孩喜好與選物習慣。登入後填答，完成即可領 30 點；每位會員限領一次。", image:"/images/campaigns/survey-v3.webp", ctaLabel:"填問卷領 30 點", href:"/surveys/pet-preferences", enabled:true },
+  { id:"feedback-survey-v3", title:"這裡好不好用，想聽你說。", description:"完成網站使用回饋，領 50 元購物券。折後商品滿 NT$600 可用，有效 30 天；每位會員限領一次。", image:"/images/campaigns/survey-v3.webp", ctaLabel:"分享使用感受", href:"/surveys/site-feedback", enabled:true },
 ];
 
 export const siteContentSchema = z.object({
