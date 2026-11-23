@@ -1,26 +1,30 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 vi.mock('server-only',()=>({}));
-const blob=vi.hoisted(()=>({head:vi.fn(),get:vi.fn(),put:vi.fn()}));
+const blob=vi.hoisted(()=>({head:vi.fn(),get:vi.fn()}));
+const storage=vi.hoisted(()=>({findUnique:vi.fn(),upsert:vi.fn()}));
+vi.mock('@/server/db',()=>({db:{outboxEvent:storage}}));
 vi.mock('@vercel/blob',()=>({...blob,BlobNotFoundError:class BlobNotFoundError extends Error{}}));
 import {BlobNotFoundError} from '@vercel/blob';
 import {defaultSiteContent} from '@/lib/siteContent';
 import {readSiteContent,saveSiteContent} from '@/server/siteContentRepository';
 describe('published content consistency',()=>{
- beforeEach(()=>{vi.stubEnv('BLOB_STORE_ID','content-test');vi.clearAllMocks();});
+ beforeEach(()=>{vi.stubEnv('VERCEL','1');vi.stubEnv('BLOB_STORE_ID','content-test');vi.clearAllMocks();storage.findUnique.mockResolvedValue(null);});
  afterEach(()=>vi.unstubAllEnvs());
- it('reads a new public CDN version immediately after an edit',async()=>{
+ it('reads saved content instead of a stale public Blob copy',async()=>{
   const updated={...defaultSiteContent,heroTitle:'新的首頁標題'};
-  const url='https://example.public.blob.vercel-storage.com/content/site-content.json';
-  let etag='first';
-  blob.head.mockImplementation(async()=>({url,etag,uploadedAt:new Date('2026-11-23T00:00:00Z')}));
-  blob.get.mockImplementation(async(value:string)=>({statusCode:200,stream:new Response(JSON.stringify(new URL(value).searchParams.get('v')==='second'?updated:defaultSiteContent)).body}));
-  expect((await readSiteContent()).heroTitle).toBe(defaultSiteContent.heroTitle);
-  etag='second';
+  storage.findUnique.mockResolvedValue({payload:updated});
   expect((await readSiteContent()).heroTitle).toBe('新的首頁標題');
+  expect(blob.get).not.toHaveBeenCalled();
  });
- it('keeps one editable pathname and bounds legacy CDN caching',async()=>{
-  blob.put.mockResolvedValue({});await saveSiteContent(defaultSiteContent);
-  expect(blob.put).toHaveBeenCalledWith('content/site-content.json',expect.any(String),expect.objectContaining({access:'public',addRandomSuffix:false,allowOverwrite:true,cacheControlMaxAge:60}));
+ it('makes completed writes immediately readable from durable storage',async()=>{
+  let saved:unknown=null;
+  storage.upsert.mockImplementation(async input=>{saved={payload:input.update.payload};return saved;});
+  storage.findUnique.mockImplementation(async()=>saved);
+  const updated={...defaultSiteContent,heroTitle:'已儲存的新標題',promotionIntervalSeconds:7};
+  await saveSiteContent(updated);
+  const result=await readSiteContent();
+  expect(result.heroTitle).toBe(updated.heroTitle);expect(result.promotionIntervalSeconds).toBe(7);
+  expect(result.promotions).toEqual(updated.promotions);
  });
  it('uses the approved four campaigns when a store has no content yet',async()=>{
   blob.head.mockRejectedValue(new BlobNotFoundError());

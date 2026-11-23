@@ -3,7 +3,9 @@ import "server-only";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { BlobNotFoundError, get, head, put } from "@vercel/blob";
+import { BlobNotFoundError, get, head } from "@vercel/blob";
+import {Prisma} from "@prisma/client";
+import {db} from "./db";
 import { defaultSiteContent, siteContentSchema, type SiteContent } from "@/lib/siteContent";
 
 const contentPath = join(process.cwd(), "data", "site-content.json");
@@ -29,8 +31,14 @@ function refreshLegacyArt(content: SiteContent): SiteContent {
 function usesBlob() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
 }
+function usesDurableContent() {return process.env.VERCEL==="1"||usesBlob();}
+const contentKey="SITE_CONTENT:main";
 
 export async function readSiteContent(): Promise<SiteContent> {
+  if(usesDurableContent()){
+    const stored=await db.outboxEvent.findUnique({where:{dedupeKey:contentKey}});
+    if(stored)return refreshLegacyArt(siteContentSchema.parse(stored.payload));
+  }
   if (usesBlob()) {
     // Public Blob reads are CDN cached; useCache:false only bypasses private
     // blobs in the SDK. Read fresh metadata and key the public URL by version.
@@ -57,14 +65,11 @@ export async function readSiteContent(): Promise<SiteContent> {
 export function saveSiteContent(content: SiteContent): Promise<void> {
   const validated = siteContentSchema.parse(content);
   const write = pendingWrite.then(async () => {
-    if (usesBlob()) {
-      await put(blobPath, JSON.stringify(validated, null, 2) + "\n", {
-        access: "public",
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        cacheControlMaxAge: 60,
-        contentType: "application/json",
-      });
+    if (usesDurableContent()) {
+      // The established JSON configuration store makes completed saves visible
+      // to all functions immediately; public Blob remains legacy input only.
+      const payload=validated as Prisma.InputJsonValue;
+      await db.outboxEvent.upsert({where:{dedupeKey:contentKey},create:{dedupeKey:contentKey,type:"SITE_CONTENT",payload,processedAt:new Date()},update:{payload,processedAt:new Date()}});
       return;
     }
     await mkdir(dirname(contentPath), { recursive: true });
