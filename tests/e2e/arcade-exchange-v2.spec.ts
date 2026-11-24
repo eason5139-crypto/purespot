@@ -6,41 +6,43 @@ test("三種遊戲與實體點數換購可操作", async ({ page }) => {
   test.skip(!process.env.PURESPOT_ADMIN_TEST_PASSWORD, "需要後台測試密碼");
   test.setTimeout(160000);
   await createMemberFixture(page.request);
+  const checkIn = await page.request.post("/api/account/membership", { headers, data: { action: "check_in" } });
+  check(checkIn.ok(), await checkIn.text()).toBeTruthy();
   await page.goto("/account?tab=games");
   await check(page.getByRole("button", { name: "開啟遊戲音效" })).toBeVisible();
   await page.getByRole("button", { name: "開啟遊戲音效" }).click();
   const wheel = page.waitForResponse(
     (r) =>
-      r.url().endsWith("/api/account/membership") &&
+      r.url().endsWith("/api/account/arcade") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: /立即抽/ }).click();
+  await page.locator(".game-play-button").click();
   check((await wheel).ok()).toBeTruthy();
   await check(
-    page.getByText("貓咪轉盤中獎結果", { exact: true }),
-  ).toBeVisible();
+    page.locator(".game-arena"),
+  ).toHaveAttribute("data-phase", "result");
   await page.screenshot({
     path: "work/preview-game-result.png",
     fullPage: false,
   });
-  await page.getByRole("button", { name: "點數搖獎機", exact: true }).click();
+  await page.getByRole("tab", { name: /毛孩扭蛋機/ }).click();
   const ball = page.waitForResponse(
     (r) =>
-      r.url().endsWith("/api/account/membership") &&
+      r.url().endsWith("/api/account/arcade") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: /花 .* 點搖獎/ }).click();
+  await page.locator(".game-play-button").click();
   check((await ball).ok()).toBeTruthy();
-  await check(page.getByRole("button", { name: /花 .* 點搖獎/ })).toBeEnabled();
-  await page.getByRole("button", { name: "每日刮刮樂", exact: true }).click();
+  await check(page.locator(".game-arena")).toHaveAttribute("data-phase", "result");
+  await page.getByRole("tab", { name: /幸運刮刮卡/ }).click();
   const scratch = page.waitForResponse(
     (r) =>
-      r.url().endsWith("/api/account/membership") &&
+      r.url().endsWith("/api/account/arcade") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: /花 .* 點開卡刮獎/ }).click();
+  await page.locator(".game-play-button").click();
   check((await scratch).ok()).toBeTruthy();
-  await page.getByRole("button", { name: "快速全部刮開", exact: true }).click();
+  await page.getByRole("button", { name: "直接揭曉", exact: true }).click();
   await page.screenshot({ path: "work/preview-scratch.png", fullPage: false });
   const before = await (
     await page.request.get("/api/account/membership")

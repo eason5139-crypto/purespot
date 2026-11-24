@@ -226,9 +226,9 @@ export const DEFAULT_ARCADE_CONFIG: PointsArcadeConfig = {
   ],
 };
 
-export function pickWeightedIndex<T extends { weight: number }>(items: T[]): number {
+export function pickWeightedIndex<T extends { weight: number }>(items: T[], random = Math.random()): number {
   const total = items.reduce((sum, item) => sum + Math.max(1, item.weight), 0);
-  let r = Math.random() * total;
+  let r = random * total;
   for (let i = 0; i < items.length; i++) {
     r -= Math.max(1, items[i]!.weight);
     if (r <= 0) return i;

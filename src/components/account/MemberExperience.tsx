@@ -34,7 +34,7 @@ const PointsArcadeHub = dynamic(
 type Snapshot = Awaited<
   ReturnType<typeof import("@/server/membership").membershipSnapshot>
 >;
-export type MemberView = "membership" | "shop" | "tickets" | "tasks" | "games";
+export type MemberView = "membership" | "shop" | "tickets" | "tasks";
 const dates = (v: unknown) =>
   new Date(String(v)).toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" });
 const labels = {
@@ -42,7 +42,6 @@ const labels = {
   shop: "點數商店",
   tickets: "我的票券",
   tasks: "簽到與任務",
-  games: "毛孩遊戲室",
 };
 export function MemberExperience({
   view = "membership",
@@ -557,14 +556,10 @@ export function MemberExperience({
           )}
         </>
       )}
-      {(view === "tasks" || view === "games") && (
+      {view === "tasks" && (
         <PointsArcadeHub
-          mode={view}
           isLoggedIn
-          points={data.points}
-          arcadeConfig={data.arcadeConfig}
           checkInStatus={data.checkInStatus}
-          arcadeLimits={data.arcadeLimits}
           arcadeTasks={data.arcadeTasks}
           onRequireAuth={() => openAuth(true)}
           onRefresh={load}

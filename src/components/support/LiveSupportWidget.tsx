@@ -160,7 +160,8 @@ export function LiveSupportWidget() {
   }
 
   useEffect(() => {
-    if (clientToken) {
+    const inGame = window.location.pathname === "/account" && new URLSearchParams(window.location.search).get("tab") === "games";
+    if (clientToken && (open || !inGame)) {
       void loadThreads(clientToken);
     }
   }, [open, clientToken, user?.id]);
@@ -273,7 +274,7 @@ export function LiveSupportWidget() {
   return (
     <>
       {/* 右下角日台工藝懸浮客服按鈕 */}
-      <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
+      <div className="live-support-launcher fixed bottom-5 right-5 z-40 flex flex-col items-end gap-2">
         <motion.button
           type="button"
           whileHover={{ scale: 1.03, y: -2 }}

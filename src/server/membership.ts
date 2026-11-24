@@ -2,6 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 import { db } from "./db";
+import { playArcade } from "./arcadeService";
 import { ApiError } from "./http";
 import {
   POINTS_SHOP_CATALOG,
@@ -9,7 +10,6 @@ import {
   discountedPointsCost,
 } from "@/lib/pointsShopCatalog";
 import {
-  pickWeightedIndex,
   type WheelKey,
 } from "@/lib/pointsArcadeConfig";
 import {
@@ -470,297 +470,20 @@ export async function claimDailyCheckIn(userId: string) {
   );
 }
 
-/** 寵物分類幸運轉盤（貓咪 / 狗狗 / 小寵）：花費點數抽實體商品兌換券、折價券或點數 */
+/** Compatibility for clients opened before the arcade upgrade. */
 export async function playPetWheel(userId: string, wheelKey: WheelKey) {
-  await reconcilePoints(userId);
-  const arcadeConfig = await getArcadeConfig();
-  const wheel = arcadeConfig.wheels[wheelKey];
-  if (!wheel || wheel.prizes.length === 0) {
-    throw new ApiError(404, "找不到指定的轉盤獎池");
-  }
-
-  return db.$transaction(
-    async (tx) => {
-      const balance = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-      const currentPoints = Math.max(0, balance._sum.points ?? 0);
-      if (currentPoints < wheel.costPoints) {
-        throw new ApiError(
-          409,
-          `點數不足（目前 ${currentPoints} 點，需 ${wheel.costPoints} 點）`,
-        );
-      }
-
-      const runId = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const prizeIndex = pickWeightedIndex(wheel.prizes);
-      const prize = wheel.prizes[prizeIndex]!;
-
-      await tx.pointEntry.create({
-        data: {
-          userId,
-          sourceKey: `wheel-cost:${userId}:${runId}`,
-          title: `${wheel.title}抽獎投入`,
-          points: -wheel.costPoints,
-        },
-      });
-
-      let voucherCode: string | null = null;
-
-      if (prize.kind === "POINTS") {
-        await tx.pointEntry.create({
-          data: {
-            userId,
-            sourceKey: `wheel-win:${userId}:${runId}`,
-            title: `${wheel.title}中獎：${prize.label}`,
-            points: prize.value,
-          },
-        });
-      } else {
-        voucherCode = `PURE-${runId}`;
-        const rewardId = `wheel-${wheelKey.toLowerCase()}-${prize.id}`;
-        const reward = await tx.reward.upsert({
-          where: { id: rewardId },
-          create: {
-            id: rewardId,
-            title: `${wheel.title}・${prize.label}`,
-            pointsCost: wheel.costPoints,
-            discountNt: prize.value,
-            isActive: false, // 不混入一般兌換目錄，專供轉盤票券核銷
-          },
-          update: {
-            title: `${wheel.title}・${prize.label}`,
-            discountNt: prize.value,
-          },
-        });
-
-        await tx.rewardRedemption.create({
-          data: {
-            userId,
-            rewardId: reward.id,
-            code: voucherCode,
-            pointsCost: wheel.costPoints,
-            discountNt: prize.value,
-          },
-        });
-
-        await tx.memberNotification.create({
-          data: {
-            userId,
-            title: `${wheel.title}中獎：${prize.label}`,
-            body: `專屬兌換碼 ${voucherCode}（可折抵 NT$${prize.value}）已存入您的票券夾，結帳可直接帶入折抵。`,
-            href: "/rewards",
-          },
-        });
-      }
-
-      const after = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-
-      return {
-        wheelKey,
-        wheelTitle: wheel.title,
-        prizeIndex,
-        prize,
-        code: voucherCode,
-        costPoints: wheel.costPoints,
-        newBalance: Math.max(0, after._sum.points ?? 0),
-      };
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  );
+  const r=await playArcade(userId,{requestId:crypto.randomUUID(),game:"wheel",wheelKey});
+  const config=await getArcadeConfig();
+  return {...r,wheelTitle:r.title,prize:config.wheels[wheelKey].prizes.find(p=>p.id===r.prizeId)!};
 }
-
-/** 福引倍率搖獎機（點數抽點數） */
 export async function playFukubiki(userId: string) {
-  await reconcilePoints(userId);
-  const arcadeConfig = await getArcadeConfig();
-  const cfg = arcadeConfig.fukubiki;
-  const todayKey = getTaipeiDateKey();
-
-  return db.$transaction(
-    async (tx) => {
-      const usedToday = await tx.pointEntry.count({
-        where: {
-          userId,
-          sourceKey: { startsWith: `fukubiki-cost:${userId}:${todayKey}:` },
-        },
-      });
-      if (usedToday >= cfg.dailyLimit) {
-        throw new ApiError(
-          429,
-          `今日福引搖獎次數已達上限（${cfg.dailyLimit} 次），請明日再來！`,
-        );
-      }
-
-      const balance = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-      const currentPoints = Math.max(0, balance._sum.points ?? 0);
-      if (currentPoints < cfg.costPoints) {
-        throw new ApiError(
-          409,
-          `點數不足（目前 ${currentPoints} 點，需 ${cfg.costPoints} 點）`,
-        );
-      }
-
-      const runId = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const picked = cfg.prizes[pickWeightedIndex(cfg.prizes)]!;
-
-      await tx.pointEntry.create({
-        data: {
-          userId,
-          sourceKey: `fukubiki-cost:${userId}:${todayKey}:${runId}`,
-          title: "福引搖獎機投入點數",
-          points: -cfg.costPoints,
-        },
-      });
-
-      if (picked.points > 0) {
-        await tx.pointEntry.create({
-          data: {
-            userId,
-            sourceKey: `fukubiki-win:${userId}:${todayKey}:${runId}`,
-            title: `福引搖獎中獎（${picked.rank}）`,
-            points: picked.points,
-          },
-        });
-      }
-
-      const after = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-
-      return {
-        ball: picked.ball,
-        rank: picked.rank,
-        pointsWon: picked.points,
-        costPoints: cfg.costPoints,
-        netPoints: picked.points - cfg.costPoints,
-        usedToday: usedToday + 1,
-        dailyLimit: cfg.dailyLimit,
-        newBalance: Math.max(0, after._sum.points ?? 0),
-      };
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  );
+  const r=await playArcade(userId,{requestId:crypto.randomUUID(),game:"capsule"});
+  return {...r,rank:r.label,pointsWon:r.value,netPoints:r.value-r.costPoints};
 }
-
-/** 每日點數刮刮樂 */
 export async function playScratchCard(userId: string) {
-  await reconcilePoints(userId);
-  const arcadeConfig = await getArcadeConfig();
-  const cfg = arcadeConfig.scratch;
-  const todayKey = getTaipeiDateKey();
-
-  return db.$transaction(
-    async (tx) => {
-      const usedToday = await tx.pointEntry.count({
-        where: {
-          userId,
-          sourceKey: { startsWith: `scratch-cost:${userId}:${todayKey}:` },
-        },
-      });
-      if (usedToday >= cfg.dailyLimit) {
-        throw new ApiError(
-          429,
-          `今日刮刮樂已達上限（每日限 ${cfg.dailyLimit} 張），請明日再試！`,
-        );
-      }
-
-      const balance = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-      const currentPoints = Math.max(0, balance._sum.points ?? 0);
-      if (currentPoints < cfg.costPoints) {
-        throw new ApiError(
-          409,
-          `點數不足（目前 ${currentPoints} 點，需 ${cfg.costPoints} 點）`,
-        );
-      }
-
-      const runId = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const picked = cfg.prizes[pickWeightedIndex(cfg.prizes)]!;
-
-      await tx.pointEntry.create({
-        data: {
-          userId,
-          sourceKey: `scratch-cost:${userId}:${todayKey}:${runId}`,
-          title: "每日點數刮刮樂開卡",
-          points: -cfg.costPoints,
-        },
-      });
-
-      let voucherCode: string | null = null;
-      if (picked.kind === "POINTS") {
-        await tx.pointEntry.create({
-          data: {
-            userId,
-            sourceKey: `scratch-win:${userId}:${todayKey}:${runId}`,
-            title: `刮刮樂中獎：${picked.label}`,
-            points: picked.value,
-          },
-        });
-      } else {
-        voucherCode = `PURE-${runId}`;
-        const rewardId = `scratch-${picked.id}`;
-        const reward = await tx.reward.upsert({
-          where: { id: rewardId },
-          create: {
-            id: rewardId,
-            title: `刮刮樂・${picked.label}`,
-            pointsCost: cfg.costPoints,
-            discountNt: picked.value,
-            isActive: false,
-          },
-          update: {
-            title: `刮刮樂・${picked.label}`,
-            discountNt: picked.value,
-          },
-        });
-
-        await tx.rewardRedemption.create({
-          data: {
-            userId,
-            rewardId: reward.id,
-            code: voucherCode,
-            pointsCost: cfg.costPoints,
-            discountNt: picked.value,
-          },
-        });
-
-        await tx.memberNotification.create({
-          data: {
-            userId,
-            title: `刮刮樂中獎：${picked.label}`,
-            body: `專屬折抵代碼 ${voucherCode} 已存入您的票券夾，結帳可直接折抵 NT$${picked.value}。`,
-            href: "/rewards",
-          },
-        });
-      }
-
-      const after = await tx.pointEntry.aggregate({
-        where: { userId },
-        _sum: { points: true },
-      });
-
-      return {
-        prize: picked,
-        code: voucherCode,
-        costPoints: cfg.costPoints,
-        usedToday: usedToday + 1,
-        dailyLimit: cfg.dailyLimit,
-        newBalance: Math.max(0, after._sum.points ?? 0),
-      };
-    },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-  );
+  const r=await playArcade(userId,{requestId:crypto.randomUUID(),game:"scratch"});
+  const config=await getArcadeConfig();
+  return {...r,prize:config.scratch.prizes.find(p=>p.id===r.prizeId)!};
 }
 
 /** 領取雙軌任務點數 */
