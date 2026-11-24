@@ -3,7 +3,7 @@ export type SupportCategory =
   | "ALLERGY"
   | "AUTOSHIP"
   | "ORDER"
-  | "AFTER_SALES";
+  | "AFTER_SALES" | "MEMBERSHIP" | "GAMES" | "TECHNICAL" | "OTHER";
 
 export type MemberTierCode = "DIAMOND" | "PLATINUM" | "GOLD" | "SILVER" | "MEMBER" | "GUEST";
 
@@ -37,6 +37,14 @@ export interface SupportThread {
   messages: SupportChatMessage[];
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string | null;
+  firstResponseAt?: string | null;
+  parentId?: string | null;
+  tags?: string[];
+  internalNotes?: { id: string; body: string; author: string; at: string }[];
+  activity?: { action: string; author: string; at: string }[];
+  feedback?: { score: number; comment: string; at: string } | null;
+  version?: number;
 }
 
 export const SUPPORT_CATEGORIES: {
@@ -200,7 +208,7 @@ export function mapLegacyKindToCategory(kind: string): SupportCategory {
   ) {
     return kind;
   }
-  return "NUTRITION";
+  return "OTHER";
 }
 
 export const INITIAL_DEMO_THREADS: SupportThread[] = [

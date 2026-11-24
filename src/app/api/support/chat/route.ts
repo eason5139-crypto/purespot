@@ -1,120 +1,162 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { requireUser } from "@/server/auth";
-import { apiError, readBody, verifyOrigin } from "@/server/http";
+import { ApiError, apiError, readBody, verifyOrigin } from "@/server/http";
+import { listBuyerThreads } from "@/server/supportRepository";
 import {
   appendBuyerMessage,
+  claimSupport,
   createSupportThread,
-  getUserTierProfile,
-  listAllSupportThreads,
-  listBuyerThreads,
-} from "@/server/supportRepository";
-
+  getSupportSettings,
+  mutateSupport,
+  rateSupport,
+  supportBrowserKey,
+} from "@/server/supportOperations";
+import { buyerTicket, CATEGORY_IDS } from "@/lib/supportDesk";
+import { db } from "@/server/db";
+import { rateLimit } from "@/server/rateLimit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-async function optionalUserId(): Promise<string | null> {
+async function user() {
   try {
     return await requireUser();
-  } catch {
-    return null;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401) return null;
+    throw e;
   }
 }
-
 export async function GET(request: Request) {
   try {
-    const userId = await optionalUserId();
-    const { searchParams } = new URL(request.url);
-    const clientToken = searchParams.get("clientToken")?.trim() || "";
-
-    const [profile, ownThreads, allThreads] = await Promise.all([
-      getUserTierProfile(userId),
-      listBuyerThreads({ userId, clientToken }),
-      listAllSupportThreads(),
+    const [userId, browserKey] = await Promise.all([
+      user(),
+      supportBrowserKey(),
     ]);
-
-    const threads =
-      ownThreads.length > 0 ? ownThreads : allThreads.slice(0, 2);
-
+    const legacy = new URL(request.url).searchParams.get("clientToken");
+    if (legacy && /^client-\d{13}-[a-z0-9]{6,}$/.test(legacy)) {
+      const old = (
+        await listBuyerThreads({ userId: null, clientToken: legacy })
+      ).filter((t) => !t.userId && t.source === "CHAT");
+      for (let i = 0; i < old.length; i += 20)
+        await mutateSupport(
+          old.slice(i, i + 20).map((t) => t.id),
+          browserKey,
+          randomUUID(),
+          (t) => {
+            if (t.userId || t.clientToken !== legacy)
+              throw new ApiError(409, "紀錄已認領，請更新後確認");
+            return { ...t, clientToken: browserKey };
+          },
+        );
+    }
+    const [threads, settings, orders] = await Promise.all([
+      listBuyerThreads({ userId, clientToken: browserKey }),
+      getSupportSettings(),
+      userId
+        ? db.order.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+            select: { id: true, status: true, totalNt: true, createdAt: true },
+            take: 100,
+          })
+        : Promise.resolve([]),
+    ]);
     return NextResponse.json(
       {
-        profile,
-        threads,
+        threads: threads.map(buyerTicket),
+        settings: {
+          ...settings,
+          categories: settings.categories.map((c) => ({ ...c, templates: [] })),
+        },
+        orders,
+        guestCount: threads.filter((t) => !t.userId).length,
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
-  } catch (error) {
-    return apiError(error);
+  } catch (e) {
+    return apiError(e);
   }
 }
-
-const createSchema = z
-  .object({
-    action: z.literal("create"),
-    clientToken: z.string().min(1).max(120),
-    buyerName: z.string().trim().max(60).optional(),
-    buyerEmail: z.string().trim().max(120).optional(),
-    category: z.enum([
-      "NUTRITION",
-      "ALLERGY",
-      "AUTOSHIP",
-      "ORDER",
-      "AFTER_SALES",
-    ]),
-    subject: z.string().trim().min(2, "請輸入問題主旨").max(120),
-    message: z.string().trim().min(4, "請輸入問題內容").max(1500),
-    orderId: z.string().trim().max(80).nullable().optional(),
-    petSummary: z.string().trim().max(240).nullable().optional(),
-  })
-  .strict();
-
-const replySchema = z
-  .object({
-    action: z.literal("reply"),
-    clientToken: z.string().min(1).max(120),
-    threadId: z.string().min(1).max(120),
-    message: z.string().trim().min(2, "請輸入追問訊息").max(1500),
-  })
-  .strict();
-
-const postSchema = z.discriminatedUnion("action", [createSchema, replySchema]);
-
+const common = {
+  requestId: z.string().uuid().optional(),
+  clientToken: z.string().max(120).optional(),
+};
+const schema = z.discriminatedUnion("action", [
+  z
+    .object({
+      action: z.literal("create"),
+      ...common,
+      buyerName: z.string().trim().max(60).optional(),
+      buyerEmail: z.union([z.email(), z.literal("")]).optional(),
+      category: z.enum(CATEGORY_IDS),
+      subject: z.string().trim().min(2).max(120),
+      message: z.string().trim().min(2).max(1500),
+      orderId: z.string().max(80).nullish(),
+      petSummary: z.string().max(240).nullish(),
+      parentId: z.string().max(120).nullish(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("reply"),
+      ...common,
+      threadId: z.string().min(1).max(120),
+      message: z.string().trim().min(2).max(1500),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("rate"),
+      ...common,
+      id: z.string().min(1).max(120),
+      score: z.number().int().min(1).max(5),
+      comment: z.string().trim().max(500),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("claim"),
+      requestId: z.string().uuid().optional(),
+    })
+    .strict(),
+]);
 export async function POST(request: Request) {
   try {
     verifyOrigin(request);
-    const userId = await optionalUserId();
-    const input = await readBody(request, postSchema);
-
-    if (input.action === "create") {
-      const thread = await createSupportThread({
-        userId,
-        clientToken: input.clientToken,
-        buyerName: input.buyerName,
-        buyerEmail: input.buyerEmail,
-        category: input.category,
-        subject: input.subject,
-        message: input.message,
-        orderId: input.orderId ?? null,
-        petSummary: input.petSummary ?? null,
+    const [userId, clientToken] = await Promise.all([
+      user(),
+      supportBrowserKey(),
+    ]);
+    const input = await readBody(request, schema);
+    await rateLimit(`support:${userId ?? clientToken}`, 80, 900);
+    if (input.action === "claim") {
+      if (!userId) throw new ApiError(401, "登入後即可認領紀錄");
+      return NextResponse.json({
+        claimed: await claimSupport(userId, clientToken),
       });
-      return NextResponse.json({ thread }, { status: 201 });
     }
-
-    const updated = await appendBuyerMessage({
-      threadId: input.threadId,
-      userId,
-      clientToken: input.clientToken,
-      message: input.message,
-    });
-    if (!updated) {
-      return NextResponse.json(
-        { error: "找不到該筆客服對話" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ thread: updated });
-  } catch (error) {
-    return apiError(error);
+    const requestId = input.requestId ?? randomUUID();
+    const thread =
+      input.action === "create"
+        ? await createSupportThread({
+            ...input,
+            userId,
+            clientToken,
+            requestId,
+          })
+        : input.action === "reply"
+          ? await appendBuyerMessage({
+              ...input,
+              userId,
+              clientToken,
+              requestId,
+            })
+          : await rateSupport({ ...input, userId, clientToken, requestId });
+    return NextResponse.json(
+      { thread: buyerTicket(thread) },
+      { status: input.action === "create" ? 201 : 200 },
+    );
+  } catch (e) {
+    return apiError(e);
   }
 }
