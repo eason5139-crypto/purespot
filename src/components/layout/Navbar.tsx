@@ -25,6 +25,8 @@ import { useCartStore } from "@/store/useCartStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { CART_BUMP_EVENT } from "@/lib/flyToCart";
+import { LittleP } from "@/components/assistant/LittleP";
+import type { PublicAssistantSettings } from "@/lib/assistant";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,7 +45,7 @@ const links = [
   { href: "/autoship", label: "定期配送" },
 ];
 
-export function Navbar({ announcement }: { announcement: string }) {
+export function Navbar({ announcement, assistant }: { announcement: string; assistant: PublicAssistantSettings | null }) {
   const path = usePathname();
   const pet = useActivePet();
   const pets = usePetContextStore((s) => s.allPets);
@@ -91,6 +93,7 @@ export function Navbar({ announcement }: { announcement: string }) {
           定期配糧 9 折・滿 $699 免運送到家
         </Link>
       </div>
+      <LittleP initialSettings={assistant} />
       <div className="page-shell flex h-[76px] items-center justify-between gap-3">
         <Link
           href="/"

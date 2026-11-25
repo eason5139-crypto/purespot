@@ -34,15 +34,15 @@ function LayerContent({ product, layer }: { product: Product; layer: Layer }) {
 
 function Metric({ label, value }: { label: string; value: string }) { return <div><span className="block text-[11px] text-[#667681]">{label}</span><strong className="mt-1 block text-lg text-[#263e50]">{value}</strong></div>; }
 
-export function IngredientLens({ initialSlug }: { initialSlug: string }) {
+export function IngredientLens({ initialSlug, initialCompareSlug = "" }: { initialSlug: string; initialCompareSlug?: string }) {
   const products = useCatalogStore((state) => state.products);
   const foods = useMemo(() => products.filter((item) => item.kind !== "SUPPLIES"), [products]);
   const [slug, setSlug] = useState(initialSlug);
-  const [compareSlug, setCompareSlug] = useState("");
+  const [compareSlug, setCompareSlug] = useState(initialCompareSlug);
   const [layer, setLayer] = useState<Layer>("ingredients");
   const [visited, setVisited] = useState<Layer[]>([]);
   const product = foods.find((item) => item.slug === slug) ?? foods[0];
-  const compare = foods.find((item) => item.slug === compareSlug);
+  const compare = foods.find((item) => item.slug === compareSlug && item.type === product?.type && item.slug !== product?.slug);
   if (!product) return <main className="page-shell py-20">目前沒有可查看的食品資料。</main>;
   const sameType = foods.filter((item) => item.type === product.type && item.id !== product.id);
   function chooseLayer(next: Layer) { const updated = visited.includes(next) ? visited : [...visited, next]; setLayer(next); setVisited(updated); if (updated.length === layers.length) awardStamp("lens"); }

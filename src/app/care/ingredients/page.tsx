@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "從商品照片逐層查看配方、已知過敏原與批次狀態，並排比較兩款食品。",
 };
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
-  const { product } = await searchParams;
-  return <IngredientLens initialSlug={product ?? ""} />;
+export default async function Page({ searchParams }: { searchParams: Promise<{ product?: string; compare?: string }> }) {
+  const { product, compare } = await searchParams;
+  return <IngredientLens key={`${product ?? ""}:${compare ?? ""}`} initialSlug={product ?? ""} initialCompareSlug={compare ?? ""} />;
 }

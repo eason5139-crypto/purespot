@@ -8,6 +8,7 @@ import { OverlayHub } from "./OverlayHub";
 import { FlyToCartLayer } from "./FlyToCartLayer";
 import { LiveSupportWidget } from "@/components/support/LiveSupportWidget";
 import type { SiteContent } from "@/lib/siteContent";
+import type { PublicAssistantSettings } from "@/lib/assistant";
 import { useSiteContentPreview } from "@/lib/useSiteContentPreview";
 
 const FOOTER_CRAFT_LINKS = [
@@ -22,9 +23,11 @@ const FOOTER_CRAFT_LINKS = [
 export function SiteChrome({
   children,
   content,
+  assistant,
 }: {
   children: React.ReactNode;
   content: SiteContent;
+  assistant: PublicAssistantSettings | null;
 }) {
   const path = usePathname();
   const displayContent = useSiteContentPreview(content);
@@ -34,7 +37,7 @@ export function SiteChrome({
 
   return (
     <div className="public-site">
-      <Navbar announcement={displayContent.announcement} />
+      <Navbar announcement={displayContent.announcement} assistant={assistant} />
       {children}
       <footer
         id="site-footer"

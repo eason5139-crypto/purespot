@@ -6,6 +6,8 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { readSiteContent } from "@/server/siteContentRepository";
+import { getAssistantSettings } from "@/server/assistantRepository";
+import { publicAssistantSettings } from "@/lib/assistant";
 
 export const metadata: Metadata = {
   title: { default: "PURESPOT｜懂牠，從每一天開始", template: "%s｜PURESPOT" },
@@ -25,7 +27,7 @@ export const dynamic = "force-dynamic";
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const content = await readSiteContent();
+  const [content, assistant] = await Promise.all([readSiteContent(), getAssistantSettings().then(publicAssistantSettings).catch(()=>null)]);
   return (
     <html lang="zh-Hant">
       <body className="bg-[#f8f5ef] text-[#302b26]">
@@ -36,7 +38,7 @@ export default async function RootLayout({
           跳至主要內容
         </a>
         <Providers>
-          <SiteChrome content={content}>{children}</SiteChrome>
+          <SiteChrome content={content} assistant={assistant}>{children}</SiteChrome>
         </Providers>
       </body>
     </html>
